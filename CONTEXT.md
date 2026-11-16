@@ -23,11 +23,23 @@ _Avoid_: knowledge base, wiki, notes.
 **Document Scan** (noun) — A digitized image file of a physical document uploaded to the archive.
 _Avoid_: scan, file, upload, photo.
 
-**OCR Extraction** (noun) — The optical character recognition process extracting text and layout from a document scan.
+**OCR Extraction** (noun) — The optical character recognition process extracting text and TSV bounding-box layout from a document scan.
 _Avoid_: OCRing, scanning, text reading.
 
-**Anonymization** (noun) — The automated detection and redaction of personally identifiable information within extracted text.
+**Bounding Box** (noun) — The pixel coordinates (left, top, width, height) of an OCR-extracted word or redaction area on a document scan.
+_Avoid_: box, rect, coordinates, zone.
+
+**Anonymization** (noun) — The automated detection, confidence scoring, and redaction of personally identifiable information within extracted text.
 _Avoid_: masking, blurring, privacy filtering.
+
+**Redaction** (noun) — The permanent pixel-level burning of solid black boxes onto a scan copy and masking of corresponding text.
+_Avoid_: blurring, blacking out, hiding.
+
+**Notarial Context Anchor** (noun) — A Romanian legal phrase (e.g., subsemnatul, numitul, domiciliat în) indicating adjacent personal data.
+_Avoid_: trigger word, keyword, cue.
+
+**Human Review Queue** (noun) — The workflow queue for medium-confidence or unvalidated PII detections awaiting manual archivist review.
+_Avoid_: moderation queue, approval list, pending tasks.
 
 **Document Version** (noun) — An immutable snapshot of a document scan, its metadata, and its OCR output at a point in time.
 _Avoid_: revision, copy, history entry.
@@ -37,3 +49,9 @@ _Avoid_: folder right, access rule, privilege.
 
 **Retention Policy** (noun) — An automated schedule governing document preservation duration and archival or deletion criteria.
 _Avoid_: deletion rule, lifecycle, expiry.
+
+**Role: Arhivar** (noun) — An archive administrator authorized to view original scans, verify OCR output, and approve PII redactions.
+_Avoid_: archivist, moderator, editor.
+
+**Role: Cititor** (noun) — A standard reader role permitted to access only approved, anonymized document scans and redacted text.
+_Avoid_: viewer, reader, user, guest.

@@ -7,55 +7,75 @@
 
 ## Overview
 Digital archive web application `digital-archive-ocr` (`proiect1`).
-Composed of a React frontend, a Laravel backend API, a PostgreSQL relational database, and an OCR/anonymization processing pipeline, containerized with Docker ([D-001](DECISIONS.md#D-001), [D-002](DECISIONS.md#D-002)).
+Composed of a React frontend, a Laravel backend API, a PostgreSQL relational database, and an OCR/PII redaction processing pipeline containerized with Docker ([D-001](DECISIONS.md#D-001), [D-002](DECISIONS.md#D-002)).
 
 ```text
 [Browser Client (React)]
          |
-         v (HTTP / REST)
+         v (REST API / Sanctum)
 [Laravel Backend API (Docker)] <---> [PostgreSQL (Docker)]
          |
-         +---> [Storage: Document Scans & Versions]
+         +---> [Tesseract OCR + tesseract-ocr-ron (Docker)] ---> Emits TSV (Word Bounding Boxes) [D-004]
          |
-         +---> [OCR Extraction & Anonymization Engine]
+         +---> [PII Pipeline: Checksums (CNP, IBAN) + Romanian Notarial Anchors] [D-005]
+         |          |
+         |          +---> High confidence: Auto-redact (burn black boxes onto scan copy)
+         |          +---> Medium confidence / Names: Human Review Queue (Arhivar review)
+         |
+         +---> [Storage: Original Scans (Arhivar/Admin only) vs Redacted Scans (Cititor)]
 ```
 
 ## Parts
 | Part | Path | Responsibility | Talks to |
 |---|---|---|---|
-| Frontend | `frontend/` (pending) | React visual UI for browsing, uploading, viewing, and searching archive documents | Laravel Backend |
-| Backend API | `backend/` (pending) | Laravel application: auth, permissions, versioning, retention, business logic | PostgreSQL, Frontend, OCR Service |
-| Database | Docker service | PostgreSQL relational database for users, documents, versions, permissions, retention rules | Laravel Backend |
-| File Storage | Docker volume / disk | Preserves original document scans and versioned assets | Laravel Backend |
+| Frontend | `frontend/` (pending) | React visual UI for archive browsing, scan uploads, bounding box correction, and archivist review | Laravel Backend |
+| Backend API | `backend/` (pending) | Laravel application: auth, folder permissions, versioning, PII detection, retention | PostgreSQL, Storage, Tesseract |
+| OCR Engine | Docker (Tesseract) | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Laravel Backend |
+| Database | Docker service | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
+| Storage | Docker volume / disk | Physical scan storage segregating original scans from visually redacted copies | Laravel Backend |
+| Visual Testing | `frontend/` (Playwright) | Automated desktop and mobile screenshot capture in light/dark themes ([D-006](DECISIONS.md#D-006)) | Frontend UI |
 
 ## Data flow
-1. User uploads document scan via React UI; Laravel backend validates permissions and creates an immutable initial document version ([D-002](DECISIONS.md#D-002)).
-2. Laravel dispatches OCR extraction and personal data detection/anonymization task.
-3. Extracted text and anonymized copy are indexed in PostgreSQL.
-4. User searches or browses documents respecting folder-level permissions.
-5. Retention policies evaluate document age and trigger scheduled actions.
+1. **Upload & Ingestion:** User (`arhivar` / `admin`) uploads document scan via React UI; Laravel validates folder permissions and creates an immutable initial document version ([D-002](DECISIONS.md#D-002)).
+2. **OCR Extraction:** Laravel dispatches Tesseract job in Docker with Romanian language pack (`tesseract-ocr-ron`), emitting TSV output with word coordinates (`left`, `top`, `width`, `height`) ([D-004](DECISIONS.md#D-004)).
+3. **PII Detection & Checksum Validation:**
+   - Evaluates mathematical checksums: Romanian CNP (control digit weights `279146358279` mod 11) and IBAN (MOD-97).
+   - Scans for Romanian notarial context anchors (e.g. `subsemnatul`, `numitul`, `domiciliat în`, `identificat prin CI`) to identify person names ([D-005](DECISIONS.md#D-005)).
+4. **Scoring & Routing:**
+   - High-confidence matches (valid checksum + context anchor) auto-redact.
+   - Detected person names and unvalidated/corrupted OCR matches are assigned medium confidence and routed to the Human Review Queue. Public notary titles/names are explicitly excluded from redaction ([D-005](DECISIONS.md#D-005)).
+5. **Visual Redaction:**
+   - Burning solid black boxes onto a generated public scan copy using TSV bounding-box coordinates (with manual rect drawing support in UI).
+   - Redacted text is masked in the full-text search index and catalog.
+6. **Access Control & Serving:**
+   - `cititor` role sees only approved, redacted scan copies and masked text.
+   - `arhivar` / `admin` role retains access to the unredacted original in the private archive ([D-005](DECISIONS.md#D-005)).
+7. **Retention:** Scheduled retention policies enforce preservation schedules or archival actions ([D-002](DECISIONS.md#D-002)).
 
 ## State and storage
 | What | Where | Owner | Notes |
 |---|---|---|---|
-| Document metadata & catalog | PostgreSQL | Laravel Backend | Relational models for folders, permissions, versions, retention |
-| Document scans & files | Filesystem / Docker volume | Laravel Backend | Original and redacted scan assets |
-| UI State | React state / browser cache | Frontend | Transient client session state |
+| Document metadata & catalog | PostgreSQL | Laravel Backend | Folders, permissions, document versions, retention policies |
+| PII detections & review queue | PostgreSQL | Laravel Backend | Detected entities, confidence scores, bounding boxes, review status |
+| Original document scans | Storage (private) | Laravel Backend | Restricted to `admin` / `arhivar` |
+| Redacted document copies | Storage (public) | Laravel Backend | Burned black-box images/PDFs served to `cititor` |
+| UI State & review canvas | React state | Frontend | Transient canvas state for manual bounding-box adjustment |
 
 ## Configuration
 | Name | Where set | Used by | Notes |
 |---|---|---|---|
 | `DB_*` | `.env` / Docker Compose | Laravel Backend | PostgreSQL connection parameters |
 | `APP_KEY` | `.env` | Laravel Backend | Encryption key |
-| `VITE_*` | `frontend/.env` | React Frontend | API base URL and client config |
+| `TESSERACT_PATH` | `.env` | Laravel Backend | Path to Tesseract binary with `ron` support |
+| `VITE_*` | `frontend/.env` | React Frontend | API URL and frontend environment |
 <!-- names only, never values -->
 
 ## Build, deploy, runtime
 Multi-container architecture managed via Docker Compose ([D-001](DECISIONS.md#D-001)). See [AGENTS.md](../../AGENTS.md) sections 2 and 5.
 
 ## Boundaries
-- Frontend / Backend REST API boundary with token/session authentication.
-- Folder-level permission boundary enforcing role and folder access rules ([D-002](DECISIONS.md#D-002)).
-- Document version immutability boundary preventing direct mutation of past versions.
-- PII redaction boundary ensuring sensitive text is masked according to anonymization rules.
+- Frontend / Backend REST API boundary with role-based token authentication.
+- Access boundary: `cititor` (redacted only) vs `arhivar`/`admin` (unredacted original) ([D-005](DECISIONS.md#D-005)).
+- Immutability boundary: Document versions cannot be edited in place; new versions are appended ([D-002](DECISIONS.md#D-002)).
+- PII redaction boundary: Redaction physically burns black pixels into the scan copy, preventing client-side unmasking.
 - Contracts between services are defined in [CONTRACTS.md](CONTRACTS.md).

@@ -78,7 +78,7 @@ without new evidence. A rejected proposal is added there with the reason.
 
 ## 1. What this repo is
 Digital archive web application `digital-archive-ocr` (`proiect1`).
-Supports document scan uploads, OCR text extraction, document search and indexing, personal data detection and anonymization, immutable document versioning, folder-level access control, and retention policies ([D-002](docs/agents/DECISIONS.md#D-002)).
+Supports document scan uploads, Romanian OCR text extraction with bounding boxes ([D-004](docs/agents/DECISIONS.md#D-004)), document search and indexing, PII detection, confidence scoring, visual redaction, and human review ([D-005](docs/agents/DECISIONS.md#D-005)), immutable document versioning, folder-level access control, and retention policies ([D-002](docs/agents/DECISIONS.md#D-002)).
 
 ## 2. Stack and commands
 React frontend, Laravel backend, PostgreSQL database, and Docker containerization ([D-001](docs/agents/DECISIONS.md#D-001)).
@@ -93,14 +93,14 @@ React frontend, Laravel backend, PostgreSQL database, and Docker containerizatio
 # run
 # not run: pending docker-compose configuration
 
-# test
+# test (backend)
 # not run: pending Laravel PHPUnit setup (see D-003)
 
 # lint / type-check
 python3 docs/agents/tools/ledger-lint.py
 
 # screenshot (visual apps)
-# not run: pending screenshot tooling selection (see Q-004)
+# not run: pending Playwright setup (see D-006)
 ```
 
 ## 3. Layout
@@ -113,6 +113,7 @@ python3 docs/agents/tools/ledger-lint.py
 - Use `/plan` before building non-trivial changes or when introducing architecture/design decisions.
 - All user interface development must conform to `docs/design/DESIGN.md` guardrails and maintain `docs/design/registry.yaml`.
 - Backend automated tests are authored with PHPUnit ([D-003](docs/agents/DECISIONS.md#D-003)).
+- Frontend visual testing and screenshots are executed using Playwright ([D-006](docs/agents/DECISIONS.md#D-006)).
 
 ## 5. Release
 - Default branch is `main`.
@@ -122,5 +123,5 @@ python3 docs/agents/tools/ledger-lint.py
 - Stack test command (PHPUnit) passes (see [D-003](docs/agents/DECISIONS.md#D-003)).
 - Stack build / type-check passes.
 - `python3 docs/agents/tools/ledger-lint.py` passes with zero errors.
-- Visual app: screenshots of every changed screen, light and dark, compared with `docs/design/DESIGN.md`.
+- Visual app: Playwright screenshots of every changed screen, light and dark, compared with `docs/design/DESIGN.md` ([D-006](docs/agents/DECISIONS.md#D-006)).
 - New reusable practices recorded as candidate patterns; open points recorded as Q- entries.
