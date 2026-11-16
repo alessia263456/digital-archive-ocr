@@ -19,3 +19,21 @@ _Avoid_: variable, style, constant, magic number.
 
 **Ledger** (noun) — The structured documentation files in `docs/agents/` recording decisions, patterns, contracts, and open questions.
 _Avoid_: knowledge base, wiki, notes.
+
+**Document Scan** (noun) — A digitized image file of a physical document uploaded to the archive.
+_Avoid_: scan, file, upload, photo.
+
+**OCR Extraction** (noun) — The optical character recognition process extracting text and layout from a document scan.
+_Avoid_: OCRing, scanning, text reading.
+
+**Anonymization** (noun) — The automated detection and redaction of personally identifiable information within extracted text.
+_Avoid_: masking, blurring, privacy filtering.
+
+**Document Version** (noun) — An immutable snapshot of a document scan, its metadata, and its OCR output at a point in time.
+_Avoid_: revision, copy, history entry.
+
+**Folder Permission** (noun) — An access control rule enforced at folder level governing access to contained documents.
+_Avoid_: folder right, access rule, privilege.
+
+**Retention Policy** (noun) — An automated schedule governing document preservation duration and archival or deletion criteria.
+_Avoid_: deletion rule, lifecycle, expiry.

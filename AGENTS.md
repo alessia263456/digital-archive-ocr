@@ -77,24 +77,24 @@ without new evidence. A rejected proposal is added there with the reason.
 <!-- graffino-agentic:end -->
 
 ## 1. What this repo is
-Visual web application `proiect1` (under `web2_proiecte`).
-Detailed purpose, users, and deployment environment are pending definition in [docs/agents/OPEN-QUESTIONS.md](docs/agents/OPEN-QUESTIONS.md).
+Digital archive web application `digital-archive-ocr` (`proiect1`).
+Supports document scan uploads, OCR text extraction, document search and indexing, personal data detection and anonymization, immutable document versioning, folder-level access control, and retention policies ([D-002](docs/agents/DECISIONS.md#D-002)).
 
 ## 2. Stack and commands
-Web application stack to be determined (see [docs/agents/OPEN-QUESTIONS.md](docs/agents/OPEN-QUESTIONS.md#Q-001)).
+React frontend, Laravel backend, PostgreSQL database, and Docker containerization ([D-001](docs/agents/DECISIONS.md#D-001)).
 
 ```bash
 # install
-# not run: pending tech stack selection (see Q-001)
+# not run: pending project scaffolding
 
 # build
-# not run: pending tech stack selection (see Q-001)
+# not run: pending project scaffolding
 
 # run
-# not run: pending tech stack selection (see Q-001)
+# not run: pending docker-compose configuration
 
 # test
-# not run: pending test runner configuration (see Q-003)
+# not run: pending Laravel PHPUnit setup (see D-003)
 
 # lint / type-check
 python3 docs/agents/tools/ledger-lint.py
@@ -112,14 +112,15 @@ python3 docs/agents/tools/ledger-lint.py
 - Follow the agent gate in "How we work here" for all changes to the knowledge ledger.
 - Use `/plan` before building non-trivial changes or when introducing architecture/design decisions.
 - All user interface development must conform to `docs/design/DESIGN.md` guardrails and maintain `docs/design/registry.yaml`.
+- Backend automated tests are authored with PHPUnit ([D-003](docs/agents/DECISIONS.md#D-003)).
 
 ## 5. Release
 - Default branch is `main`.
 - Deployments, tags, and production releases occur only with explicit confirmation from the repository owner.
 
 ## 6. Definition of done
-- Stack test command passes (pending Q-001, Q-003).
-- Stack build / type-check passes (pending Q-001, Q-003).
+- Stack test command (PHPUnit) passes (see [D-003](docs/agents/DECISIONS.md#D-003)).
+- Stack build / type-check passes.
 - `python3 docs/agents/tools/ledger-lint.py` passes with zero errors.
 - Visual app: screenshots of every changed screen, light and dark, compared with `docs/design/DESIGN.md`.
 - New reusable practices recorded as candidate patterns; open points recorded as Q- entries.
