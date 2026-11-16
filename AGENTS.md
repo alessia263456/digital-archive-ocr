@@ -18,6 +18,7 @@ non-fast-forward or on uncommitted changes you did not make.
 | Structural work | `docs/agents/ARCHITECTURE.md` |
 | Old code or a past decision needs explaining | `docs/agents/DECISIONS-SUPERSEDED.md`, `PATTERNS-SUPERSEDED.md` (never obeyed) |
 | UI work | `docs/design/DESIGN.md`, `docs/design/registry.yaml` |
+| Requirement or domain scope work | `docs/brief.md` |
 
 **Flow:** a change to more than a few lines, or one with a design choice, starts with
 `/plan`. The approved plan runs with `/build`. Small fixes go straight to build, with
