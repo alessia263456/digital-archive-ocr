@@ -97,7 +97,7 @@ them; a ticket with UI has a design subtask instead (team addon).
 
 ## Source
 - Design board: none yet (published from `mocks/`, never pulled)
-- Figma: none (regenerated on request)
+- Figma: see Q-009 (considering; account not yet created)
 - Token source in code: none yet (pending stack setup; see docs/agents/OPEN-QUESTIONS.md#Q-001)
 
 ## Tokens
