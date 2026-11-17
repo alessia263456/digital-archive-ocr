@@ -20,7 +20,7 @@ _Avoid_: variable, style, constant, magic number.
 **Ledger** (noun) — The structured documentation files in `docs/agents/` recording decisions, patterns, contracts, and open questions.
 _Avoid_: knowledge base, wiki, notes.
 
-**Notary Cabinet** (noun) — The specific notary office organization (*Cabinet Individual Notarial*) whose paper records constitute the digital archive corpus.
+**Notary Cabinet** (noun) — The specific notary office organization (*Cabinet Individual Notarial* / *Birou Individual Notarial*) whose paper records constitute the digital archive corpus.
 _Avoid_: law firm, office, agency, bureau, client.
 
 **Notarial Act** (noun) — An authenticated legal document issued by the notary cabinet (e.g., contract, power of attorney, declaration, succession certificate).
@@ -88,3 +88,39 @@ _Avoid_: dead-letter queue, error list, failed jobs, poison queue.
 
 **Near-Duplicate** (noun) — A document scan whose extracted OCR text exhibits high textual similarity to an existing archived document.
 _Avoid_: similar document, duplicate, duplicate text, copy.
+
+**Role: Secretar Notarial** (noun) — The notary cabinet administrative staff member (*Secretar Notarial*) responsible for daily registration of acts, compilation of the alphabetical index, and physical dossier retrieval.
+_Avoid_: secretary, clerk, assistant, front desk staff.
+
+**Physical Dossier Number** (noun) — The physical folder identifier (*Număr de Dosar*, e.g., `Dosar nr. 29/2014`) written on the physical dossier spine in the cabinet archive and displayed in the application to guide physical retrieval.
+_Avoid_: folder code, shelf number, physical ID, file number.
+
+**Archival Indicator** (noun) — The classification code (*Indicativ Arhivistic*, e.g., `IA 1`, `IA 17`, `IB 4`) defined in the Notarial Nomenclature assigned to an act or dossier governing retention period and archival rules.
+_Avoid_: category code, archive code, class code, tag, indicativ.
+
+**Alphabetical Index** (noun) — The annual registry (*Opis Alfabetic*) compiled by notarial staff organized by initial of party names mapping signatories to act and physical dossier numbers.
+_Avoid_: index book, name index, registry list, party index.
+
+**Daily Notarial Register** (noun) — The formal chronological register (*Registru General*) where daily notarial acts, parties, act numbers, inventory numbers, and archival indicators are recorded.
+_Avoid_: day log, daily book, journal, daily notes.
+
+**Inventory Number** (noun) — The official archival inventory identifier (*Număr de Inventar*, e.g., `29/2014`) assigned to a completed dossier or register volume.
+_Avoid_: inventory code, archive ID, item number, catalog number.
+
+**Selection Commission** (noun) — The statutory cabinet committee (*Comisia de Selecționare* / `C.S.`) comprising the notary public, archivist, and secretary that reviews expired acts with `C.S.` notation to recommend retention extension or scrapping.
+_Avoid_: disposal committee, review board, retention panel, selection team.
+
+**Storage Context** (noun) — The specific archival placement category (*Context Arhivare*) prescribed by the Notarial Nomenclature (e.g., standalone act, permanent binder / mapă permanentă, succession dossier, divorce dossier).
+_Avoid_: filing location, binder type, archive zone, placement.
+
+**Retention Computation Base** (noun) — The statutory starting event (*De când curge timpul*) from which a retention duration is calculated (e.g., January 1st of the year following execution, contract expiration date, dossier resolution date, or deposit release date).
+_Avoid_: calculation date, trigger date, start time, retention base.
+
+**Permanent Preservation** (noun) — The indefinite archival retention status (`P`) indicating that a notarial act, permanent binder, or official register must never be destroyed.
+_Avoid_: forever retention, infinite storage, permanent file, eternal archive.
+
+**Cadastral Identifier** (noun) — Real estate identification data (*Număr Cadastral*, *Număr Carte Funciară*) appearing in notarial property acts requiring recognition and indexing.
+_Avoid_: land ID, property number, lot number, plot ID.
+
+**Movable Asset Identifier** (noun) — Vehicle identification details (VIN / chassis number, license plate) appearing in notarial powers of attorney and sale contracts.
+_Avoid_: car ID, vehicle data, auto number, chassis data.

@@ -3,3 +3,6 @@
 !.claude/skills/
 !.claude/agents/
 .claude/worktrees/
+
+# Windows / WSL Zone Identifier metadata files
+*:Zone.Identifier

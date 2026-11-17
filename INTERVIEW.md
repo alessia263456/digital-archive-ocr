@@ -7,42 +7,46 @@
 
 ## 1. Date Generale Interviu
 
-- **Organizație:** Cabinet Individual Notarial
-- **Persoană intervievată:** [Nume / Funcție — Notar Public / Arhivar / Secretar notarial]
-- **Data interviului:** [Data realizării interviului]
-- **Locație / Format:** [Sediul cabinetului / Telefonic / Online]
-- **Intervievator:** [Nume student / dezvoltator]
+**Organizație:** Birou Individual Notarial
+**Persoana intervievată:** Secretar Notarial  
+**Data interviului:** 14 Noiembrie 2026 
 
 ---
+## 2. Notițe Complete Interviu
 
-## 2. Contextul Arhivei Fizice Curente
+### „Cum găsiți în prezent un document vechi (ex. un contract sau o procură din 2019) și cât timp durează căutarea?”
+**Răspuns:** În fiecare zi se completează de mână un registru care conține numele persoanelor implicate în act, tipul actului, numărul de dosar, indicatorul arhivistic, nr. act și nr. inventar. La finalul zilei se completează un opis alfabetic (după inițiala numelui), pe anul în curs.
+Un document vechi se găsește astfel: dacă se cunoaște anul în care a fost emis, se consultă opisul alfabetic din acel an, căutându-se numele persoanei care este prezentă în act. Dacă nu se cunoaște anul, ci doar perioada aproximativă în care a fost emis, se vor consulta toate opisurile din acea perioadă. Astfel se găsește numărul de dosar, unde se va găsi documentul în arhivă.
+Căutarea poate dura foarte mult. În general, pentru o programare la notariat, de exemplu pentru o succesiune, actele necesare se caută în arhivă cu câteva zile înainte de programare.
 
-### Cum este organizată arhiva în prezent?
-- *Tipuri de documente gestionate:* (ex. contracte de vânzare-cumpărare, procuri, declarații, certificate de moștenitor, încheieri de autentificare, registre notariale)
-- *Volum estimat:* (număr de dosare / bibliorafturi / acte pe an)
-- *Starea fizică a documentelor:* (documente dactilografiate, tipărite modern, adnotate olograf / scrise de mână)
+### „Cum este în prezent organizată arhiva? (pe ani, în funcție de nume?)”
+**Răspuns:** Arhiva este organizată pe dosare, după tipul documentului (deci indicativul arhivistic) și timpul de păstrare. De exemplu, pentru procuri și declarații cu indicativ arhivistic IA1, există dosarul nr. 29/2014. Pe cotorul dosarului este scris numărul dosarului, indicatorul arhivistic, nr. act (ex. 761-1020), data (ex. 12.06.2014-14.08.2014), nr. inventar (ex. 29/2014), T.P. (timp păstrare) și eventual tipul documentelor scris explicit (ex. procuri și declarații).
 
-### Cum se caută un document în prezent?
-- *Procedura de căutare:* (ex. căutare după număr de încheiere și an în opis/registru pe hârtie sau Excel, apoi identificare fizică la raft)
-- *Timp mediu de căutare:* (cât durează găsirea unui act specific, ex. „contractul din 2019”)
-- *Dificultăți întâmpinate:* (documente rătăcite, deteriorare hârtie, lipsă căutare după text/conținut sau părți semnatare)
+### „Cine din cabinet are voie să vadă documentele originale cu toate datele cu caracter personal la vedere (CNP, adrese, IBAN)?”
+**Răspuns:** Documentele originale sunt vizualizate de notar și arhivar. Documentele se eliberează doar titularului în persoană, pe bază de buletin. Documentele au valoare legală doar dacă sunt fizice, cele digitale nu au valoare juridică.
 
----
+### „Aveți situații în care trebuie să eliberați copii sau extrase anonimizate/redactate către terți (ex. avocați, instanțe, alți clienți)?”
+**Răspuns:** Singurele situații în care se pot elibera copii anonimizate este pentru a oferi un model de act (de exemplu un client are nevoie de o procură specială, dar pe care o va întocmi la alt cabinet notarial. Se poate elibera o copie anonimizată cu un model de formulare).
 
-## 3. Acces, Roluri și Permisiuni
+### „Cum procedați când trimiteți un document pe email sau prin link rapid? Folosiți parole sau limite de timp pentru descărcare?”
+**Răspuns:** Documentele se trimit pe email doar după ce titularul se prezintă în persoană la cabinet, se identifică prin carte de identitate și completează o cerere de trimitere pe email/fax. O copie se poate trimite scanat, dar nu va avea nicio valoare juridică, ci poate fi privit doar informativ. De exemplu pentru a consulta o moștenire, dar actul nu poate fi folosit propriu-zis.
 
-### Cine are acces la arhivă și ce nivel de acces are fiecare?
-- **Admin / Notar:** Acces complet la toate documentele, originale, metadate și rapoarte de audit.
-- **Arhivar / Personal secretariat:** Acces la scanări originale pentru verificare, indexare, corectare OCR și aprobare redactare PII.
-- **Cititor / Părți externe / Consultare:** Acces exclusiv la versiunile anonimizate/redactate vizual (fără acces la CNP, conturi bancare sau date de identificare ale terților).
+### „Cât de frecvent aveți de-a face cu acte vechi completate sau adnotate de mână (ex. cereri, mențiuni pe margine)?”
+**Răspuns:** Zilnic se completează cereri de mână.
 
-### Politici de partajare externă
-- Cum se eliberează duplicate sau extrase către părți sau instituții?
-- Necesitatea link-urilor securizate cu expirare temporară.
+### „Care sunt termenele legale de păstrare pentru diferitele tipuri de acte notariale (ex. procuri vs. acte de proprietate vs. cereri simple)?”
+**Răspuns:** Timpul de păstrare al documentelor este documentat în nomenclatorul arhivistic. Notarul trebuie să dea aprobarea finală pentru distrugerea documentelor după expirarea lor.
 
----
+**Notă**
+În urma interviului, am primit din partea biroului notarial **Nomenclatorul Arhivistic** oficial (aprobat prin Hotărârea Consiliului UNNPR nr. 117 din 19.11.2014), în format PDF scanat, pe baza căruia am extras și structurat regulile de arhivare pentru aplicație. (vezi `docs/nomenclator_arhivistic.csv`)
+Pentru a elimina ambiguitățile în aplicație, am separat documentele în funcție de obiectul juridic și locul arhivării (de ex. *procură* de vânzare `IA 1 – P` vs. *procură* radiere auto `IA 21 – 5 ani C.S.`; iar la *succesiuni*, am separat explicit *testamentul/declarația succesorală* `IA 3 – P` și *certificatul de moștenitor/încheierea finală* `IA 6 – P` de *dosarul succesoral* cu acte procedurale `IA 17 – 10 ani C.S.`).
+Am inclus explicit momentul de la care începe să curgă termenul de păstrare (de la 1 ianuarie al anului următor încheierii actului, de la soluționarea dosarului, de la expirarea contractului — ex. comodat/închiriere `IA 20` — sau de la eliberarea depozitului `IA 24`), pentru calculul datei scadente a documentelor.
 
-## 4. Date cu Caracter Personal (PII) și Protecția Datelor
+### „Cum decideți ce documente trebuie distruse când le expiră termenul și cine dă aprobarea finală?”
+**Răspuns:** Deoarece dosarele sunt grupate în funcție de timpul de păstrare, este ușor de identificat ce documente trebuie distruse. Notarul public este cel care dă aprobarea finală. În cazul în care termenele au și mențiunea CS (Comisia de Selecționare - ex. 5 ani CS) în urma unei analize amănunțite, comisia (formată la nivelul cabinetului din notar, arhivar și secretar) poate propune prelungirea termenelor de păstrare sau casarea lor.
+
+### „Este necesar să știți exact cine din echipa cabinetului a vizualizat, a descărcat sau a modificat un anumit fișier și la ce dată?”
+**Răspuns:** Da, mai ales atunci când cineva accesează varianta neredactată a unui act sau îl distribuie către exterior (doar pe bază de cerere scrisă întocmită la cabinet).
 
 ### Ce date cu caracter personal apar în actele notariale?
 - CNP (Cod Numeric Personal)
@@ -51,28 +55,21 @@
 - Numere de cont bancar (IBAN)
 - Numere de telefon și adrese de email
 - Numele și prenumele părților semnatare
+- Detalii despre proprietăți (vecinătăți, adrese, documentație cadastrală)
+- Date de identificare ale bunurilor mobile(număr înmatriculare și serie de șasiu la autoturisme) 
+- Date de identificare ale firmelor (CUI/CIF)
+- Semnături olografe
+- Număr de carte funciară
+- Număr cadastral
 
-### Reguli specifice pentru Notariat
-- **Numele Notarului Public și al cabinetului:** Sunt publice și apar în antet/încheiere — NU se redactează.
-- **Părțile semnatare (Signatory Parties):** Datele lor de identificare trebuie protejate la consultare publică/cititori.
-- **Validare și prag de încredere:**
-  - CNP-urile și IBAN-urile cu cifră de control validă + context notarial (`CNP:`, `subsemnatul`) sunt redactate automat.
-  - Numele de persoane și detecțiile incerte/corupte la OCR necesită revizuire umană de către arhivar.
-- **Redactare vizuală:** Aplicarea de dreptunghiuri negre arse direct în imagine/PDF, astfel încât datele să nu poată fi recuperate din stratul grafic sau text.
+## Alte mențiuni 
 
----
+Pentru că un document este valid doar în forma lui fizică, tipărită, ștampilată, este necesar ca în aplicație să fie vizibil **numărul dosarului** unde se găsește actul în arhiva de la cabinet. Aceasta ar trebui să fie funcția principală a aplicației, pentru a eficientiza căutarea în arhivă.
 
-## 5. Politici de Retenție și Nomenclator Arhivistic
-
-### Cât timp se păstrează documentele?
-- *Acte cu păstrare permanentă / istorică:* (ex. acte de proprietate, certificate de moștenitor, registre de autentificări)
-- *Acte cu termen limitat:* (ex. procuri speciale, declarații simple, corespondență administrativă — 5 ani / 10 ani)
-- *Calculul termenului de retenție:* Se calculează de la **Data Actului** (data autentificării), NU de la data scanării/încărcării în sistem.
-- *Procedura la expirarea termenului:* Propunere de casare/eliminare cu confirmare manuală obligatorie din partea notarului/arhivarului.
 
 ---
 
-## 6. Verificare și Căutare în Aplicație (Cerință Definition of Done)
+## 3. Verificare și Căutare în Aplicație (Cerință Definition of Done)
 
 > Notă: Această secțiune va fi completată după încărcarea corpusului de 30 de documente reale și testarea căutării full-text de către persoana din cabinet.
 
@@ -86,10 +83,3 @@
 
 ---
 
-## 7. Transcrierea Brută a Discuției / Notițe Complete
-
-*(Lipiți mai jos textul complet al discuției, răspunsurile detaliate sau notițele luate în timpul interviului)*
-
-```text
-[Lipiți aici textul interviului...]
-```
