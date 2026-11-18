@@ -57,7 +57,7 @@ Alphabetical Index, while storing redacted copies of Document Scans for GDPR-saf
 | Folder structure | See Q-008 (open — pending client answer) |
 | Application language | Romanian only |
 | Notifications | In-app only (badge / notification panel) |
-| Figma | See Q-009 (open — considering) |
+| Figma | [arhiva-digitala-ocr-Design](https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1) |
 
 ---
 
@@ -74,17 +74,19 @@ Alphabetical Index, while storing redacted copies of Document Scans for GDPR-saf
 
 ## Screens
 
-| # | Screen | Visible to |
-|---|---|---|
-| 1 | Document list / Search results | All logged-in |
-| 2 | Document viewer | All logged-in (original: admin/arhivar; redacted: cititor) |
-| 3 | Upload | admin, arhivar |
-| 4 | Human Review Queue | admin, arhivar |
-| 5 | Retention & Destruction list | admin |
-| 6 | Admin panel (users, folders, permissions) | admin |
-| 7 | Dashboard / statistics | admin, arhivar |
-| 8 | Audit Log viewer | admin, arhivar |
-| 9 | Public share link viewer | unauthenticated |
+| # | ID | Screen | Visible to |
+|---|---|---|---|
+| 1 | `DS-001` | Document list / Search results | All logged-in (`admin`, `arhivar`, `cititor`) |
+| 2 | `DS-002` | Document viewer (read-only) | All logged-in (original: `admin`/`arhivar`; redacted: `cititor`) |
+| 3 | `DS-003` | Upload | `admin`, `arhivar` |
+| 4 | `DS-004` | Human Review Queue & Quarantine | `admin`, `arhivar` |
+| 5 | `DS-005` | Retention & Destruction list | `admin` |
+| 6 | `DS-006` | Admin panel (users, folders, permissions) | `admin` |
+| 7 | `DS-007` | Dashboard / statistics | `admin`, `arhivar` |
+| 8 | `DS-008` | Audit Log viewer | `admin`, `arhivar` |
+| 9 | `DS-009` | Public share link viewer | unauthenticated (valid signed URL) |
+| 10 | `DS-010` | Login | unauthenticated |
+| 11 | `DS-011` | Document Editor & Anonymization | `admin`, `arhivar` |
 
 ---
 

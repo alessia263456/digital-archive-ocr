@@ -17,7 +17,7 @@
 - Q-006 · What tool or pipeline should perform personal data detection and anonymization? · _answered_
 - Q-007 · What visual testing or screenshot tool should be used for the React frontend? · _answered_
 - Q-008 · Should application folders mirror Archival Indicator categories with retention pre-filled, or be free-form?
-- Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project?
+- Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project? · _answered_
 - Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue?
 - Q-011 · What text similarity threshold defines a Near-Duplicate at upload time?
 - Q-012 · What expiry options are available when creating a Share Link (fixed durations, custom date, or both)?
@@ -89,12 +89,12 @@
 - **Recorded as:**
 
 ## Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project?
-- **Status:** open
+- **Status:** answered 2026-11-18
 - **Blocks:** `docs/design/DESIGN.md` Source section; design board publishing workflow
 - **Who answers:** repository owner
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Yes, external Figma design project linked at https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1 as an external snapshot/review board.
+- **Recorded as:** docs/design/DESIGN.md
 
 ## Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue?
 - **Status:** open

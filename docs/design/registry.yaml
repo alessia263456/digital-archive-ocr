@@ -1,4 +1,91 @@
 # docs/design/registry.yaml — every screen and shared component, by DS- ID.
 # Plans, commits, mocks and board files use the ID (tickets don't). kind: foundation | component | screen
 # status: draft (mock drawn) | approved (confirmed on the board) | implemented | deprecated (never delete an entry)
-designs: []
+designs:
+  - id: DS-001
+    name: "Listă documente / Căutare (Document list / Search results)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar, cititor]
+    decisions: [D-002, D-004, D-014, D-020]
+    description: "Căutare full-text OCR (<2s), afișare extrase cu diacritice, filtre cu fațete (Dată Act, Indicativ Arhivistic, Dosar, An), arbore foldere, etichete avertizare duplicat."
+
+  - id: DS-002
+    name: "Vizualizator document (Document viewer)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar, cititor]
+    decisions: [D-004, D-005, D-010, D-013, D-020]
+    description: "Ecran read-only pentru consultare documente: comutare original vs anonimizat (conform permisiunilor), navigare pagini, căutare în textul OCR, afișare metadate, descărcare PDF, generare link partajare și buton Editare către DS-011 pentru rolurile autorizate."
+
+  - id: DS-003
+    name: "Încărcare documente (Upload)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar]
+    decisions: [D-002, D-014, D-015, D-020]
+    description: "Încărcare scanuri multi-file (drag & drop), deduplicare pe hash SHA-256, avertizare near-duplicate pe text OCR, selectare folder destinație."
+
+  - id: DS-004
+    name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar]
+    decisions: [D-005, D-015, D-019, D-020]
+    description: "Coadă de triaj pentru detecții PII cu încredere medie; deschidere directă în DS-011 pentru revizuire detaliată; tab separat pentru Carantină (fișiere cu erori repetate de procesare OCR)."
+
+  - id: DS-005
+    name: "Retenție & Listă de casare (Retention & Destruction list)"
+    kind: screen
+    status: draft
+    roles: [admin]
+    decisions: [D-002, D-010, D-016, D-020]
+    description: "Monitorizare termene de păstrare din Data Actului conform Nomenclatorului, grupare pe Comisie de Selecționare (C.S.), confirmare manuală a casării pe loturi."
+
+  - id: DS-006
+    name: "Panou administrare (Admin panel)"
+    kind: screen
+    status: draft
+    roles: [admin]
+    decisions: [D-008, D-017, D-020]
+    description: "Gestiune conturi utilizatori (notar, arhivar, cititor), ierarhie foldere și permisiuni de acces per folder, configurări sistem."
+
+  - id: DS-007
+    name: "Panou principal / Statistici (Dashboard)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar]
+    decisions: [D-019, D-020]
+    description: "Indicatori volum arhivă (documente, spațiu, scanuri), contor alerte revizuire PII și carantină, scadențe de retenție, flux activitate recentă."
+
+  - id: DS-008
+    name: "Jurnal de audit (Audit Log viewer)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar]
+    decisions: [D-002, D-013, D-020]
+    description: "Jurnal append-only imutabil conform GDPR pentru toate acțiunile (vizualizare, descărcare, editare OCR, generare link), filtrare după operator și perioadă."
+
+  - id: DS-009
+    name: "Vizualizator link public (Public share link viewer)"
+    kind: screen
+    status: draft
+    roles: [unauthenticated]
+    decisions: [D-013, D-020]
+    description: "Vizualizator extern read-only prin URL semnat cu expirare, afișare strict a versiunii autorizate (redactată sau original), descărcare PDF, contor timp rămas."
+
+  - id: DS-010
+    name: "Autentificare (Login)"
+    kind: screen
+    status: draft
+    roles: [unauthenticated]
+    decisions: [D-017, D-018]
+    description: "Ecran autentificare cu utilizator și parolă pentru personalul cabinetului notarial, mesaje de eroare exclusiv în limba română."
+
+  - id: DS-011
+    name: "Editor document & Anonimizare (Document Editor & Anonymization)"
+    kind: screen
+    status: draft
+    roles: [admin, arhivar]
+    decisions: [D-004, D-005, D-009, D-010, D-011, D-012, D-020]
+    description: "Ecran dedicat de editare: corectare OCR inline, inspecție casete TSV, revizuire PII, desenare manuală de chenare negre de anonimizare (redaction burning), editare metadate și confirmare obligatorie Dată Act, generare versiune anonimizată. Poate fi deschis din DS-002 sau din coada de revizuire DS-004."
