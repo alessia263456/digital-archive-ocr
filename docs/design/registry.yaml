@@ -13,10 +13,11 @@ designs:
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
     kind: screen
-    status: draft
+    status: approved
+    design_ref: mocks/DS-002.html
     roles: [admin, arhivar, cititor]
     decisions: [D-004, D-005, D-010, D-013, D-020]
-    description: "Ecran read-only pentru consultare documente: comutare original vs anonimizat (conform permisiunilor), navigare pagini, căutare în textul OCR, afișare metadate, descărcare PDF, generare link partajare și buton Editare către DS-011 pentru rolurile autorizate."
+    description: "Ecran read-only pentru consultare documente: comutare original vs anonimizat (conform permisiunilor), navigare pagini, căutare în documentul deschis cu evidențierea potrivirilor, descărcare PDF, generare link partajare și buton Editare către DS-011 pentru rolurile autorizate."
 
   - id: DS-003
     name: "Încărcare documente (Upload)"

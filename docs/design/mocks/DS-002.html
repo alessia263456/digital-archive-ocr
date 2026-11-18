@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DS-002 — Vizualizator document (Document Viewer) · Arhivă Digitală Notarială</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS (DESIGN.md strictly obeyed)
+       ========================================================================== */
+    :root {
+      /* Color tokens - Light */
+      --color-bg-primary: #FAF8F5;
+      --color-bg-surface: #FFFFFF;
+      --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C;
+      --color-text-secondary: #556070;
+      --color-border: #E5E0D8;
+      --color-primary: #072D5C;
+      --color-accent-mid: #4683CF;
+      --color-accent-teal: #46CFC3;
+      --color-accent-amber: #CE8946;
+      --color-version-navy: #072D5C;
+      --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A;
+      --color-archival-label-border: #DEC09F;
+      --color-focus-ring: #4683CF;
+      --color-redaction: #000000;
+      --color-text-inverse: #FFFFFF;
+      --color-search-hit: rgba(206, 137, 70, 0.28);
+      --color-search-active: rgba(206, 137, 70, 0.65);
+      --color-danger: #C53030;
+      --color-danger-bg: #FFF5F5;
+      --color-danger-border: #FEB2B2;
+
+      /* Typography tokens */
+      --font-heading: var(--font-body);
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+
+      --font-size-h1: 32px;
+      --line-height-h1: 40px;
+      --font-weight-h1: 700;
+
+      --font-size-h2: 24px;
+      --line-height-h2: 32px;
+      --font-weight-h2: 600;
+
+      --font-size-h3: 18px;
+      --line-height-h3: 26px;
+      --font-weight-h3: 600;
+
+      --font-size-body: 16px;
+      --line-height-body: 24px;
+      --font-weight-body: 400;
+
+      --font-size-lead: 15px;
+      --line-height-lead: 28px;
+
+      --font-size-small: 14px;
+      --line-height-small: 20px;
+      --font-weight-small: 400;
+
+      --font-weight-mono: 400;
+
+      --font-size-mono-sm: 11px;
+      --line-height-mono-sm: 16px;
+      --font-weight-mono-sm: 400;
+
+      --font-size-badge-icon: 10px;
+
+      /* Spacing tokens */
+      --space-hairline: 1px;
+      --space-2xs: 2px;
+      --space-3xs: 1px;
+      --space-xs: 4px;
+      --space-xs-plus: 6px;
+      --space-sm: 8px;
+      --space-sm-plus: 10px;
+      --space-md: 16px;
+      --space-md-plus: 20px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+
+      /* Radius, shadow, motion */
+      --radius-none: 0px;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-full: 9999px;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-hud: 0 4px 14px rgba(7, 45, 92, 0.08);
+      --shadow-modal: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --shadow-sheet: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --duration-fast: 150ms ease;
+      --duration-normal: 250ms ease;
+
+      /* Dimensional & Layout tokens */
+      --border-width-hairline: 1px;
+      --border-width-sm: 1px;
+      --border-width-md: 2px;
+      --border-width-spinner: 3px;
+      --target-touch: 44px;
+      --target-pointer: 24px;
+      --filter-blur-sm: blur(2px);
+
+      --size-mock-bar-h: 36px;
+      --size-main-header-h: 54px;
+      --size-floating-hud-h: 44px;
+
+      --sidebar-left-width: 200px;
+      --doc-canvas-max-width: 820px;
+
+      --size-icon-btn: 34px;
+      --size-btn-compact-h: 34px;
+      --size-page-input-w: 40px;
+      --size-page-input-h: 28px;
+      --size-search-w: 180px;
+      --size-search-w-focus: 220px;
+      --size-search-h: 30px;
+      --size-search-pr: 48px;
+      --size-search-count-right: 22px;
+
+      --size-thumbnail-w: 120px;
+      --size-thumbnail-h: 170px;
+      --size-thumb-header-h: 10px;
+      --size-thumb-stamp: 20px;
+
+      --size-doc-min-h: 1100px;
+      --size-skeleton-h: 900px;
+      --size-skeleton-title-h: 28px;
+      --size-spinner: 24px;
+      --size-coat-of-arms: 38px;
+      --size-redact-h: 18px;
+      --size-signatory-min-w: 170px;
+      --size-sig-line-mt: 36px;
+      --size-stamp: 90px;
+      --size-progress-h: 6px;
+      --size-ocr-box-max-h: 240px;
+      --size-modal-max-w: 500px;
+      --size-select-h: 36px;
+      --size-tooltip-max-w: 420px;
+      --size-title-max-w-long: 420px;
+      --size-error-max-w: 500px;
+      --size-error-icon: 44px;
+
+      /* Redaction bounding-box widths */
+      --redact-w-name1: 140px;
+      --redact-w-address1: 250px;
+      --redact-w-ci1: 85px;
+      --redact-w-cnp1: 120px;
+      --redact-w-name2: 130px;
+      --redact-w-address2: 180px;
+      --redact-w-ci2: 85px;
+      --redact-w-cnp2: 120px;
+      --redact-w-sig1: 95px;
+    }
+
+    [data-theme="dark"] {
+      --color-bg-primary: #1E293B;
+      --color-bg-surface: #283548;
+      --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC;
+      --color-text-secondary: #94A3B8;
+      --color-border: #334155;
+      --color-primary: #4683CF;
+      --color-accent-mid: #60A5FA;
+      --color-accent-teal: #46CFC3;
+      --color-accent-amber: #E59E5B;
+      --color-archival-label-bg: #3A302A;
+      --color-archival-label-text: #E7B587;
+      --color-archival-label-border: #69503A;
+      --color-focus-ring: #46CFC3;
+      --color-redaction: #000000;
+      --color-text-inverse: #FFFFFF;
+      --color-search-hit: rgba(229, 158, 91, 0.35);
+      --color-search-active: rgba(229, 158, 91, 0.7);
+      --color-danger: #F87171;
+      --color-danger-bg: #451A1A;
+      --color-danger-border: #7F1D1D;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-hud: 0 4px 14px rgba(0, 0, 0, 0.4);
+      --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+      --shadow-sheet: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: var(--radius-none);
+      padding: var(--radius-none);
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-small);
+      color: var(--color-text-primary);
+      background-color: var(--color-bg-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Accessible Focus styling */
+    :focus-visible {
+      outline: var(--border-width-md) solid var(--color-focus-ring);
+      outline-offset: var(--space-xs);
+    }
+
+    /* ==========================================================================
+       SUBTLE MOCK SWITCHBOARD (For testing states & theme in draft review)
+       ========================================================================== */
+    .mock-ribbon {
+      background-color: var(--color-bg-subtle);
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      padding: var(--space-xs) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm);
+      min-height: var(--size-mock-bar-h);
+      z-index: 60;
+    }
+
+    .mock-tag {
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .mock-tag-status {
+      background-color: var(--color-accent-amber);
+      color: var(--color-text-inverse);
+      padding: 0 var(--space-xs);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    .mock-switch-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      flex-wrap: wrap;
+    }
+
+    .mock-pill {
+      background: none;
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-3xs) var(--space-xs-plus);
+      font-family: var(--font-body);
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast);
+    }
+
+    .mock-pill:hover {
+      background-color: var(--color-border);
+      color: var(--color-text-primary);
+    }
+
+    .mock-pill.active {
+      background-color: var(--color-primary);
+      color: var(--color-text-inverse);
+      border-color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       UNIFIED SLIM VIEWER HEADER (Restrained, elegant, non-intrusive)
+       ========================================================================== */
+    .viewer-header {
+      background-color: var(--color-bg-surface);
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      padding: 0 var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--space-sm);
+      min-height: var(--size-main-header-h);
+      z-index: 40;
+    }
+
+    .header-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--size-icon-btn);
+      height: var(--size-icon-btn);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background-color: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color var(--duration-fast), border-color var(--duration-fast);
+      flex-shrink: 0;
+    }
+
+    .header-nav-btn:hover {
+      background-color: var(--color-bg-subtle);
+      border-color: var(--color-accent-mid);
+    }
+
+    .doc-title {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
+    }
+
+    .doc-dossier-sub {
+      font-size: var(--font-size-mono-sm);
+      line-height: var(--line-height-mono-sm);
+      color: var(--color-archival-label-text);
+      background: var(--color-archival-label-bg);
+      border: var(--border-width-sm) solid var(--color-archival-label-border);
+      border-radius: var(--radius-sm);
+      padding-inline: var(--space-xs);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Center: Version Switcher (Calm segmented control) */
+    .header-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .version-segment {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      background-color: var(--color-bg-subtle);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-xs);
+    }
+
+    .version-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: var(--font-size-small);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .version-btn:hover:not(:disabled):not(.active) {
+      color: var(--color-text-primary);
+    }
+
+    .version-btn.active {
+      font-weight: 700;
+      box-shadow: var(--shadow-card);
+    }
+
+    #btnVerOriginal.active {
+      background-color: var(--color-version-navy);
+      color: var(--color-text-inverse);
+    }
+
+    #btnVerAnon.active {
+      background-color: var(--color-accent-teal);
+      color: var(--color-version-navy);
+    }
+
+    .version-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .version-badge-cititor {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--font-size-small);
+      color: var(--color-text-secondary);
+      padding: var(--space-xs) var(--space-sm);
+      background-color: var(--color-bg-subtle);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .header-edit {
+      margin-inline-start: auto;
+      flex-shrink: 0;
+    }
+
+    .btn-compact {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      height: var(--size-btn-compact-h);
+      padding: 0 var(--space-sm-plus);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background-color: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--duration-fast);
+      white-space: nowrap;
+    }
+
+    .btn-compact:hover {
+      background-color: var(--color-bg-subtle);
+      border-color: var(--color-accent-mid);
+    }
+
+    .btn-compact.btn-accent {
+      border-color: var(--color-accent-amber);
+      color: var(--color-text-primary);
+    }
+
+    .btn-compact.btn-accent:hover {
+      background-color: var(--color-bg-subtle);
+      color: var(--color-accent-amber);
+    }
+
+    .icon-btn-compact {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--size-icon-btn);
+      height: var(--size-icon-btn);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background-color: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--duration-fast);
+      font-size: var(--font-size-body);
+    }
+
+    .icon-btn-compact:hover {
+      background-color: var(--color-bg-subtle);
+      color: var(--color-text-primary);
+      border-color: var(--color-accent-mid);
+    }
+
+    .icon-btn-compact.active {
+      background-color: var(--color-primary);
+      color: var(--color-text-inverse);
+      border-color: var(--color-primary);
+    }
+
+    .v-divider {
+      width: var(--border-width-sm);
+      height: var(--space-md-plus);
+      background-color: var(--color-border);
+      margin: 0 var(--space-2xs);
+    }
+
+    /* Warning ribbon when anonymized version is unavailable */
+    .banner-warning {
+      background-color: var(--color-bg-subtle);
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      padding: var(--space-xs-plus) var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: var(--font-size-small);
+      border-left: var(--border-width-md) solid var(--color-accent-amber);
+    }
+
+    /* ==========================================================================
+       VIEWER WORKSPACE (Dominant central document canvas)
+       ========================================================================== */
+    .viewer-workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Collapsible Left Thumbnails */
+    .sidebar-left {
+      width: var(--sidebar-left-width);
+      background-color: var(--color-bg-surface);
+      border-right: var(--border-width-sm) solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: width var(--duration-normal), margin-left var(--duration-normal);
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .sidebar-left.collapsed {
+      width: 0;
+      margin-left: calc(-1 * var(--sidebar-left-width));
+      border-right: none;
+    }
+
+    .sidebar-panel-header {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: var(--font-size-small);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      background-color: var(--color-bg-subtle);
+    }
+
+    .thumb-scroll {
+      list-style: none;
+      padding: var(--space-md) var(--space-sm);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      align-items: center;
+      flex: 1;
+    }
+
+    .thumb-item {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .thumb-box {
+      width: var(--size-thumbnail-w);
+      height: var(--size-thumbnail-h);
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      padding: var(--space-xs);
+      transition: border-color var(--duration-fast);
+      position: relative;
+    }
+
+    .thumb-item:hover .thumb-box {
+      border-color: var(--color-accent-mid);
+    }
+
+    .thumb-item.active .thumb-box {
+      border: var(--border-width-md) solid var(--color-primary);
+    }
+
+    .thumb-preview {
+      width: 100%;
+      height: 100%;
+      background-color: var(--color-bg-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      padding: var(--space-xs);
+    }
+
+    .thumb-line {
+      height: var(--space-2xs);
+      background-color: var(--color-border);
+      border-radius: var(--radius-sm);
+    }
+
+    .thumb-label {
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .thumb-item.active .thumb-label {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    /* Central Document Canvas (The Hero Element) */
+    .canvas-viewport {
+      flex: 1;
+      background-color: var(--color-bg-primary);
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+      position: relative;
+    }
+
+    .doc-sheet {
+      width: 100%;
+      max-width: var(--doc-canvas-max-width);
+      min-height: var(--size-doc-min-h);
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-sheet);
+      padding: var(--space-3xl) var(--space-2xl);
+      margin-bottom: var(--space-3xl);
+      transition: transform var(--duration-fast);
+      position: relative;
+    }
+
+    /* Authentic Romanian Notarial Document typography */
+    .notarial-head {
+      text-align: center;
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      padding-bottom: var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+
+    .head-emblem {
+      width: var(--size-coat-of-arms);
+      height: var(--size-coat-of-arms);
+      margin: 0 auto var(--space-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-size-h3);
+      color: var(--color-text-primary);
+    }
+
+    .head-country {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-small);
+      font-weight: 700;
+      letter-spacing: var(--space-3xs);
+      color: var(--color-text-primary);
+    }
+
+    .head-unnpr {
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .head-cabinet {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-lead);
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-top: var(--space-2xs);
+    }
+
+    .head-dossier-line {
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-secondary);
+      margin-top: var(--space-xs);
+    }
+
+    .act-heading {
+      text-align: center;
+      font-family: var(--font-heading);
+      font-size: var(--font-size-h2);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: var(--space-xl) 0 var(--space-lg);
+      letter-spacing: var(--space-hairline);
+    }
+
+    .act-body {
+      font-family: var(--font-body);
+      font-size: var(--font-size-lead);
+      line-height: var(--line-height-lead);
+      color: var(--color-text-primary);
+      text-align: justify;
+    }
+
+    .act-p {
+      margin-bottom: var(--space-lg);
+      text-indent: var(--space-xl);
+    }
+
+    /* Pixel-level burned redaction box (D-005, D-012) */
+    .redaction-burned {
+      display: inline-block;
+      background-color: var(--color-redaction);
+      color: transparent;
+      user-select: none;
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-xs);
+      margin: 0 var(--space-2xs);
+      vertical-align: middle;
+      height: var(--size-redact-h);
+    }
+
+    .rw-name1 { width: var(--redact-w-name1); }
+    .rw-addr1 { width: var(--redact-w-address1); }
+    .rw-ci1 { width: var(--redact-w-ci1); }
+    .rw-cnp1 { width: var(--redact-w-cnp1); }
+    .rw-name2 { width: var(--redact-w-name2); }
+    .rw-addr2 { width: var(--redact-w-address2); }
+    .rw-ci2 { width: var(--redact-w-ci2); }
+    .rw-cnp2 { width: var(--redact-w-cnp2); }
+    .rw-sig1 { width: var(--redact-w-sig1); }
+
+    .act-conclusion {
+      margin-top: var(--space-2xl);
+      border-top: var(--border-width-sm) solid var(--color-border);
+      padding-top: var(--space-lg);
+    }
+
+    .conclusion-head {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-small);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: var(--space-xl);
+      padding: 0 var(--space-lg);
+    }
+
+    .sig-col {
+      text-align: center;
+      min-width: var(--size-signatory-min-w);
+    }
+
+    .sig-border {
+      width: 100%;
+      border-bottom: var(--border-width-sm) dashed var(--color-border);
+      margin-top: var(--size-sig-line-mt);
+      margin-bottom: var(--space-xs);
+    }
+
+    .stamp-seal {
+      width: var(--size-stamp);
+      height: var(--size-stamp);
+      border: var(--border-width-md) dashed var(--color-accent-mid);
+      border-radius: var(--radius-full);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: var(--font-size-badge-icon);
+      color: var(--color-accent-mid);
+      padding: var(--space-xs);
+      transform: rotate(-10deg);
+      user-select: none;
+    }
+
+    /* Floating Minimal Canvas HUD (Clean page navigation & zoom docked at bottom) */
+    .floating-hud {
+      position: absolute;
+      bottom: var(--space-lg);
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-full);
+      box-shadow: var(--shadow-hud);
+      padding: var(--space-xs) var(--space-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      height: var(--size-floating-hud-h);
+      z-index: 30;
+      backdrop-filter: var(--filter-blur-sm);
+    }
+
+    .hud-btn {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      font-size: var(--font-size-small);
+      padding: var(--space-xs);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      transition: color var(--duration-fast);
+    }
+
+    .hud-btn:hover {
+      color: var(--color-text-primary);
+    }
+
+    .hud-page-indicator {
+      font-size: var(--font-size-mono-sm);
+      color: var(--color-text-primary);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .viewer-input {
+      height: var(--size-search-h);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background-color: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: var(--font-size-small);
+      padding: 0 var(--space-sm);
+      width: 100%;
+    }
+
+    /* ==========================================================================
+       MODAL DIALOG (Partajare link semnat D-013)
+       ========================================================================== */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-md);
+      backdrop-filter: var(--filter-blur-sm);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-modal);
+      width: 100%;
+      max-width: var(--size-modal-max-w);
+      overflow: hidden;
+      animation: modal-pop var(--duration-normal);
+    }
+
+    @keyframes modal-pop {
+      from { transform: scale(0.97); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-head {
+      padding: var(--space-md);
+      border-bottom: var(--border-width-sm) solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: var(--font-heading);
+      font-size: var(--font-size-body);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .modal-body {
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .modal-foot {
+      padding: var(--space-sm) var(--space-md);
+      border-top: var(--border-width-sm) solid var(--color-border);
+      background-color: var(--color-bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-sm);
+    }
+
+    /* Loading skeleton */
+    .skeleton-wrap {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl);
+    }
+
+    .skeleton-paper {
+      width: 100%;
+      max-width: var(--doc-canvas-max-width);
+      height: var(--size-skeleton-h);
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-2xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      overflow: hidden;
+    }
+
+    .skeleton-stripe {
+      height: var(--space-md);
+      background: linear-gradient(90deg, var(--color-bg-subtle) 25%, var(--color-border) 50%, var(--color-bg-subtle) 75%);
+      background-size: 200% 100%;
+      animation: sk-shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    .skeleton-stripe.h-title {
+      height: var(--size-skeleton-title-h);
+      width: 50%;
+      margin: 0 auto var(--space-xl);
+    }
+
+    @keyframes sk-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Error container */
+    .error-card {
+      display: none;
+      background-color: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-2xl);
+      max-width: var(--size-error-max-w);
+      text-align: center;
+      margin: auto;
+      box-shadow: var(--shadow-card);
+    }
+
+    /* Toast notification */
+    .toast-pill {
+      position: fixed;
+      bottom: var(--space-lg);
+      right: var(--space-lg);
+      background-color: var(--color-primary);
+      color: var(--color-text-inverse);
+      padding: var(--space-xs-plus) var(--space-md);
+      border-radius: var(--radius-full);
+      box-shadow: var(--shadow-hud);
+      font-size: var(--font-size-small);
+      display: none;
+      align-items: center;
+      gap: var(--space-xs);
+      z-index: 200;
+    }
+
+    .viewer-icon {
+      width: 1em;
+      height: 1em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: none;
+    }
+
+    .viewer-area {
+      display: flex;
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      position: relative;
+      container-type: inline-size;
+    }
+
+    .viewer-overlay {
+      position: absolute;
+      top: var(--space-sm);
+      left: var(--space-sm);
+      right: var(--space-sm);
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: start;
+      gap: var(--space-sm);
+      pointer-events: none;
+    }
+
+    .viewer-overlay > * { pointer-events: auto; }
+    .viewer-overlay > .icon-btn-compact { justify-self: start; }
+    .viewer-overlay > .icon-btn-compact.active { background: var(--color-bg-surface); color: var(--color-text-primary); }
+    .version-badge-cititor { background: var(--color-bg-surface); }
+    .version-segment, .version-badge-cititor, .viewer-action, .document-search {
+      box-shadow: var(--shadow-card);
+    }
+
+    .viewer-actions {
+      position: relative;
+      justify-self: end;
+      margin-inline-end: var(--space-md);
+      pointer-events: none;
+    }
+
+    .viewer-action-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .viewer-action, .document-search { pointer-events: auto; }
+
+    .viewer-action {
+      display: grid;
+      place-items: center;
+      inline-size: calc(var(--space-md) * 2 + var(--space-xs));
+      block-size: calc(var(--space-md) * 2 + var(--space-xs));
+      padding: 0;
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .viewer-action:hover,
+    .viewer-action[aria-expanded="true"] { background: var(--color-bg-subtle); }
+    .viewer-action:focus-visible { outline-offset: calc(-1 * var(--space-3xs)); }
+
+    .document-search {
+      position: absolute;
+      top: calc(100% + var(--space-xs));
+      right: 0;
+      width: max-content;
+      max-width: calc(100cqw - var(--space-xl));
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      padding: var(--space-sm);
+      background: var(--color-bg-surface);
+      border: var(--border-width-sm) solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+
+    .document-search[hidden], .document-search output:empty { display: none; }
+    .document-search .viewer-input { flex: 1; width: auto; min-width: 0; }
+    .document-search label { flex-basis: 100%; }
+    .document-search-controls { display: flex; align-items: center; gap: var(--space-xs); }
+
+    @container (max-width: 580px) {
+      .viewer-actions { grid-column: 3; grid-row: 2; }
+      .viewer-area:has(#btnSearchDoc[aria-expanded="true"]) .doc-sheet {
+        padding-block-start: calc(var(--space-3xl) * 2 + var(--space-md));
+      }
+      .canvas-viewport .banner-warning { margin-top: var(--space-3xl); }
+    }
+
+    .canvas-viewport { min-width: 0; }
+    .canvas-viewport .banner-warning { margin-top: var(--space-lg); flex-wrap: wrap; }
+    .doc-sheet { overflow-wrap: anywhere; }
+    ::highlight(document-matches) { background: var(--color-search-hit); color: var(--color-text-primary); }
+    ::highlight(current-match) { background: var(--color-accent-teal); color: var(--color-text-primary); }
+
+    @media (max-width: 639px) {
+      .mock-ribbon { flex-wrap: wrap; }
+      .viewer-workspace { flex-direction: column; }
+      .sidebar-left { width: 100%; max-height: var(--space-3xl); flex-direction: row; }
+      .sidebar-left.collapsed { display: none; }
+      .sidebar-left .thumb-scroll { flex-direction: row; overflow: auto; }
+      .sidebar-left .thumb-item { flex: none; }
+      .sidebar-left .thumb-box { display: none; }
+      .canvas-viewport, .doc-sheet { padding: var(--space-md); }
+      .doc-sheet { padding-block-start: calc(var(--space-3xl) + var(--space-md)); }
+    }
+
+    .u-hidden { display: none; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="icon-back" viewBox="0 0 24 24"><path d="M19 12H5m7 7-7-7 7-7"/></symbol>
+    <symbol id="icon-pages" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24"><path d="m8.7 10.5 6.6-4m-6.6 7 6.6 4"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="5" r="3"/><circle cx="18" cy="19" r="3"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m4 16 11-11 4 4L8 20H4zm9-9 4 4"/></symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Zm0 6v5m0 3v1"/></symbol>
+    <symbol id="icon-building" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5H3Zm2 3v7m5-7v7m4-7v7m5-7v7M3 21h18"/></symbol>
+    <symbol id="icon-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="icon-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="icon-zoom-in" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M7 10h6m-3-3v6"/></symbol>
+    <symbol id="icon-zoom-out" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M7 10h6"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 4a8 8 0 1 0 11 11Z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2m0-14-2 2M7 17l-2 2"/></symbol>
+  </svg>
+
+  <!-- ========================================================================
+       SLIM MOCK SWITCHBOARD (Minimalistic top strip for state/theme verification)
+       ======================================================================== -->
+  <aside class="mock-ribbon" aria-label="Comenzi mock de test">
+    <div style="display: flex; align-items: center; gap: var(--space-sm);">
+      <span class="mock-tag">DS-002 · Vizualizator document</span>
+      <span class="mock-tag mock-tag-status">approved</span>
+      <span class="mock-tag" id="lblRole">Arhivar</span>
+    </div>
+    <div class="mock-switch-group">
+      <span style="font-size: var(--font-size-mono-sm); color: var(--color-text-secondary);">Stare:</span>
+      <button type="button" class="mock-pill active" data-s="original" onclick="applyState('original')">Original</button>
+      <button type="button" class="mock-pill" data-s="anonymized" onclick="applyState('anonymized')">Anonimizat</button>
+      <button type="button" class="mock-pill" data-s="unavail" onclick="applyState('unavail')">Fără anonimizare</button>
+      <button type="button" class="mock-pill" data-s="cititor" onclick="applyState('cititor')">Cititor</button>
+      <button type="button" class="mock-pill" data-s="long_title" onclick="applyState('long_title')">Titlu lung</button>
+      <button type="button" class="mock-pill" data-s="loading" onclick="applyState('loading')">Se încarcă</button>
+      <button type="button" class="mock-pill" data-s="error" onclick="applyState('error')">Eroare</button>
+      <div class="v-divider"></div>
+      <button type="button" class="mock-pill" onclick="toggleTheme()" id="themeBtn" aria-label="Comută tema între luminos și întunecat">
+        <svg class="viewer-icon" aria-hidden="true"><use id="themeIcon" href="#icon-moon"/></svg> <span id="themeText">Mod întunecat</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       UNIFIED SLIM VIEWER HEADER (Clean, quiet, essential controls only)
+       ======================================================================== -->
+  <header class="viewer-header">
+    <a href="#back" class="header-nav-btn" aria-label="Înapoi la lista documentelor"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-back"/></svg></a>
+    <h1 class="doc-title" id="txtDocTitle">Procură specială de reprezentare imobiliară</h1>
+    <span class="doc-dossier-sub" id="txtDocDossier">Dosar nr. 29/2014</span>
+    <button type="button" class="btn-compact header-edit" id="btnEditDoc" onclick="goToEditorDS011()" title="Deschide în DS-011 pentru redactare și corecție OCR" aria-label="Editează în DS-011">
+      <svg class="viewer-icon" aria-hidden="true"><use href="#icon-edit"/></svg> Editează
+    </button>
+  </header>
+
+  <!-- ========================================================================
+       MAIN VIEWER WORKSPACE (Generous central canvas + Open page sidebar)
+       ======================================================================== -->
+  <main class="viewer-workspace">
+
+    <!-- LEFT SIDEBAR: Page Thumbnails -->
+    <aside class="sidebar-left" id="sidebarThumbs" aria-label="Miniaturi pagini">
+      <div class="sidebar-panel-header">
+        <span>PAGINI (5)</span>
+        <button type="button" class="hud-btn" onclick="toggleSidebarLeft()" aria-label="Închide panoul">✕</button>
+      </div>
+      <ul class="thumb-scroll">
+        <li class="thumb-item" onclick="selectPageNum(1)">
+          <div class="thumb-box">
+            <div class="thumb-preview">
+              <div style="height: var(--size-thumb-header-h); background: var(--color-border); width: 50%; margin: 0 auto; border-radius: var(--radius-sm);"></div>
+              <div class="thumb-line"></div>
+              <div class="thumb-line"></div>
+              <div class="thumb-line" style="width: 70%;"></div>
+            </div>
+          </div>
+          <span class="thumb-label">Pagina 1</span>
+        </li>
+        <li class="thumb-item active" onclick="selectPageNum(2)">
+          <div class="thumb-box">
+            <div class="thumb-preview">
+              <div class="thumb-line" style="width: 60%;"></div>
+              <div class="thumb-line"></div>
+              <div class="thumb-line" style="width: 80%;"></div>
+              <div class="thumb-line"></div>
+            </div>
+          </div>
+          <span class="thumb-label">Pagina 2</span>
+        </li>
+        <li class="thumb-item" onclick="selectPageNum(3)">
+          <div class="thumb-box">
+            <div class="thumb-preview">
+              <div class="thumb-line"></div>
+              <div class="thumb-line" style="width: 80%;"></div>
+              <div class="thumb-line"></div>
+            </div>
+          </div>
+          <span class="thumb-label">Pagina 3</span>
+        </li>
+        <li class="thumb-item" onclick="selectPageNum(4)">
+          <div class="thumb-box">
+            <div class="thumb-preview">
+              <div class="thumb-line" style="width: 70%;"></div>
+              <div class="thumb-line"></div>
+              <div class="thumb-line"></div>
+            </div>
+          </div>
+          <span class="thumb-label">Pagina 4</span>
+        </li>
+        <li class="thumb-item" onclick="selectPageNum(5)">
+          <div class="thumb-box">
+            <div class="thumb-preview">
+              <div class="thumb-line" style="width: 50%; margin-top: auto;"></div>
+              <div style="width: var(--size-thumb-stamp); height: var(--size-thumb-stamp); border: var(--border-width-hairline) dashed var(--color-accent-mid); border-radius: var(--radius-full); margin-left: auto;"></div>
+            </div>
+          </div>
+          <span class="thumb-label">Pagina 5</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="viewer-area">
+      <div class="viewer-overlay">
+        <button type="button" class="icon-btn-compact active" id="btnToggleThumbs" onclick="toggleSidebarLeft()" aria-label="Comută miniaturi pagini" aria-expanded="true" aria-controls="sidebarThumbs"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-pages"/></svg></button>
+        <div class="header-center">
+          <div class="version-segment" id="versionControlSegment" role="group" aria-label="Versiunea documentului">
+            <button type="button" class="version-btn active" id="btnVerOriginal" onclick="setDocumentVersion('original')" aria-label="Versiunea originală">
+              <svg class="viewer-icon" aria-hidden="true"><use href="#icon-lock"/></svg> Original
+            </button>
+            <button type="button" class="version-btn" id="btnVerAnon" onclick="setDocumentVersion('anonymized')" aria-label="Versiunea anonimizată">
+              <svg class="viewer-icon" aria-hidden="true"><use href="#icon-shield"/></svg> Anonimizat
+            </button>
+          </div>
+          <!-- Single version indicator for Cititor role -->
+          <div class="version-badge-cititor u-hidden" id="cititorVersionBadge">
+            <svg class="viewer-icon" aria-hidden="true"><use href="#icon-shield"/></svg> Anonimizat (Protejat GDPR)
+          </div>
+        </div>
+        <div class="viewer-actions">
+          <div class="viewer-action-group">
+            <button type="button" class="viewer-action" id="btnSearchDoc" title="Caută în document" aria-label="Caută în document" aria-expanded="false" aria-controls="documentSearch">
+              <svg class="viewer-icon" aria-hidden="true"><use href="#icon-search"/></svg>
+            </button>
+            <button type="button" class="viewer-action" title="Descarcă PDF" onclick="downloadPdf()" aria-label="Descarcă PDF">
+              <svg class="viewer-icon" aria-hidden="true"><use href="#icon-download"/></svg>
+            </button>
+            <button type="button" class="viewer-action" id="btnShareDoc" title="Partajare" onclick="openShareDialog()" aria-label="Partajare link">
+              <svg class="viewer-icon" aria-hidden="true"><use href="#icon-share"/></svg>
+            </button>
+          </div>
+          <form class="document-search" id="documentSearch" hidden role="search" aria-label="Căutare în document">
+            <label for="documentQuery">Caută în document</label>
+            <input id="documentQuery" type="search" class="viewer-input" placeholder="Introdu textul căutat">
+            <div class="document-search-controls">
+              <output id="documentMatches" for="documentQuery" role="status"></output>
+              <button type="button" class="icon-btn-compact" id="previousMatch" aria-label="Potrivirea anterioară" disabled><svg class="viewer-icon" aria-hidden="true"><use href="#icon-left"/></svg></button>
+              <button type="submit" class="icon-btn-compact" id="nextMatch" aria-label="Potrivirea următoare" disabled><svg class="viewer-icon" aria-hidden="true"><use href="#icon-right"/></svg></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    <!-- CENTER CANVAS VIEWPORT (Dominant element with breathing room) -->
+    <section class="canvas-viewport" id="canvasViewport" aria-label="Suprafață de vizualizare document">
+      <!-- Banner for Anonymized Version Unavailable state -->
+      <div class="banner-warning u-hidden" id="bannerUnavail" role="alert">
+        <div style="display: flex; align-items: center; gap: var(--space-xs);">
+          <span><svg class="viewer-icon" aria-hidden="true"><use href="#icon-warning"/></svg></span>
+          <span><strong>Versiunea anonimizată nu este disponibilă.</strong> Documentul necesită generarea redactării în Editorul dedicat.</span>
+        </div>
+        <button type="button" class="btn-compact" onclick="goToEditorDS011()" style="height: var(--size-page-input-h);">
+          Deschide în DS-011
+        </button>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div class="skeleton-wrap" id="viewSkeleton">
+        <div style="display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); color: var(--color-text-secondary);">
+          <div class="spinner" style="width: var(--space-md-plus); height: var(--space-md-plus); border: var(--border-width-md) solid var(--color-border); border-top-color: var(--color-primary); border-radius: var(--radius-full); animation: spin 1s linear infinite;"></div>
+          <span>Se încarcă documentul...</span>
+        </div>
+        <div class="skeleton-paper">
+          <div class="skeleton-stripe h-title"></div>
+          <div class="skeleton-stripe" style="width: 80%; margin: 0 auto var(--space-lg);"></div>
+          <div class="skeleton-stripe"></div>
+          <div class="skeleton-stripe"></div>
+          <div class="skeleton-stripe" style="width: 85%;"></div>
+          <div class="skeleton-stripe" style="margin-top: var(--space-lg);"></div>
+          <div class="skeleton-stripe"></div>
+          <div class="skeleton-stripe" style="width: 60%;"></div>
+        </div>
+      </div>
+
+      <!-- Error Card -->
+      <div class="error-card" id="viewError">
+        <div style="font-size: var(--font-size-h2); color: var(--color-danger); margin-bottom: var(--space-xs);"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-warning"/></svg></div>
+        <h2 style="font-family: var(--font-heading); font-size: var(--font-size-body); font-weight: 600; margin-bottom: var(--space-xs);">Nu s-a putut încărca documentul</h2>
+        <p style="color: var(--color-text-secondary); margin-bottom: var(--space-lg);">
+          Sesiunea de descărcare a expirat sau fișierul nu este accesibil. Vă rugăm să reîncercați.
+        </p>
+        <button type="button" class="btn-compact" onclick="applyState('original')">Reîncearcă încărcarea</button>
+      </div>
+
+      <!-- High-fidelity Archival Sheet -->
+      <article class="doc-sheet" id="renderedSheet">
+        <!-- Header -->
+        <header class="notarial-head">
+          <div class="head-emblem"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-building"/></svg></div>
+          <div class="head-country">ROMÂNIA</div>
+          <div class="head-unnpr">UNIUNEA NAȚIONALĂ A NOTARILOR PUBLICI</div>
+          <div class="head-cabinet">BIROUL INDIVIDUAL NOTARIAL NOTAR EXEMPLU</div>
+          <div class="head-dossier-line">Dosar nr. 29/2014 · Indicativ Arhivistic: IA 1 – P · Nr. Inventar: 29/2014</div>
+        </header>
+
+        <h2 class="act-heading" id="actTitleHeading">PROCURĂ SPECIALĂ</h2>
+
+        <div class="act-body">
+          <p class="act-p">
+            Subsemnatul,
+            <span class="pii-wrap">
+              <strong id="valName1">MANDANT EXEMPLU</strong>
+              <span class="redaction-burned rw-name1 u-hidden" id="redName1" aria-hidden="true"></span>
+            </span>,
+            cetățean român, născut la data de 12.05.1982 în mun. București, domiciliat în
+            <span class="pii-wrap">
+              <span id="valAddr1">Localitatea Exemplu, Strada Model nr. 1</span>
+              <span class="redaction-burned rw-addr1 u-hidden" id="redAddr1" aria-hidden="true"></span>
+            </span>,
+            identificat prin C.I. seria
+            <span class="pii-wrap">
+              <span id="valCi1">ZZ nr. 000001</span>
+              <span class="redaction-burned rw-ci1 u-hidden" id="redCi1" aria-hidden="true"></span>
+            </span>,
+            eliberată de SPCEP Sector 1, având <strong>CNP:</strong>
+            <span class="pii-wrap">
+              <span class="text-mono" id="valCnp1">0000000000000</span>
+              <span class="redaction-burned rw-cnp1 u-hidden" id="redCnp1" aria-hidden="true"></span>
+            </span>,
+            împuternicesc prin prezenta pe:
+          </p>
+
+          <p class="act-p">
+            Subsemnata,
+            <span class="pii-wrap">
+              <strong id="valName2">MANDATAR EXEMPLU</strong>
+              <span class="redaction-burned rw-name2 u-hidden" id="redName2" aria-hidden="true"></span>
+            </span>,
+            cetățean român, domiciliată în
+            <span class="pii-wrap">
+              <span id="valAddr2">Localitatea Exemplu, Strada Model nr. 2</span>
+              <span class="redaction-burned rw-addr2 u-hidden" id="redAddr2" aria-hidden="true"></span>
+            </span>,
+            identificată prin C.I. seria
+            <span class="pii-wrap">
+              <span id="valCi2">ZZ nr. 000002</span>
+              <span class="redaction-burned rw-ci2 u-hidden" id="redCi2" aria-hidden="true"></span>
+            </span>,
+            având <strong>CNP:</strong>
+            <span class="pii-wrap">
+              <span class="text-mono" id="valCnp2">0000000000001</span>
+              <span class="redaction-burned rw-cnp2 u-hidden" id="redCnp2" aria-hidden="true"></span>
+            </span>,
+          </p>
+
+          <p class="act-p">
+            pentru ca în numele meu să mă reprezinte în fața Oficiului de Cadastru și Publicitate Imobiliară Brașov, în vederea vânzării imobilului proprietatea mea situat în Mun. Brașov, înscris în Cartea Funciară nr. 50124 Brașov, având
+            <strong>Număr Cadastral: 204192</strong>.
+          </p>
+
+          <p class="act-p">
+            Mandatara mea va stabili liber prețul și condițiile de vânzare, va semna contractul de vânzare-cumpărare în formă autentică la orice birou notarial și va îndeplini formalitățile legale de publicitate imobiliară.
+          </p>
+        </div>
+
+        <section class="act-conclusion">
+          <div class="conclusion-head">ÎNCHEIERE DE AUTENTIFICARE Nr. 1042 / 14.06.2014</div>
+          <p style="font-size: var(--font-size-small); color: var(--color-text-secondary); margin-bottom: var(--space-md);">
+            În fața mea, <strong>NOTAR EXEMPLU</strong>, notar public, părțile au semnat actul.
+          </p>
+
+          <div class="signature-row">
+            <div class="sig-col">
+              <div style="font-weight: 600; font-size: var(--font-size-mono-sm);">MANDANT</div>
+              <div class="sig-border"></div>
+              <span id="txtSig1">Mandant Exemplu</span>
+              <span class="redaction-burned rw-sig1 u-hidden" id="redSig1"></span>
+            </div>
+
+            <div class="stamp-seal">
+              <span>ROMÂNIA</span>
+              <strong>NOTAR PUBLIC</strong>
+              <span>B.I.N. BUCUREȘTI</span>
+            </div>
+
+            <div class="sig-col">
+              <div style="font-weight: 600; font-size: var(--font-size-mono-sm);">NOTAR PUBLIC</div>
+              <div class="sig-border"></div>
+              <span>Notar Exemplu</span>
+            </div>
+          </div>
+        </section>
+      </article>
+
+      <!-- FLOATING HUD (Minimal, unencumbered page navigation and zoom) -->
+      <nav class="floating-hud" aria-label="Controale vizualizator document">
+        <button type="button" class="hud-btn" onclick="stepPage(-1)" title="Pagina anterioară" aria-label="Pagina anterioară"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-left"/></svg></button>
+        <span class="hud-page-indicator">Pagina <span id="lblPageCur">2</span> / 5</span>
+        <button type="button" class="hud-btn" onclick="stepPage(1)" title="Pagina următoare" aria-label="Pagina următoare"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-right"/></svg></button>
+        <div class="v-divider"></div>
+        <button type="button" class="hud-btn" onclick="modifyZoom(-0.1)" title="Micșorare zoom" aria-label="Micșorare zoom"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-zoom-out"/></svg></button>
+        <span class="hud-page-indicator" id="lblZoomVal">100%</span>
+        <button type="button" class="hud-btn" onclick="modifyZoom(0.1)" title="Mărire zoom" aria-label="Mărire zoom"><svg class="viewer-icon" aria-hidden="true"><use href="#icon-zoom-in"/></svg></button>
+        <div class="v-divider"></div>
+        <button type="button" class="hud-btn" onclick="resetZoom()" title="Potrivește lățimea" aria-label="Potrivește lățimea">Potrivește</button>
+      </nav>
+
+    </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       MODAL DIALOG: Partajare link semnat (D-013)
+       ======================================================================== -->
+  <div class="modal-backdrop" id="modalShare" role="dialog" aria-modal="true" aria-labelledby="modalShareTitle">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <h2 class="modal-title" id="modalShareTitle">Partajare link securizat (Signed URL)</h2>
+        <button type="button" class="hud-btn" onclick="closeShareDialog()" aria-label="Închide">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: var(--font-size-small); color: var(--color-text-secondary);">
+          Generați un link semnat temporar conform [D-013]. Accesările vor fi înregistrate în Jurnalul de Audit (DS-008).
+        </p>
+
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: var(--space-xs);">Versiune partajată:</label>
+          <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
+            <label style="display: flex; align-items: center; gap: var(--space-xs); cursor: pointer;">
+              <input type="radio" name="shareOpt" value="anon" checked>
+              <span>Versiunea anonimizată (Recomandat GDPR)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: var(--space-xs); cursor: pointer;">
+              <input type="radio" name="shareOpt" value="orig">
+              <span>Versiunea originală (Acces autorizat)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label for="selExpiry" style="display: block; font-weight: 600; margin-bottom: var(--space-xs);">Valabilitate link:</label>
+          <select id="selExpiry" class="viewer-input">
+            <option value="24h">24 de ore</option>
+            <option value="7d" selected>7 zile</option>
+            <option value="30d">30 de zile</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn-compact" onclick="closeShareDialog()">Anulează</button>
+        <button type="button" class="btn-compact" style="background-color: var(--color-primary); color: var(--color-text-inverse);" onclick="confirmShareLink()">
+          Generează link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast-pill" id="toastPill" role="status" aria-live="polite">
+    <span id="toastTxt">Acțiune efectuată.</span>
+  </div>
+
+  <!-- ========================================================================
+       JAVASCRIPT LOGIC
+       ======================================================================== -->
+  <script>
+    const app = {
+      state: 'original',
+      theme: 'light',
+      docVer: 'original',
+      page: 2,
+      totalPages: 5,
+      zoom: 1.0,
+      thumbsOpen: true,
+      matches: [],
+      matchIndex: -1
+    };
+
+    const STATES = {
+      original: {
+        role: 'Arhivar',
+        ver: 'original',
+        allowVerSwitch: true,
+        title: 'Procură specială de reprezentare imobiliară',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: false,
+        error: false
+      },
+      anonymized: {
+        role: 'Arhivar',
+        ver: 'anonymized',
+        allowVerSwitch: true,
+        title: 'Procură specială de reprezentare imobiliară',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: false,
+        error: false
+      },
+      unavail: {
+        role: 'Arhivar',
+        ver: 'original',
+        allowVerSwitch: true,
+        title: 'Procură specială de reprezentare imobiliară',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: true,
+        loading: false,
+        error: false
+      },
+      cititor: {
+        role: 'Cititor',
+        ver: 'anonymized',
+        allowVerSwitch: false,
+        title: 'Procură specială de reprezentare imobiliară',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: false,
+        error: false
+      },
+      long_title: {
+        role: 'Arhivar',
+        ver: 'original',
+        allowVerSwitch: true,
+        title: 'Contract de vânzare-cumpărare cu clauză de întreținere viageră, uzufruct viager și renunțare la dreptul de ipotecă legală conform art. 2386 pct. 1 Cod Civil, încheiat între Mandant Exemplu și Mandatar Exemplu',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: false,
+        error: false
+      },
+      loading: {
+        role: 'Arhivar',
+        ver: 'original',
+        allowVerSwitch: true,
+        title: 'Procură specială',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: true,
+        error: false
+      },
+      error: {
+        role: 'Arhivar',
+        ver: 'original',
+        allowVerSwitch: true,
+        title: 'Procură specială',
+        dossier: 'Dosar nr. 29/2014',
+        unavail: false,
+        loading: false,
+        error: true
+      }
+    };
+
+    function applyState(stKey) {
+      app.state = stKey;
+      const cfg = STATES[stKey];
+      if (!cfg) return;
+
+      document.querySelectorAll('.mock-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-s') === stKey);
+      });
+
+      document.getElementById('lblRole').textContent = cfg.role;
+      const title = document.getElementById('txtDocTitle');
+      title.textContent = cfg.title;
+      title.title = cfg.title;
+      document.getElementById('txtDocDossier').textContent = cfg.dossier;
+
+      // Cititor vs Arhivar
+      const isCititor = cfg.role === 'Cititor';
+      document.getElementById('versionControlSegment').classList.toggle('u-hidden', !cfg.allowVerSwitch);
+      document.getElementById('cititorVersionBadge').classList.toggle('u-hidden', cfg.allowVerSwitch);
+      document.getElementById('btnShareDoc').classList.toggle('u-hidden', isCititor);
+      document.getElementById('btnEditDoc').classList.toggle('u-hidden', isCititor);
+
+      // Unavailable banner
+      document.getElementById('bannerUnavail').classList.toggle('u-hidden', !cfg.unavail);
+      document.getElementById('btnVerAnon').disabled = cfg.unavail;
+
+      // Loading / Error / Normal
+      document.getElementById('viewSkeleton').style.display = cfg.loading ? 'flex' : 'none';
+      document.getElementById('viewError').style.display = cfg.error ? 'block' : 'none';
+      document.getElementById('renderedSheet').style.display = (cfg.loading || cfg.error) ? 'none' : 'block';
+
+      setDocumentVersion(cfg.ver);
+    }
+
+    function setDocumentVersion(ver) {
+      const state = STATES[app.state];
+      if ((ver === 'original' && !state.allowVerSwitch) ||
+          (ver === 'anonymized' && state.unavail)) return;
+      app.docVer = ver;
+      const isOrig = ver === 'original';
+
+      document.getElementById('btnVerOriginal').classList.toggle('active', isOrig);
+      document.getElementById('btnVerAnon').classList.toggle('active', !isOrig);
+      document.getElementById('btnVerOriginal').setAttribute('aria-pressed', isOrig);
+      document.getElementById('btnVerAnon').setAttribute('aria-pressed', !isOrig);
+
+      const redIds = ['redName1', 'redAddr1', 'redCi1', 'redCnp1', 'redName2', 'redAddr2', 'redCi2', 'redCnp2', 'redSig1'];
+      const valIds = ['valName1', 'valAddr1', 'valCi1', 'valCnp1', 'valName2', 'valAddr2', 'valCi2', 'valCnp2', 'txtSig1'];
+
+      redIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('u-hidden', isOrig);
+      });
+
+      valIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('u-hidden', !isOrig);
+      });
+
+      updateDocumentSearch();
+    }
+
+    function toggleSidebarLeft() {
+      app.thumbsOpen = !app.thumbsOpen;
+      document.getElementById('sidebarThumbs').classList.toggle('collapsed', !app.thumbsOpen);
+      const button = document.getElementById('btnToggleThumbs');
+      button.classList.toggle('active', app.thumbsOpen);
+      button.setAttribute('aria-expanded', app.thumbsOpen);
+    }
+
+    const searchButton = document.getElementById('btnSearchDoc');
+    const searchForm = document.getElementById('documentSearch');
+    const documentQuery = document.getElementById('documentQuery');
+    const documentMatches = document.getElementById('documentMatches');
+    const previousMatch = document.getElementById('previousMatch');
+    const nextMatch = document.getElementById('nextMatch');
+
+    function updateDocumentSearch() {
+      const state = STATES[app.state];
+      documentQuery.disabled = state.loading || state.error;
+      const query = documentQuery.value.trim().toLocaleLowerCase('ro');
+      app.matches = [];
+      app.matchIndex = -1;
+      if (query && !documentQuery.disabled) {
+        const sheet = document.getElementById('renderedSheet');
+        const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          if (!node.parentElement.getClientRects().length ||
+              getComputedStyle(node.parentElement).visibility === 'hidden') continue;
+          const text = node.textContent.toLocaleLowerCase('ro');
+          for (let index = text.indexOf(query); index !== -1; index = text.indexOf(query, index + query.length)) {
+            const range = new Range();
+            range.setStart(node, index);
+            range.setEnd(node, index + query.length);
+            app.matches.push(range);
+          }
+        }
+      }
+      CSS.highlights.set('document-matches', new Highlight(...app.matches));
+      CSS.highlights.delete('current-match');
+      previousMatch.disabled = nextMatch.disabled = app.matches.length === 0;
+      documentMatches.textContent = query && !documentQuery.disabled ? 'Nicio potrivire' : '';
+      if (app.matches.length) showDocumentMatch(1);
+    }
+
+    function showDocumentMatch(step) {
+      const count = app.matches.length;
+      if (!count) return;
+      app.matchIndex = (app.matchIndex + step + count) % count;
+      const range = app.matches[app.matchIndex];
+      CSS.highlights.set('current-match', new Highlight(range));
+      documentMatches.textContent = `${app.matchIndex + 1} / ${count}`;
+      const viewport = document.getElementById('canvasViewport');
+      viewport.scrollTop += range.getBoundingClientRect().top - viewport.getBoundingClientRect().top - viewport.clientHeight / 2;
+    }
+
+    function setSearchOpen(open) {
+      searchForm.hidden = !open;
+      searchButton.setAttribute('aria-expanded', open);
+      if (open && !documentQuery.disabled) documentQuery.focus();
+    }
+
+    searchButton.addEventListener('click', () => setSearchOpen(searchForm.hidden));
+    document.addEventListener('click', event => {
+      if (!searchForm.hidden && !searchForm.contains(event.target) && !searchButton.contains(event.target)) {
+        setSearchOpen(false);
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !searchForm.hidden) {
+        setSearchOpen(false);
+        searchButton.focus();
+      }
+    });
+
+    documentQuery.addEventListener('input', updateDocumentSearch);
+    previousMatch.addEventListener('click', () => showDocumentMatch(-1));
+    documentQuery.form.addEventListener('submit', event => {
+      event.preventDefault();
+      showDocumentMatch(1);
+    });
+
+    // Page navigation
+    function selectPageNum(n) {
+      if (n < 1 || n > app.totalPages) return;
+      app.page = n;
+      document.getElementById('lblPageCur').textContent = n;
+
+      document.querySelectorAll('.thumb-item').forEach((it, idx) => {
+        it.classList.toggle('active', (idx + 1) === n);
+      });
+
+      notify(`Pagina ${n} din ${app.totalPages}`);
+    }
+
+    function stepPage(delta) {
+      selectPageNum(app.page + delta);
+    }
+
+    // Zoom
+    function modifyZoom(d) {
+      app.zoom = Math.max(0.6, Math.min(1.8, app.zoom + d));
+      renderZoom();
+    }
+
+    function resetZoom() {
+      app.zoom = 1.0;
+      renderZoom();
+      notify('Zoom 100% (Potrivit pe lățime)');
+    }
+
+    function renderZoom() {
+      const el = document.getElementById('renderedSheet');
+      if (el) {
+        el.style.transform = `scale(${app.zoom})`;
+        el.style.transformOrigin = 'top center';
+        document.getElementById('lblZoomVal').textContent = `${Math.round(app.zoom * 100)}%`;
+      }
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      const root = document.documentElement;
+      app.theme = app.theme === 'light' ? 'dark' : 'light';
+      root.setAttribute('data-theme', app.theme);
+
+      const dark = app.theme === 'dark';
+      document.getElementById('themeIcon').setAttribute('href', dark ? '#icon-sun' : '#icon-moon');
+      document.getElementById('themeText').textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+    }
+
+    // Modals & Navigation
+    function openShareDialog() {
+      document.getElementById('modalShare').classList.add('open');
+    }
+
+    function closeShareDialog() {
+      document.getElementById('modalShare').classList.remove('open');
+    }
+
+    function confirmShareLink() {
+      closeShareDialog();
+      notify('Link semnat generat și copiat! (Audit înregistrat în DS-008)');
+    }
+
+    function goToEditorDS011() {
+      notify('Redirecționare către DS-011 — Editor document & Anonimizare...');
+    }
+
+    function downloadPdf() {
+      notify(`Descărcare PDF inițiată (${app.docVer === 'original' ? 'Original' : 'Anonimizat'})`);
+    }
+
+    function notify(msg) {
+      const el = document.getElementById('toastPill');
+      const txt = document.getElementById('toastTxt');
+      if (el && txt) {
+        txt.textContent = msg;
+        el.style.display = 'inline-flex';
+        clearTimeout(el._t);
+        el._t = setTimeout(() => { el.style.display = 'none'; }, 2800);
+      }
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      applyState('original');
+    });
+  </script>
+</body>
+</html>

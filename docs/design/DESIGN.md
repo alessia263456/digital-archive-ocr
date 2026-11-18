@@ -113,22 +113,26 @@ them; a ticket with UI has a design subtask instead (team addon).
 | `--color-border` | `#E5E0D8` | `#334155` | Crisp technical borders, dividers, bounding-box outlines |
 | `--color-primary` | `#072D5C` | `#4683CF` | Primary actions, buttons, active navigation states |
 | `--color-accent-mid` | `#4683CF` | `#60A5FA` | Secondary interactive links, focus accents (Solstice Cerulean) |
-| `--color-accent-teal` | `#46CFC3` | `#46CFC3` | Metadata tags, successful verification badges, PII review cleared (Solstice Teal) |
-| `--color-accent-amber` | `#CE8946` | `#E59E5B` | Archival indicator badges, retention alerts, warning status (Solstice Amber) |
+| `--color-accent-teal` | `#46CFC3` | `#46CFC3` | Anonymized and verified states (Solstice Teal) |
+| `--color-accent-amber` | `#CE8946` | `#E59E5B` | Warnings, retention alerts, and pending review (Solstice Amber) |
+| `--color-version-navy` | `#072D5C` | `#072D5C` | Original version background with white text and Anonimizat text on teal |
+| `--color-archival-label-bg` | `#F9F1E9` | `#3A302A` | Muted bronze background for archival identifiers |
+| `--color-archival-label-text` | `#79502A` | `#E7B587` | Bronze text for archival identifiers |
+| `--color-archival-label-border` | `#DEC09F` | `#69503A` | Subtle bronze border for archival identifiers |
 | `--color-focus-ring` | `#4683CF` | `#46CFC3` | Accessible keyboard focus outline (contrast ≥ 3:1) |
 
 ### Typography
 | Token | Family | Size / line height | Weight | Use |
 |---|---|---|---|---|
-| `--font-heading` | `'Plus Jakarta Sans', system-ui, sans-serif` | — | — | Screen titles, section headings, and panel headers |
-| `--font-body` | `'Public Sans', system-ui, sans-serif` | — | — | Highly legible body copy, form labels, controls, tables |
-| `--font-mono` | `'Fira Code', monospace` | — | — | Raw OCR text, CNP, IBAN, bounding boxes, TSV layout |
+| `--font-heading` | `var(--font-body)` | — | — | Screen titles, section headings, and panel headers |
+| `--font-body` | `'Public Sans', system-ui, sans-serif` | — | — | All UI typography, including headings, body text, buttons, tables, navigation, and metadata |
+| `--font-mono` | `'Fira Code', monospace` | — | — | Only technical identifiers, OCR coordinates, hashes, and other monospaced data |
 | `--text-h1` | var(--font-heading) | 32px / 40px | 700 | Primary screen title |
 | `--text-h2` | var(--font-heading) | 24px / 32px | 600 | Section and dossier headings |
 | `--text-h3` | var(--font-heading) | 18px / 26px | 600 | Subsection and panel titles |
 | `--text-body` | var(--font-body) | 16px / 24px | 400 | Standard body copy and form inputs |
 | `--text-small` | var(--font-body) | 14px / 20px | 400 | Secondary text, table cells, metadata values |
-| `--text-mono` | var(--font-mono) | 13px / 20px | 400 | OCR raw text inspection, bounding-box coordinates |
+| `--text-mono` | var(--font-mono) | 13px / 20px | 400 | Technical identifiers and OCR bounding-box coordinates |
 | `--text-mono-sm` | var(--font-mono) | 11px / 16px | 400 | TSV coordinate badges, hash inspection |
 
 ### Spacing
