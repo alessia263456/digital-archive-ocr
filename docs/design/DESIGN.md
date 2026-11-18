@@ -97,7 +97,7 @@ them; a ticket with UI has a design subtask instead (team addon).
 
 ## Source
 - Design board: none yet (published from `mocks/`, never pulled)
-- Figma: none (regenerated on request)
+- Figma: [arhiva-digitala-ocr-Design](https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1)
 - Token source in code: none yet (pending stack setup; see docs/agents/OPEN-QUESTIONS.md#Q-001)
 
 ## Tokens
@@ -105,22 +105,35 @@ them; a ticket with UI has a design subtask instead (team addon).
 ### Color
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `--color-bg-primary` | `#ffffff` | `#0f172a` | Primary page background |
-| `--color-bg-surface` | `#f8fafc` | `#1e293b` | Cards, panels, elevated surfaces |
-| `--color-text-primary` | `#0f172a` | `#f8fafc` | Primary text and headings |
-| `--color-text-secondary` | `#475569` | `#94a3b8` | Supporting text, captions, metadata |
-| `--color-border` | `#e2e8f0` | `#334155` | Borders, dividers, subtle outlines |
-| `--color-primary` | `#2563eb` | `#3b82f6` | Brand accent, primary buttons, active links |
-| `--color-focus-ring` | `#60a5fa` | `#93c5fd` | Accessible keyboard focus outline |
+| `--color-bg-primary` | `#FAF8F5` | `#1E293B` | Main page background (subtle warm stone/parchment in light mode; Slate 800 in dark mode) |
+| `--color-bg-surface` | `#FFFFFF` | `#283548` | Cards, panels, elevated toolbars, and modal surfaces |
+| `--color-bg-subtle` | `#F2EFE9` | `#16202E` | Recessed table headers, search input fields, and sidebar backgrounds |
+| `--color-text-primary` | `#072D5C` | `#F8FAFC` | Primary headings, titles, high-contrast ink text (Solstice Deep Navy in light mode) |
+| `--color-text-secondary` | `#556070` | `#94A3B8` | Supporting text, metadata, archival dossier captions, table headers |
+| `--color-border` | `#E5E0D8` | `#334155` | Crisp technical borders, dividers, bounding-box outlines |
+| `--color-primary` | `#072D5C` | `#4683CF` | Primary actions, buttons, active navigation states |
+| `--color-accent-mid` | `#4683CF` | `#60A5FA` | Secondary interactive links, focus accents (Solstice Cerulean) |
+| `--color-accent-teal` | `#46CFC3` | `#46CFC3` | Anonymized and verified states (Solstice Teal) |
+| `--color-accent-amber` | `#CE8946` | `#E59E5B` | Warnings, retention alerts, and pending review (Solstice Amber) |
+| `--color-version-navy` | `#072D5C` | `#072D5C` | Original version background with white text and Anonimizat text on teal |
+| `--color-archival-label-bg` | `#F9F1E9` | `#3A302A` | Muted bronze background for archival identifiers |
+| `--color-archival-label-text` | `#79502A` | `#E7B587` | Bronze text for archival identifiers |
+| `--color-archival-label-border` | `#DEC09F` | `#69503A` | Subtle bronze border for archival identifiers |
+| `--color-focus-ring` | `#4683CF` | `#46CFC3` | Accessible keyboard focus outline (contrast ≥ 3:1) |
 
 ### Typography
 | Token | Family | Size / line height | Weight | Use |
 |---|---|---|---|---|
-| `--text-h1` | system-ui, sans-serif | 32px / 40px | 700 | Primary screen title |
-| `--text-h2` | system-ui, sans-serif | 24px / 32px | 600 | Section headings |
-| `--text-h3` | system-ui, sans-serif | 18px / 24px | 600 | Subsection headings |
-| `--text-body` | system-ui, sans-serif | 16px / 24px | 400 | Standard body copy |
-| `--text-small` | system-ui, sans-serif | 14px / 20px | 400 | Secondary text, captions |
+| `--font-heading` | `var(--font-body)` | — | — | Screen titles, section headings, and panel headers |
+| `--font-body` | `'Public Sans', system-ui, sans-serif` | — | — | All UI typography, including headings, body text, buttons, tables, navigation, and metadata |
+| `--font-mono` | `'Fira Code', monospace` | — | — | Only technical identifiers, OCR coordinates, hashes, and other monospaced data |
+| `--text-h1` | var(--font-heading) | 32px / 40px | 700 | Primary screen title |
+| `--text-h2` | var(--font-heading) | 24px / 32px | 600 | Section and dossier headings |
+| `--text-h3` | var(--font-heading) | 18px / 26px | 600 | Subsection and panel titles |
+| `--text-body` | var(--font-body) | 16px / 24px | 400 | Standard body copy and form inputs |
+| `--text-small` | var(--font-body) | 14px / 20px | 400 | Secondary text, table cells, metadata values |
+| `--text-mono` | var(--font-mono) | 13px / 20px | 400 | Technical identifiers and OCR bounding-box coordinates |
+| `--text-mono-sm` | var(--font-mono) | 11px / 16px | 400 | TSV coordinate badges, hash inspection |
 
 ### Spacing
 | Token | Value |
@@ -131,16 +144,17 @@ them; a ticket with UI has a design subtask instead (team addon).
 | `--space-lg` | 24px |
 | `--space-xl` | 32px |
 | `--space-2xl` | 48px |
+| `--space-3xl` | 64px |
 
 ### Radius, shadow, motion
 | Token | Value | Use |
 |---|---|---|
-| `--radius-sm` | 4px | Inputs, badges |
-| `--radius-md` | 8px | Buttons, cards |
-| `--radius-lg` | 16px | Modals, panels |
-| `--shadow-card` | 0 1px 3px rgba(0,0,0,0.1) | Elevated card containers |
-| `--duration-fast` | 150ms ease | Hover transitions |
-| `--duration-normal` | 250ms ease | Dropdowns, dialogs |
+| `--radius-none` | 0px | Table cells, full-width toolbars |
+| `--radius-sm` | 2px | Inputs, status badges, technical tags |
+| `--radius-md` | 4px | Buttons, cards, modal dialogue frames |
+| `--shadow-card` | 0 1px 2px rgba(0, 0, 0, 0.05) | Minimal elevation; structure established by crisp borders |
+| `--duration-fast` | 150ms ease | Interactive hover and focus transitions |
+| `--duration-normal` | 250ms ease | Modal animations and panel toggles |
 
 ### Breakpoints / window sizes
 | Name | Min | Max |

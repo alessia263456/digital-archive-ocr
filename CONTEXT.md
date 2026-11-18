@@ -124,3 +124,12 @@ _Avoid_: land ID, property number, lot number, plot ID.
 
 **Movable Asset Identifier** (noun) — Vehicle identification details (VIN / chassis number, license plate) appearing in notarial powers of attorney and sale contracts.
 _Avoid_: car ID, vehicle data, auto number, chassis data.
+
+**Document Corpus** (noun) — The set of 30 real notarial document scans digitized from the Notary Cabinet's physical archive, used to seed the application and satisfy the Definition of Done.
+_Avoid_: test set, sample documents, demo files, dataset.
+
+**Share Link** (noun) — A generated Signed URL, created by an admin or arhivar, granting a named external recipient time-limited access to view and download a specific document scan (redacted or original, per the creator's choice).
+_Avoid_: public link, download link, sharing URL, external link.
+
+**Destruction List** (noun) — The in-application list of documents whose retention period has expired, presented to Admin for manual batch confirmation before any permanent deletion occurs.
+_Avoid_: deletion list, expired documents, documents to destroy, purge list.
