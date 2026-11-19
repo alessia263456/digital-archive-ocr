@@ -81,7 +81,7 @@ without new evidence. A rejected proposal is added there with the reason.
 
 ## 1. What this repo is
 Digital archive web application `digital-archive-ocr` (`proiect1`).
-Supports document scan uploads, Romanian OCR text extraction with bounding boxes ([D-004](docs/agents/DECISIONS.md#D-004)), document search and indexing, PII detection, confidence scoring, visual redaction, and human review ([D-005](docs/agents/DECISIONS.md#D-005)), immutable document versioning, folder-level access control, and retention policies ([D-002](docs/agents/DECISIONS.md#D-002)).
+Supports document scan uploads, Romanian OCR text extraction with bounding boxes ([D-004](docs/agents/DECISIONS.md#D-004)), document search and indexing, PII detection, confidence scoring, visual redaction, and human review ([D-022](docs/agents/decisions/archive-workflows.md#d-022--pii-detection-and-redaction-coverage)), immutable document versioning, folder-level access control, and retention policies ([D-002](docs/agents/DECISIONS.md#D-002)).
 
 ## 2. Stack and commands
 React frontend, Laravel backend, PostgreSQL database, and Docker containerization ([D-001](docs/agents/DECISIONS.md#D-001)).

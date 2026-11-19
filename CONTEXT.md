@@ -29,7 +29,7 @@ _Avoid_: deed, paper, file, instrument, legal paper.
 **Notary Public** (noun) — The certified legal official (*Notar Public*) whose name, title, and signature appear on notarial acts and are exempt from PII redaction.
 _Avoid_: notary, lawyer, public official, signing officer.
 
-**Signatory Party** (noun) — An individual identified in a notarial act whose personal data (CNP, address, identity card, phone, IBAN) is subject to PII detection and redaction.
+**Signatory Party** (noun) — An individual identified in a notarial act whose name, contact details, CNP, address, identity-card details, IBAN, and signature are subject to PII detection and Redaction.
 _Avoid_: party, client, subject, individual, signer.
 
 **Authentication Conclusion** (noun) — The formal concluding section of a Romanian notarial act (*Încheiere de Autentificare*) containing the act number, registration date, and notary certification.
@@ -38,7 +38,7 @@ _Avoid_: conclusion, closing, certification, seal.
 **Notarial Nomenclature** (noun) — The statutory archival retention schedule (*Nomenclator Arhivistic Notarial*) defining mandatory preservation periods per notarial act category.
 _Avoid_: retention list, schedule, retention table, document categories.
 
-**Act Date** (noun) — The official execution or authentication date stated within a notarial act, from which archival retention periods are calculated.
+**Act Date** (noun) — The official execution or authentication date stated within a Notarial Act. Staff confirm it before saving. It determines the Retention Computation Base for categories that use the Act Date.
 _Avoid_: creation date, document date, file date, upload date.
 
 **Document Scan** (noun) — A digitized image or PDF file of a physical document uploaded to the archive.
@@ -53,41 +53,41 @@ _Avoid_: box, rect, coordinates, zone.
 **Notarial Context Anchor** (noun) — A Romanian legal phrase (e.g., subsemnatul, numitul, domiciliat în, identificat prin CI) indicating adjacent personal data.
 _Avoid_: trigger word, keyword, cue.
 
-**Anonymization** (noun) — The automated detection, confidence scoring, and redaction of personally identifiable information within extracted text.
+**Anonymization** (noun) — The workflow that detects and scores sensitive information, requires explicit human review, and produces an approved redacted copy.
 _Avoid_: masking, blurring, privacy filtering.
 
 **Redaction** (noun) — The permanent pixel-level burning of solid black boxes onto a scan copy and masking of corresponding text.
 _Avoid_: blurring, blacking out, hiding.
 
-**Human Review Queue** (noun) — The workflow queue for medium-confidence or unvalidated PII detections awaiting manual archivist review.
+**Human Review Queue** (noun) — The workflow queue for flagged PII detections awaiting review by `admin` or `arhivar`.
 _Avoid_: moderation queue, approval list, pending tasks.
 
-**Document Version** (noun) — An immutable snapshot of a document scan, its metadata, and its OCR output at a point in time.
+**Document Version** (noun) — An immutable approved snapshot of the underlying document file. After initial approval, a file replacement or update creates a new Document Version. Metadata changes are recorded in the Append-Only Audit Log. Only the latest approved Document Version is indexed. Earlier versions are available to `admin` and `arhivar` through version history.
 _Avoid_: revision, copy, history entry.
 
-**Folder Permission** (noun) — An access control rule enforced at folder level governing access to contained documents.
+**Folder Permission** (noun) — An access control rule assigned by Physical Dossier for `cititor` and applied in all browsing modes. Access is denied by default. An individual permission takes precedence over a role permission.
 _Avoid_: folder right, access rule, privilege.
 
 **Retention Policy** (noun) — An automated schedule governing document preservation duration and archival or deletion criteria.
 _Avoid_: deletion rule, lifecycle, expiry.
 
-**Role: Arhivar** (noun) — An archive administrator authorized to view original scans, verify OCR output, and approve PII redactions.
+**Role: Arhivar** (noun) — The archive role used by Arhivar and Secretar Notarial, with unrestricted dossier access and authority to review uploads, approve Redaction, and create or revoke Share Links.
 _Avoid_: archivist, moderator, editor.
 
-**Role: Cititor** (noun) — A standard reader role permitted to access only approved, anonymized document scans and redacted text.
+**Role: Cititor** (noun) — A role for other internal staff and interns, with access to approved anonymized Document Scans and redacted search text in explicitly granted Physical Dossiers.
 _Avoid_: viewer, reader, user, guest.
 
 **Signed URL** (noun) — A time-limited, cryptographically signed URL providing secure temporary access to a document file in object storage.
 _Avoid_: temporary link, share link, direct link, public URL.
 
-**Append-Only Audit Log** (noun) — An immutable, tamper-evident log capturing all document access, view, download, export, and modification events for GDPR compliance.
+**Append-Only Audit Log** (noun) — An immutable, tamper-evident log of document access, views, downloads, exports, modifications, Share Link creation and use, and destruction. It retains prior access events, the person who confirmed destruction, the act number, Act Date, document type, Physical Dossier Number, and Signatory Party names indefinitely after destruction. Both `admin` and `arhivar` can see the retained evidence.
 _Avoid_: access log, audit trail, activity history, history.
 
-**Quarantine Queue** (noun) — An isolated queue holding corrupted or unreadable document scans that failed OCR processing after maximum retry attempts.
+**Quarantine Queue** (noun) — An isolated queue holding corrupted or unreadable document scans that failed OCR processing after the initial failure and three failed retries.
 _Avoid_: dead-letter queue, error list, failed jobs, poison queue.
 
-**Near-Duplicate** (noun) — A document scan whose extracted OCR text exhibits high textual similarity to an existing archived document.
-_Avoid_: similar document, duplicate, duplicate text, copy.
+**Possible Duplicate** (noun) — A Document Scan whose act number and Act Date both match an existing document. An exact SHA-256 match has a separate warning and blocks saving.
+_Avoid_: near-duplicate, similar document, duplicate text.
 
 **Role: Secretar Notarial** (noun) — The notary cabinet administrative staff member (*Secretar Notarial*) responsible for daily registration of acts, compilation of the alphabetical index, and physical dossier retrieval.
 _Avoid_: secretary, clerk, assistant, front desk staff.
@@ -95,7 +95,7 @@ _Avoid_: secretary, clerk, assistant, front desk staff.
 **Physical Dossier Number** (noun) — The physical folder identifier (*Număr de Dosar*, e.g., `Dosar nr. 29/2014`) written on the physical dossier spine in the cabinet archive and displayed in the application to guide physical retrieval.
 _Avoid_: folder code, shelf number, physical ID, file number.
 
-**Archival Indicator** (noun) — The classification code (*Indicativ Arhivistic*, e.g., `IA 1`, `IA 17`, `IB 4`) defined in the Notarial Nomenclature assigned to an act or dossier governing retention period and archival rules.
+**Archival Indicator** (noun) — The classification code (*Indicativ Arhivistic*, e.g., `IA 1`, `IA 17`, `IB 4`) defined in the Notarial Nomenclature assigned from a document’s type, subtype, and Storage Context. The classification can be corrected and governs retention and archival rules.
 _Avoid_: category code, archive code, class code, tag, indicativ.
 
 **Alphabetical Index** (noun) — The annual registry (*Opis Alfabetic*) compiled by notarial staff organized by initial of party names mapping signatories to act and physical dossier numbers.
@@ -119,17 +119,17 @@ _Avoid_: calculation date, trigger date, start time, retention base.
 **Permanent Preservation** (noun) — The indefinite archival retention status (`P`) indicating that a notarial act, permanent binder, or official register must never be destroyed.
 _Avoid_: forever retention, infinite storage, permanent file, eternal archive.
 
-**Cadastral Identifier** (noun) — Real estate identification data (*Număr Cadastral*, *Număr Carte Funciară*) appearing in notarial property acts requiring recognition and indexing.
+**Cadastral Identifier** (noun) — Real estate identification data (*Număr Cadastral*, *Număr Carte Funciară*) appearing in notarial property acts. Flag it for Redaction and exclude the redacted value from `cititor` search.
 _Avoid_: land ID, property number, lot number, plot ID.
 
-**Movable Asset Identifier** (noun) — Vehicle identification details (VIN / chassis number, license plate) appearing in notarial powers of attorney and sale contracts.
+**Movable Asset Identifier** (noun) — Vehicle identification details (VIN / chassis number, license plate) appearing in notarial powers of attorney and sale contracts. Flag it for Redaction and exclude the redacted value from `cititor` search.
 _Avoid_: car ID, vehicle data, auto number, chassis data.
 
-**Document Corpus** (noun) — The set of 30 real notarial document scans digitized from the Notary Cabinet's physical archive, used to seed the application and satisfy the Definition of Done.
+**Document Corpus** (noun) — The 30 document templates supplied by the Secretar Notarial and populated with test data for live acceptance.
 _Avoid_: test set, sample documents, demo files, dataset.
 
-**Share Link** (noun) — A generated Signed URL, created by an admin or arhivar, granting a named external recipient time-limited access to view and download a specific document scan (redacted or original, per the creator's choice).
+**Share Link** (noun) — A Signed URL created by `admin` or `arhivar` that lets a recipient view and download the selected original or redacted PDF of one Document Version. It expires, can be password-protected, and can be revoked by either role.
 _Avoid_: public link, download link, sharing URL, external link.
 
-**Destruction List** (noun) — The in-application list of documents whose retention period has expired, presented to Admin for manual batch confirmation before any permanent deletion occurs.
+**Destruction List** (noun) — The in-application list of documents whose retention period has expired, grouped by C.S. status for manual batch confirmation by `admin`. Confirming destruction deletes the Document Scan and all Document Versions.
 _Avoid_: deletion list, expired documents, documents to destroy, purge list.

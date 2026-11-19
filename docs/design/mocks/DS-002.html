@@ -692,7 +692,7 @@
       text-indent: var(--space-xl);
     }
 
-    /* Pixel-level burned redaction box (D-005, D-012) */
+    /* Pixel-level burned redaction box (D-022) */
     .redaction-burned {
       display: inline-block;
       background-color: var(--color-redaction);
@@ -823,7 +823,7 @@
     }
 
     /* ==========================================================================
-       MODAL DIALOG (Partajare link semnat D-013)
+       MODAL DIALOG (Partajare link semnat D-024)
        ========================================================================== */
     .modal-backdrop {
       display: none;
@@ -834,7 +834,8 @@
       bottom: 0;
       background-color: rgba(0, 0, 0, 0.45);
       z-index: 100;
-      align-items: center;
+      overflow-y: auto;
+      align-items: safe center;
       justify-content: center;
       padding: var(--space-md);
       backdrop-filter: var(--filter-blur-sm);
@@ -1413,18 +1414,18 @@
   </main>
 
   <!-- ========================================================================
-       MODAL DIALOG: Partajare link semnat (D-013)
+       MODAL DIALOG: Partajare link semnat (D-024)
        ======================================================================== -->
   <div class="modal-backdrop" id="modalShare" role="dialog" aria-modal="true" aria-labelledby="modalShareTitle">
-    <div class="modal-dialog">
+    <form class="modal-dialog" id="shareForm">
       <div class="modal-head">
-        <h2 class="modal-title" id="modalShareTitle">Partajare link securizat (Signed URL)</h2>
+        <h2 class="modal-title" id="modalShareTitle">Partajează documentul</h2>
         <button type="button" class="hud-btn" onclick="closeShareDialog()" aria-label="Închide">✕</button>
       </div>
 
       <div class="modal-body">
         <p style="font-size: var(--font-size-small); color: var(--color-text-secondary);">
-          Generați un link semnat temporar conform [D-013]. Accesările vor fi înregistrate în Jurnalul de Audit (DS-008).
+          Linkul oferă acces la versiunea selectată până la expirare sau revocare.
         </p>
 
         <div>
@@ -1432,32 +1433,42 @@
           <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
             <label style="display: flex; align-items: center; gap: var(--space-xs); cursor: pointer;">
               <input type="radio" name="shareOpt" value="anon" checked>
-              <span>Versiunea anonimizată (Recomandat GDPR)</span>
+              <span>Versiunea anonimizată</span>
             </label>
             <label style="display: flex; align-items: center; gap: var(--space-xs); cursor: pointer;">
               <input type="radio" name="shareOpt" value="orig">
-              <span>Versiunea originală (Acces autorizat)</span>
+              <span>Versiunea originală</span>
             </label>
           </div>
         </div>
 
         <div>
           <label for="selExpiry" style="display: block; font-weight: 600; margin-bottom: var(--space-xs);">Valabilitate link:</label>
-          <select id="selExpiry" class="viewer-input">
+          <select id="selExpiry" class="viewer-input" onchange="updateShareExpiry()">
             <option value="24h">24 de ore</option>
             <option value="7d" selected>7 zile</option>
             <option value="30d">30 de zile</option>
+            <option value="custom">Dată personalizată</option>
           </select>
+        </div>
+        <div id="customExpiryField" hidden>
+          <label for="customExpiry" style="display: block;">Data expirării</label>
+          <input type="date" id="customExpiry" class="viewer-input" disabled>
+        </div>
+
+        <div>
+          <label for="sharePassword" style="display: block;">Parolă (opțional)</label>
+          <input type="password" id="sharePassword" class="viewer-input" autocomplete="new-password">
         </div>
       </div>
 
       <div class="modal-foot">
         <button type="button" class="btn-compact" onclick="closeShareDialog()">Anulează</button>
-        <button type="button" class="btn-compact" style="background-color: var(--color-primary); color: var(--color-text-inverse);" onclick="confirmShareLink()">
+        <button type="submit" class="btn-compact" style="background-color: var(--color-primary); color: var(--color-text-inverse);">
           Generează link
         </button>
       </div>
-    </div>
+    </form>
   </div>
 
   <!-- Toast notification -->
@@ -1747,18 +1758,70 @@
     }
 
     // Modals & Navigation
+    const shareForm = document.getElementById('shareForm');
+    const shareExpiry = document.getElementById('selExpiry');
+    const customExpiry = document.getElementById('customExpiry');
+    const modalShare = document.getElementById('modalShare');
+
+    function updateShareExpiry() {
+      const isCustom = shareExpiry.value === 'custom';
+      document.getElementById('customExpiryField').hidden = !isCustom;
+      customExpiry.disabled = !isCustom;
+      customExpiry.required = isCustom;
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+      const day = String(tomorrow.getDate()).padStart(2, '0');
+      customExpiry.min = `${tomorrow.getFullYear()}-${month}-${day}`;
+    }
+
     function openShareDialog() {
-      document.getElementById('modalShare').classList.add('open');
+      const state = STATES[app.state];
+      if (!state.allowVerSwitch || state.loading || state.error) return;
+
+      shareForm.reset();
+      const redacted = shareForm.querySelector('input[value="anon"]');
+      redacted.disabled = state.unavail;
+      if (state.unavail) shareForm.querySelector('input[value="orig"]').checked = true;
+      updateShareExpiry();
+      modalShare.classList.add('open');
+      shareForm.querySelector('input[name="shareOpt"]:checked').focus();
     }
 
     function closeShareDialog() {
-      document.getElementById('modalShare').classList.remove('open');
+      modalShare.classList.remove('open');
+      shareForm.reset();
+      document.getElementById('btnShareDoc').focus();
     }
 
-    function confirmShareLink() {
+    shareForm.addEventListener('submit', event => {
+      event.preventDefault();
       closeShareDialog();
-      notify('Link semnat generat și copiat! (Audit înregistrat în DS-008)');
-    }
+      notify('Linkul de partajare a fost generat.');
+    });
+
+    modalShare.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        closeShareDialog();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const controls = [...shareForm.elements].filter(control =>
+        !control.disabled && !control.closest('[hidden]') &&
+        (control.type !== 'radio' || control.checked)
+      );
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     function goToEditorDS011() {
       notify('Redirecționare către DS-011 — Editor document & Anonimizare...');
