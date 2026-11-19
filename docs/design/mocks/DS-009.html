@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DS-009 · Document partajat</title>
+  <style>
+    /* Token values from ../DESIGN.md */
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5;
+      --color-bg-surface: #FFFFFF;
+      --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C;
+      --color-text-secondary: #556070;
+      --color-border: #E5E0D8;
+      --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
+      --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A;
+      --color-focus-ring: #4683CF;
+      --font-body: "Public Sans", system-ui, sans-serif;
+      --font-heading: var(--font-body);
+      --text-h1: 700 32px / 40px var(--font-heading);
+      --text-h2: 600 24px / 32px var(--font-heading);
+      --text-body: 400 16px / 24px var(--font-body);
+      --text-small: 400 14px / 20px var(--font-body);
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg-primary: #1E293B;
+      --color-bg-surface: #283548;
+      --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC;
+      --color-text-secondary: #94A3B8;
+      --color-border: #334155;
+      --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
+      --color-archival-label-bg: #3A302A;
+      --color-archival-label-text: #E7B587;
+      --color-focus-ring: #46CFC3;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      font: var(--text-body);
+      color: var(--color-text-primary);
+      background: var(--color-bg-primary);
+    }
+    h1, h2, p { margin: 0; }
+    h1 { font: var(--text-h1); overflow-wrap: anywhere; }
+    h2 { font: var(--text-h2); }
+    button, select, input, .action {
+      min-block-size: var(--space-2xl);
+      font: inherit;
+      color: inherit;
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-text-secondary);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-md);
+    }
+    button, select, .action { cursor: pointer; }
+    button:disabled { cursor: default; color: var(--color-text-secondary); }
+    :focus-visible {
+      outline: var(--radius-sm) solid var(--color-focus-ring);
+      outline-offset: var(--space-xs);
+    }
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--color-version-navy);
+      color: var(--color-bg-surface);
+      border-color: var(--color-version-navy);
+    }
+    [data-theme="dark"] .action {
+      background: var(--color-text-primary);
+      color: var(--color-bg-primary);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      button, .action { transition: box-shadow var(--duration-fast); }
+    }
+    button:not(:disabled):hover, .action:hover {
+      box-shadow: inset 0 0 0 var(--radius-sm) currentColor;
+    }
+    button:not(:disabled):active, .action:active { text-decoration: underline; }
+
+    .review, .masthead {
+      padding: var(--space-sm) var(--space-md);
+      border-block-end: thin solid var(--color-border);
+    }
+    .review {
+      background: var(--color-bg-subtle);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-lg);
+      font: var(--text-small);
+    }
+    .review label { display: flex; gap: var(--space-sm); align-items: center; }
+    .review select { min-inline-size: 0; max-inline-size: 100%; }
+    .masthead { background: var(--color-bg-surface); padding-block: var(--space-md); }
+    main { padding: var(--space-xl) var(--space-md); }
+    .heading {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: end;
+      gap: var(--space-md);
+      margin-block-end: var(--space-lg);
+    }
+    .heading-copy { flex: 1 1 min-content; display: grid; gap: var(--space-sm); }
+    .heading-copy p, .note { color: var(--color-text-secondary); font: var(--text-small); }
+    .metadata { display: flex; align-items: center; gap: var(--space-sm); }
+    .version {
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      background: var(--color-accent-teal);
+      color: var(--color-version-navy);
+    }
+    .version[data-original] {
+      background: var(--color-version-navy);
+      color: var(--color-bg-surface);
+    }
+    [data-theme="dark"] .version[data-original] { color: var(--color-text-primary); }
+    .stage {
+      display: grid;
+      justify-items: center;
+      align-items: start;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--color-bg-subtle);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+    .paper, .message {
+      inline-size: 100%;
+      max-inline-size: calc(var(--space-3xl) * 9);
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: var(--space-xl) var(--space-lg);
+      display: grid;
+      align-content: start;
+      gap: var(--space-md);
+    }
+    .paper { min-block-size: calc(var(--space-3xl) * 6); }
+    .paper-header {
+      padding-block-end: var(--space-md);
+      border-block-end: thin solid var(--color-border);
+    }
+    .paper-header p { margin-block-start: var(--space-xs); }
+    .masked {
+      background: var(--color-text-primary);
+      color: var(--color-bg-surface);
+      border-radius: var(--radius-sm);
+      padding-inline: var(--space-xs);
+    }
+    .skeleton {
+      block-size: var(--space-md);
+      background: var(--color-bg-subtle);
+      border-radius: var(--radius-sm);
+    }
+    .skeleton:last-child { inline-size: 60%; }
+    .error { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    form { display: grid; gap: var(--space-sm); }
+    form button { justify-self: start; }
+    input { min-inline-size: 0; }
+    @media (min-width: 640px) {
+      .review, .masthead, main { padding-inline: var(--space-xl); }
+      .stage { padding: var(--space-xl); }
+      .paper { padding: var(--space-2xl); }
+    }
+    @media (min-width: 1024px) {
+      main { max-inline-size: calc(var(--space-3xl) * 17); margin-inline: auto; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="review" aria-label="Comenzi pentru revizuirea machetei">
+    <span>DS-009 · Ciornă</span>
+    <label>Stare
+      <select id="state">
+        <option value="success">Succes · Anonimizat</option>
+        <option value="original">Succes · Original</option>
+        <option value="empty">Fără document</option>
+        <option value="loading">Se încarcă</option>
+        <option value="error">Link indisponibil</option>
+        <option value="long">Titlu lung</option>
+        <option value="password">Protejat cu parolă</option>
+      </select>
+    </label>
+    <label>Temă
+      <select id="theme">
+        <option value="light">Luminoasă</option>
+        <option value="dark">Întunecată</option>
+      </select>
+    </label>
+  </aside>
+
+  <header class="masthead">Arhivă digitală</header>
+  <main>
+    <header class="heading">
+      <div class="heading-copy">
+        <h1 id="title">Document partajat</h1>
+        <p class="metadata" id="metadata" hidden>
+          <span class="version" id="version">Anonimizat</span>
+          <span>PDF</span>
+        </p>
+      </div>
+      <a class="action" id="download" download="document-exemplu.pdf" hidden>Descarcă PDF</a>
+      <button id="pending" type="button" disabled hidden>Descarcă PDF</button>
+    </header>
+
+    <div class="stage" id="stage">
+      <article class="paper" id="preview" aria-label="Previzualizare PDF" hidden>
+        <header class="paper-header">
+          <h2>Procură specială</h2>
+          <p class="note">Exemplu de document · Pagina 1 din 1</p>
+        </header>
+        <p id="redacted">Mandant: <span class="masked">Date anonimizate</span></p>
+        <p id="original" hidden>Mandant: [date de exemplu]</p>
+        <p>Mandatul are ca obiect reprezentarea în vederea depunerii unei cereri și a ridicării documentelor aferente.</p>
+        <p>Mandatarul poate prezenta actele justificative și poate primi confirmarea de înregistrare a cererii.</p>
+      </article>
+
+      <section class="paper" id="loading" aria-label="Încărcare" hidden>
+        <p role="status">Se încarcă PDF-ul…</p>
+        <div class="skeleton" aria-hidden="true"></div>
+        <div class="skeleton" aria-hidden="true"></div>
+        <div class="skeleton" aria-hidden="true"></div>
+      </section>
+
+      <section class="message" id="empty" hidden>
+        <h2>Nu există niciun PDF de afișat</h2>
+        <p>Documentul partajat ar apărea aici. Cere un nou link persoanei care ți l-a trimis.</p>
+      </section>
+
+      <section class="message error" id="error" hidden>
+        <h2>Link indisponibil</h2>
+        <p>Linkul a expirat, a fost revocat sau nu este valid. Cere un nou link persoanei care ți l-a trimis.</p>
+      </section>
+
+      <section class="message" id="password" hidden>
+        <h2>Document protejat cu parolă</h2>
+        <p>Introdu parola primită de la persoana care ți-a trimis linkul.</p>
+        <form id="unlock">
+          <label for="share-password">Parolă</label>
+          <input id="share-password" type="password" required autocomplete="off">
+          <button class="action" type="submit">Deschide documentul</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  <script>
+    const state = document.querySelector("#state");
+    const theme = document.querySelector("#theme");
+    const download = document.querySelector("#download");
+    const shortTitle = "Procură specială";
+    const longTitle = "Procură specială de reprezentare pentru depunerea cererii, consultarea documentației și ridicarea actelor aferente procedurii de înscriere în evidențele de publicitate imobiliară";
+    let pdfUrl;
+
+    function examplePdf(original) {
+      // The mock downloads a generated one-page fixture for the selected version.
+      const version = original ? "Original" : "Anonimizat";
+      const party = original ? "[date de exemplu]" : "[date anonimizate]";
+      const content = [
+        "BT /F1 18 Tf 56 740 Td (Procura speciala) Tj",
+        "0 -28 Td /F1 12 Tf (Exemplu de document - " + version + ") Tj",
+        "0 -24 Td (Mandant: " + party + ") Tj",
+        "0 -24 Td (Mandat pentru depunerea unei cereri si ridicarea actelor aferente.) Tj ET"
+      ].join("\n");
+      const objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        "<< /Length " + content.length + " >>\nstream\n" + content + "\nendstream"
+      ];
+      let pdf = "%PDF-1.4\n";
+      const offsets = objects.map((object, index) => {
+        const offset = pdf.length;
+        pdf += (index + 1) + " 0 obj\n" + object + "\nendobj\n";
+        return offset;
+      });
+      const xref = pdf.length;
+      pdf += "xref\n0 6\n0000000000 65535 f \n";
+      pdf += offsets.map(offset => String(offset).padStart(10, "0") + " 00000 n \n").join("");
+      pdf += "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+      return URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+    }
+
+    function render() {
+      const current = state.value;
+      const original = current === "original";
+      const ready = ["success", "original", "long"].includes(current);
+      document.querySelector("#title").textContent = ready
+        ? (current === "long" ? longTitle : shortTitle)
+        : "Document partajat";
+      document.querySelector("#metadata").hidden = !ready;
+      const version = document.querySelector("#version");
+      version.textContent = original ? "Original" : "Anonimizat";
+      version.toggleAttribute("data-original", original);
+      document.querySelector("#redacted").hidden = original;
+      document.querySelector("#original").hidden = !original;
+      document.querySelector("#pending").hidden = current !== "loading";
+      document.querySelector("#preview").hidden = !ready;
+      for (const name of ["loading", "empty", "error", "password"]) {
+        document.querySelector("#" + name).hidden = current !== name;
+      }
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      pdfUrl = ready ? examplePdf(original) : undefined;
+      if (ready) download.href = pdfUrl;
+      else download.removeAttribute("href");
+      download.hidden = !ready;
+    }
+
+    state.addEventListener("change", render);
+    theme.addEventListener("change", () => {
+      document.documentElement.dataset.theme = theme.value;
+    });
+    document.querySelector("#unlock").addEventListener("submit", event => {
+      event.preventDefault();
+      event.currentTarget.reset();
+      state.value = "success";
+      render();
+      download.focus();
+    });
+    render();
+  </script>
+</body>
+</html>

@@ -110,6 +110,7 @@
 - **Rejected:** Multi-language switchers, English UI translations, and complex i18n bundling.
 - **Evidence:** README.md
 - **Source:** user · confidence high
+- **Confirmed:** 2026-11-19
 
 ## D-019 · In-app notifications
 - **Status:** approved

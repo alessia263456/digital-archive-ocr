@@ -71,6 +71,7 @@ designs:
     name: "Vizualizator link public (Public share link viewer)"
     kind: screen
     status: draft
+    design_ref: mocks/DS-009.html
     roles: [unauthenticated]
     decisions: [D-020, D-024]
     description: "Consultare și descărcare PDF pentru versiunea exactă selectată la partajare, prin link semnat cu expirare și parolă dacă a fost configurată."
