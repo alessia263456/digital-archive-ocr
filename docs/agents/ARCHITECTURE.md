@@ -17,12 +17,9 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
          |
          +---> [Tesseract OCR + tesseract-ocr-ron (Docker)] ---> Emits TSV (Word Bounding Boxes) [D-004]
          |
-         +---> [PII Pipeline: Checksums (CNP, IBAN) + Romanian Notarial Anchors] [D-005]
-         |          |
-         |          +---> High confidence: Auto-redact (burn black boxes onto scan copy)
-         |          +---> Medium confidence / Names: Human Review Queue (Arhivar review)
+         +---> [PII detection and private draft review] ---> [Approved Document Version]
          |
-         +---> [Storage: Original Scans (Arhivar/Admin only) vs Redacted Scans (Cititor)]
+         +---> [Private object storage: original and redacted copies]
 ```
 
 ## Parts
@@ -32,34 +29,27 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 | Backend API | `backend/` (pending) | Laravel application: auth, folder permissions, versioning, PII detection, retention | PostgreSQL, Storage, Tesseract |
 | OCR Engine | Docker (Tesseract) | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Laravel Backend |
 | Database | Docker service | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
-| Storage | Docker volume / disk | Physical scan storage segregating original scans from visually redacted copies | Laravel Backend |
+| Storage | Private object storage | Original Document Scans and derived redacted copies | Laravel Backend |
 | Visual Testing | `frontend/` (Playwright) | Automated desktop and mobile screenshot capture in light/dark themes ([D-006](DECISIONS.md#D-006)) | Frontend UI |
 
 ## Data flow
-1. **Upload & Ingestion:** User (`arhivar` / `admin`) uploads document scan via React UI; Laravel validates folder permissions and creates an immutable initial document version ([D-002](DECISIONS.md#D-002)).
-2. **OCR Extraction:** Laravel dispatches Tesseract job in Docker with Romanian language pack (`tesseract-ocr-ron`), emitting TSV output with word coordinates (`left`, `top`, `width`, `height`) ([D-004](DECISIONS.md#D-004)).
-3. **PII Detection & Checksum Validation:**
-   - Evaluates mathematical checksums: Romanian CNP (control digit weights `279146358279` mod 11) and IBAN (MOD-97).
-   - Scans for Romanian notarial context anchors (e.g. `subsemnatul`, `numitul`, `domiciliat în`, `identificat prin CI`) to identify person names ([D-005](DECISIONS.md#D-005)).
-4. **Scoring & Routing:**
-   - High-confidence matches (valid checksum + context anchor) auto-redact.
-   - Detected person names and unvalidated/corrupted OCR matches are assigned medium confidence and routed to the Human Review Queue. Public notary titles/names are explicitly excluded from redaction ([D-005](DECISIONS.md#D-005)).
-5. **Visual Redaction:**
-   - Burning solid black boxes onto a generated public scan copy using TSV bounding-box coordinates (with manual rect drawing support in UI).
-   - Redacted text is masked in the full-text search index and catalog.
-6. **Access Control & Serving:**
-   - `cititor` role sees only approved, redacted scan copies and masked text.
-   - `arhivar` / `admin` role retains access to the unredacted original in the private archive ([D-005](DECISIONS.md#D-005)).
-7. **Retention:** Scheduled retention policies enforce preservation schedules or archival actions ([D-002](DECISIONS.md#D-002)).
+1. **Ingestion.** An `admin` or `arhivar` uploads a Document Scan into a resumable private draft. An exact SHA-256 match warns and blocks saving. A matching act number and Act Date warns and lets staff create a new Document Version, save separately, or abandon the save. Keep uploaded DOCX originals and derive PDFs for viewing, Redaction, and sharing.
+2. **OCR Extraction.** A separate worker runs Tesseract with Romanian language data and retains TSV word Bounding Boxes. After the initial failure and three failed retries, move the Document Scan to the Quarantine Queue and notify the Arhivar.
+3. **Review and approval.** DS-011 supports OCR correction, metadata confirmation, and manual Bounding Boxes. Detect and review PII under D-022. Burn detected and manual Redactions into the derived copy and remove covered PDF text. Require explicit review and confirmation of required metadata and the applicable retention date before saving and indexing.
+4. **Versioning and search.** Approving a draft saves an immutable Document Version. Keep the current approved version searchable during review of an edit, then index only the newly approved version. `admin` and `arhivar` can open prior versions and search for Signatory Party names. `cititor` can search approved redacted text in granted Physical Dossiers, including when browsing by type or year.
+5. **Sharing and audit.** An expiring Share Link pins the selected original or redacted PDF to one Document Version and can require a password. `admin` and `arhivar` can revoke links. Record creation and every PDF view or download through a Share Link.
+6. **Retention and destruction.** Calculate the deadline from the confirmed date prescribed by the Notarial Nomenclature. Group expired records by C.S. status. Admins can extend deadlines or confirm batch destruction. Destroy the Document Scan and all versions, end access to them, and retain the audit evidence defined in D-027 indefinitely.
+
+See [approved archive workflows](decisions/archive-workflows.md) for D-021 through D-029 and [Open Questions](OPEN-QUESTIONS.md) for unresolved details.
 
 ## State and storage
 | What | Where | Owner | Notes |
 |---|---|---|---|
-| Document metadata & catalog | PostgreSQL | Laravel Backend | Folders, permissions, document versions, retention policies |
-| PII detections & review queue | PostgreSQL | Laravel Backend | Detected entities, confidence scores, bounding boxes, review status |
-| Original document scans | Storage (private) | Laravel Backend | Restricted to `admin` / `arhivar` |
-| Redacted document copies | Storage (public) | Laravel Backend | Burned black-box images/PDFs served to `cititor` |
-| UI State & review canvas | React state | Frontend | Transient canvas state for manual bounding-box adjustment |
+| Catalog and search | PostgreSQL | Laravel Backend | Approved versions, confirmed metadata, Physical Dossiers, permissions, and retention dates |
+| Private drafts and review | PostgreSQL and private object storage | Laravel Backend | Draft metadata, PII detections, Bounding Boxes, review status, and uploaded originals |
+| Original and redacted copies | Private object storage | Laravel Backend | Authorized internal access and version-pinned Share Links |
+| Append-Only Audit Log | Server-side | Laravel Backend | Access, changes, sharing, and retained destruction evidence |
+| Review canvas | React state | Frontend | Transient Bounding Box adjustments |
 
 ## Configuration
 | Name | Where set | Used by | Notes |
@@ -75,7 +65,7 @@ Multi-container architecture managed via Docker Compose ([D-001](DECISIONS.md#D-
 
 ## Boundaries
 - Frontend / Backend REST API boundary with role-based token authentication.
-- Access boundary: `cititor` (redacted only) vs `arhivar`/`admin` (unredacted original) ([D-005](DECISIONS.md#D-005)).
+- Folder Permissions restrict `cititor` by Physical Dossier. External access is limited to the selected PDF through its Share Link.
 - Immutability boundary: Document versions cannot be edited in place; new versions are appended ([D-002](DECISIONS.md#D-002)).
 - PII redaction boundary: Redaction physically burns black pixels into the scan copy, preventing client-side unmasking.
 - Contracts between services are defined in [CONTRACTS.md](CONTRACTS.md).

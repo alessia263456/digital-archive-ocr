@@ -7,8 +7,8 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar, cititor]
-    decisions: [D-002, D-004, D-014, D-020]
-    description: "Căutare full-text OCR (<2s), afișare extrase cu diacritice, filtre cu fațete (Dată Act, Indicativ Arhivistic, Dosar, An), arbore foldere, etichete avertizare duplicat."
+    decisions: [D-002, D-004, D-020, D-023]
+    description: "Căutare full-text OCR (<2s), rezultate după relevanță cu evidențiere și numărul dosarului fizic. Consultare după dosar fizic, tip sau an, cu permisiuni pe dosar și rezultate anonimizate pentru cititor."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
@@ -16,47 +16,47 @@ designs:
     status: approved
     design_ref: mocks/DS-002.html
     roles: [admin, arhivar, cititor]
-    decisions: [D-004, D-005, D-010, D-013, D-020]
-    description: "Ecran read-only pentru consultare documente: comutare original vs anonimizat (conform permisiunilor), navigare pagini, căutare în documentul deschis cu evidențierea potrivirilor, descărcare PDF, generare link partajare și buton Editare către DS-011 pentru rolurile autorizate."
+    decisions: [D-004, D-020, D-021, D-022, D-023, D-024]
+    description: "Consultare document în regim de citire, navigare între pagini, căutare în document, descărcare PDF și partajarea versiunii selectate pentru rolurile autorizate. Link cu expirare prestabilită sau personalizată și parolă opțională. Acces la Editor și la versiunile anterioare pentru admin și arhivar."
 
   - id: DS-003
     name: "Încărcare documente (Upload)"
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-002, D-014, D-015, D-020]
-    description: "Încărcare scanuri multi-file (drag & drop), deduplicare pe hash SHA-256, avertizare near-duplicate pe text OCR, selectare folder destinație."
+    decisions: [D-002, D-020, D-021, D-025, D-026, D-028]
+    description: "Încărcare multiplă PDF, JPG, PNG și DOCX, cu OCR asincron și ciorne private. Hash-ul SHA-256 identic blochează salvarea. Numărul și data actului identice declanșează avertismentul de posibil duplicat."
 
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-005, D-015, D-019, D-020]
-    description: "Coadă de triaj pentru detecții PII cu încredere medie; deschidere directă în DS-011 pentru revizuire detaliată; tab separat pentru Carantină (fișiere cu erori repetate de procesare OCR)."
+    decisions: [D-019, D-020, D-021, D-022, D-026]
+    description: "Coadă pentru revizuire PII cu deschidere în DS-011. Carantină după eșecul inițial și trei reîncercări eșuate."
 
   - id: DS-005
     name: "Retenție & Listă de casare (Retention & Destruction list)"
     kind: screen
     status: draft
     roles: [admin]
-    decisions: [D-002, D-010, D-016, D-020]
-    description: "Monitorizare termene de păstrare din Data Actului conform Nomenclatorului, grupare pe Comisie de Selecționare (C.S.), confirmare manuală a casării pe loturi."
+    decisions: [D-002, D-020, D-027]
+    description: "Termene calculate de la data aplicabilă conform Nomenclatorului. Grupare după marcajul C.S., prelungirea termenului și confirmarea casării pe loturi."
 
   - id: DS-006
     name: "Panou administrare (Admin panel)"
     kind: screen
     status: draft
     roles: [admin]
-    decisions: [D-008, D-017, D-020]
-    description: "Gestiune conturi utilizatori (notar, arhivar, cititor), ierarhie foldere și permisiuni de acces per folder, configurări sistem."
+    decisions: [D-017, D-020, D-023]
+    description: "Gestiune conturi și permisiuni pentru cititor, acordate explicit pe dosar fizic. Permisiunea individuală are prioritate."
 
   - id: DS-007
     name: "Panou principal / Statistici (Dashboard)"
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-019, D-020]
+    decisions: [D-019, D-020, D-021, D-026, D-027]
     description: "Indicatori volum arhivă (documente, spațiu, scanuri), contor alerte revizuire PII și carantină, scadențe de retenție, flux activitate recentă."
 
   - id: DS-008
@@ -64,16 +64,16 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-002, D-013, D-020]
-    description: "Jurnal append-only imutabil conform GDPR pentru toate acțiunile (vizualizare, descărcare, editare OCR, generare link), filtrare după operator și perioadă."
+    decisions: [D-002, D-020, D-024, D-027]
+    description: "Jurnal de audit imuabil pentru accesări, modificări, partajare și casare. Păstrează dovezile după casare și permite filtrarea după operator și perioadă."
 
   - id: DS-009
     name: "Vizualizator link public (Public share link viewer)"
     kind: screen
     status: draft
     roles: [unauthenticated]
-    decisions: [D-013, D-020]
-    description: "Vizualizator extern read-only prin URL semnat cu expirare, afișare strict a versiunii autorizate (redactată sau original), descărcare PDF, contor timp rămas."
+    decisions: [D-020, D-024]
+    description: "Consultare și descărcare PDF pentru versiunea exactă selectată la partajare, prin link semnat cu expirare și parolă dacă a fost configurată."
 
   - id: DS-010
     name: "Autentificare (Login)"
@@ -88,5 +88,5 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-004, D-005, D-009, D-010, D-011, D-012, D-020]
-    description: "Ecran dedicat de editare: corectare OCR inline, inspecție casete TSV, revizuire PII, desenare manuală de chenare negre de anonimizare (redaction burning), editare metadate și confirmare obligatorie Dată Act, generare versiune anonimizată. Poate fi deschis din DS-002 sau din coada de revizuire DS-004."
+    decisions: [D-004, D-020, D-021, D-022, D-027]
+    description: "Corectare OCR, revizuire PII obligatorie, marcaje manuale și generare PDF anonimizat. Confirmarea metadatelor și datei aplicabile de retenție înainte de salvare. Indicativ derivat din clasificarea editabilă."

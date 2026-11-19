@@ -16,11 +16,15 @@
 - Q-005 · What OCR engine should be used for text extraction from scans? · _answered_
 - Q-006 · What tool or pipeline should perform personal data detection and anonymization? · _answered_
 - Q-007 · What visual testing or screenshot tool should be used for the React frontend? · _answered_
-- Q-008 · Should application folders mirror Archival Indicator categories with retention pre-filled, or be free-form?
+- Q-008 · Should application folders mirror Archival Indicator categories with retention pre-filled, or be free-form? · _answered_
 - Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project? · _answered_
-- Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue?
-- Q-011 · What text similarity threshold defines a Near-Duplicate at upload time?
-- Q-012 · What expiry options are available when creating a Share Link (fixed durations, custom date, or both)?
+- Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue? · _answered_
+- Q-011 · What text similarity threshold defines a Near-Duplicate at upload time? · _answered_
+- Q-012 · What expiry options are available when creating a Share Link (fixed durations, custom date, or both)? · _answered_
+- Q-013 · Where and how will the remaining Screen designs be approved?
+- Q-014 · What should staff do if a required retention event has not occurred?
+- Q-015 · What should the audit record identify for an unauthenticated Share Link access?
+- Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
 
 ---
 
@@ -81,12 +85,12 @@
 - **Recorded as:** D-006
 
 ## Q-008 · Should application folders mirror Archival Indicator categories with retention pre-filled, or be free-form?
-- **Status:** open
+- **Status:** answered 2026-11-19
 - **Blocks:** Folder data model, Admin panel folder creation UI, retention policy assignment workflow
 - **Who answers:** repository owner (after checking with client)
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Provide three ways to browse the same archive: Physical Dossier, document type, and year. Folder Permissions are assigned by Physical Dossier and apply in each mode.
+- **Recorded as:** D-023
 
 ## Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project?
 - **Status:** answered 2026-11-18
@@ -97,25 +101,57 @@
 - **Recorded as:** docs/design/DESIGN.md
 
 ## Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue?
-- **Status:** open
+- **Status:** answered 2026-11-19
 - **Blocks:** Async pipeline worker retry configuration; Quarantine Queue trigger logic
 - **Who answers:** repository owner
 - **Proposed answer:** 3 retries — a common queue default; avoids over-retrying a truly corrupted file; aligns with the brief's "N eșecuri"
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Quarantine after the initial OCR failure plus three failed retries.
+- **Recorded as:** D-026
 
 ## Q-011 · What text similarity threshold defines a Near-Duplicate at upload time?
-- **Status:** open
+- **Status:** answered 2026-11-19
 - **Blocks:** Near-duplicate detection algorithm; upload warning UI
 - **Who answers:** repository owner
 - **Proposed answer:** ≥ 85 % trigram similarity on the extracted OCR text (`pg_trgm`); tunable after testing on the real Document Corpus
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Use matching act number and Act Date for the possible-duplicate warning. Exact SHA-256 matches warn and block saving.
+- **Recorded as:** D-025
 
 ## Q-012 · What expiry options are available when creating a Share Link (fixed durations, custom date, or both)?
-- **Status:** open
+- **Status:** answered 2026-11-19
 - **Blocks:** Share link creation UI; Signed URL generation parameters
 - **Who answers:** repository owner
 - **Proposed answer:** Fixed preset durations (1 day, 7 days, 30 days) plus a custom date picker; a link with no expiry is not permitted
+- **Answer:** Offer 24 hours, 7 days, 30 days, and any custom future expiry date.
+- **Recorded as:** D-024
+
+## Q-013 · Where and how will the remaining Screen designs be approved?
+- **Status:** open
+- **Blocks:** Approval and implementation of the ten remaining Screen designs. The owner deferred the approval process.
+- **Who answers:** repository owner
+- **Proposed answer:**
+- **Answer:**
+- **Recorded as:**
+
+## Q-014 · What should staff do if a required retention event has not occurred?
+- **Status:** open
+- **Blocks:** Final save for documents whose contract expires, dossier resolves, or deposit is released later. D-027 requires a confirmed date. The handling of a future event whose actual date cannot yet be confirmed is unresolved.
+- **Who answers:** repository owner
+- **Proposed answer:**
+- **Answer:**
+- **Recorded as:**
+
+## Q-015 · What should the audit record identify for an unauthenticated Share Link access?
+- **Status:** open
+- **Blocks:** Audit event fields and verification of external views and downloads. D-024 confirms the events, with recipient verification handled offline.
+- **Who answers:** repository owner
+- **Proposed answer:**
+- **Answer:**
+- **Recorded as:**
+
+## Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
+- **Status:** open
+- **Blocks:** DS-011 classification controls and validation. D-021 allows correction through editable classification. Whether a manual override of the derived Archival Indicator is also allowed is unresolved.
+- **Who answers:** repository owner
+- **Proposed answer:**
 - **Answer:**
 - **Recorded as:**
