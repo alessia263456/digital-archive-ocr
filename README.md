@@ -66,8 +66,8 @@ Alphabetical Index, while storing redacted copies of Document Scans for GDPR-saf
 | Role | Person in cabinet | Access |
 |---|---|---|
 | `admin` | Notar Public | Full access; user management; folder management; retention confirmation; share link creation (redacted or original) |
-| `arhivar` | Arhivar | Original scans; PII review queue; metadata & Act Date confirmation; inline OCR correction; manual redaction drawing; quarantine management; share link creation |
-| `cititor` | Secretar Notarial + internal staff | Redacted scans only; full-text search; no link creation |
+| `arhivar` | Arhivar + Secretar Notarial | Original scans; PII review queue; metadata & Act Date confirmation; inline OCR correction; manual redaction drawing; quarantine management; share link creation |
+| `cititor` | Other internal staff and interns | Redacted scans only; full-text search; no link creation |
 | *(unauthenticated)* | External recipient | Share link viewer only — view and download PDF of the shared copy |
 
 ---
