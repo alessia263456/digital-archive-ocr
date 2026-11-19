@@ -1,18 +1,9 @@
 # Archive workflows
 
-## D-021 · Upload review, metadata, and Document Versions
-- **Status:** approved
-- **Date:** 2026-11-19
-- **Rule:** An incomplete upload stays a private draft that authorized staff can resume. Before any official save or indexing, an `admin` or `arhivar` must confirm or correct the editable OCR metadata suggestions (including dates, amounts, document numbers, and tags), explicitly approve PII review even when no uncertain matches are flagged, and confirm the Act Date, act number, Physical Dossier Number, and Inventory Number. Enter the Act Date manually when OCR misses it. Assign the Archival Indicator from the selected document type, subtype, and Storage Context. Staff can correct the classification. The retention date requirements in D-027 also apply. DS-011 provides inline OCR correction and Redaction. Edits create a new immutable Document Version. The current approved version remains searchable and viewable during review. After approval, only the latest version is indexed. Older versions remain available to `admin` and `arhivar` through version history.
-- **Why:** Keeps draft content out of search and preserves approved versions during review.
-- **Evidence:** D-020 and owner confirmation in the requirements review
-- **Source:** user · confidence high
-- **Confirmed:** 2026-11-19
-
 ## D-022 · PII detection and Redaction coverage
 - **Status:** approved
 - **Date:** 2026-11-19
-- **Rule:** Detect Romanian CNP, IBAN, phone numbers, email addresses, and Signatory Party names. Validate CNP using weights `279146358279` and the mod-11 control digit, and validate IBAN with ISO 7064 MOD-97. Use Notarial Context Anchors for contextual detection. A valid CNP or IBAN checksum plus a nearby anchor can trigger automatic Redaction. Route names, corrupt OCR, and uncertain matches to human review. Also flag addresses, identity-card details, Signatory Party signatures, cadastral identifiers, vehicle identifiers, and CUI/CIF for Redaction. Preserve the Notary Public name, title, and signature. DS-011 combines manual Bounding Boxes with automatically detected Bounding Boxes and burns solid black pixels into the redacted copy. Keep the original intact. Remove underlying redacted PDF text and strip redacted values from text and metadata served to `cititor`. Every document requires explicit review approval under D-021.
+- **Rule:** Detect Romanian CNP, IBAN, phone numbers, email addresses, and Signatory Party names. Validate CNP using weights `279146358279` and the mod-11 control digit, and validate IBAN with ISO 7064 MOD-97. Use Notarial Context Anchors for contextual detection. A valid CNP or IBAN checksum plus a nearby anchor can trigger automatic Redaction. Route names, corrupt OCR, and uncertain matches to human review. Also flag addresses, identity-card details, Signatory Party signatures, cadastral identifiers, vehicle identifiers, and CUI/CIF for Redaction. Preserve the Notary Public name, title, and signature. DS-011 combines manual Bounding Boxes with automatically detected Bounding Boxes and burns solid black pixels into the redacted copy. Keep the original intact. Remove underlying redacted PDF text and strip redacted values from text and metadata served to `cititor`. Every document requires explicit review approval under D-031.
 - **Why:** Defines what staff must check and what remains visible in the anonymized copy.
 - **Evidence:** Q-006, D-004, D-020, and owner confirmation in the requirements review
 - **Source:** user · confidence high
@@ -78,5 +69,23 @@
 - **Rule:** Validate the Application in the live deployment using 30 document templates supplied by the Secretar Notarial and populated with test data. Official Notary Cabinet documents are excluded from this corpus. The Secretar Notarial runs the five acceptance searches in the live deployment and the results are recorded in `INTERVIEW.md`.
 - **Why:** Validates the workflow while protecting client data.
 - **Evidence:** docs/brief.md and owner confirmation in the requirements review
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-19
+
+## D-030 · Physical Dossiers, Document Versions, and metadata changes
+- **Status:** approved
+- **Date:** 2026-11-19
+- **Rule:** Every digital document belongs to exactly one Physical Dossier. A Physical Dossier can contain many digital documents. The current dossier assignment is stored on the digital document and determines browsing and Folder Permissions. After initial approval, create a new immutable Document Version only when the underlying document file is replaced or updated. Apply metadata changes, including Physical Dossier reassignment and Notarial Nomenclature reclassification, to the digital document without creating a Document Version. Record the user, timestamp, changed field, previous value, and new value in the Append-Only Audit Log for each metadata change.
+- **Why:** Document Versions track changes to the document file. The audit log preserves the history of changes to metadata.
+- **Evidence:** Owner confirmation during Part 2 planning
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-19
+
+## D-031 · Upload review, metadata, and Document Versions
+- **Status:** approved
+- **Date:** 2026-11-19
+- **Rule:** An incomplete upload stays a private draft that authorized staff can resume. Before any official save or indexing, an `admin` or `arhivar` must confirm or correct the editable OCR metadata suggestions (including dates, amounts, document numbers, and tags), explicitly approve PII review even when no uncertain matches are flagged, and confirm the Act Date, act number, Physical Dossier Number, and Inventory Number. Enter the Act Date manually when OCR misses it. Assign the Archival Indicator from the selected document type, subtype, and Storage Context. Staff can correct the classification. The retention date requirements in D-027 also apply. DS-011 provides inline OCR correction and Redaction. Initial approval creates the first immutable Document Version. Later approval creates a new version only when the underlying document file is replaced or updated under D-030. The current approved version remains searchable and viewable during replacement review. Only the current approved version is indexed. Older versions remain available to `admin` and `arhivar` through version history.
+- **Why:** Keeps draft content out of search and preserves approved versions during review.
+- **Evidence:** D-021, D-030, and owner confirmation during Part 2 planning
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-19

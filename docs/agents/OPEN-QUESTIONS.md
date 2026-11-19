@@ -26,6 +26,11 @@
 - Q-015 · What should the audit record identify for an unauthenticated Share Link access?
 - Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
 
+### [Notarial nomenclature](questions/notarial-nomenclature.md)
+- Q-017 · How should official revisions to the Notarial Nomenclature be applied?
+- Q-018 · Should Arhivar have read-only access to the Notarial Nomenclature in the Application?
+- Q-019 · Should there be a dedicated Screen to view the Notarial Nomenclature and import CSV updates?
+
 ---
 
 ## Q-001 · What tech stack, framework, and build tools will proiect1 use?
@@ -150,7 +155,7 @@
 
 ## Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
 - **Status:** open
-- **Blocks:** DS-011 classification controls and validation. D-021 allows correction through editable classification. Whether a manual override of the derived Archival Indicator is also allowed is unresolved.
+- **Blocks:** DS-011 classification controls and validation. D-031 allows correction through editable classification. Whether a manual override of the derived Archival Indicator is also allowed is unresolved.
 - **Who answers:** repository owner
 - **Proposed answer:**
 - **Answer:**

@@ -54,3 +54,18 @@ Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs
 - Patru întrebări deschise (Q-013–Q-016) despre aprobarea machetelor rămase, evenimentele de retenție viitoare, detaliile de audit pentru accesul extern și corectarea directă a indicativului arhivistic.
 
 **Ce am făcut cu ea:** Am confirmat deciziile și macheta DS-002 revizuită. Am înregistrat corectarea rolurilor în `19d134d` și alinierea deciziilor, documentației și designului în `1e759db`. Verificarea registrului, linterul și `git diff --check` au trecut.
+
+## 2026-11-19 · Planificarea schemei PostgreSQL și aprobarea etapei Archive Foundations
+
+**Unealta:** OpenAI Codex, Git și linterul Ledger.
+
+**Ce am cerut (pe scurt)** — Am cerut un plan pentru schema bazei de date prin procedura `/plan`. Am împărțit propunerea în etape și am pregătit pentru aprobare doar prima etapă, Archive Foundations.
+
+**Ce am primit**
+
+- O propunere în șase etape: fundația arhivei, ciorne și versiuni, permisiuni și căutare, jurnal de audit, linkuri de partajare, retenție și casare.
+- Un [plan detaliat pentru prima etapă](docs/agents/plans/part-1-archive-foundations.md), cu tabele pentru conturi, dosare fizice și nomenclatorul arhivistic. Am clarificat că un dosar fizic poate conține mai multe documente digitale, fiecare cu propriul istoric de versiuni.
+- O decizie de planificare pentru importul inițial al celor 49 de intrări din CSV-ul existent în PostgreSQL. Aplicația va consulta baza de date după import. Planul prevede teste PHPUnit pe PostgreSQL pentru constrângeri, fidelitatea importului și revenirea la starea inițială dacă importul eșuează.
+- Trei [întrebări deschise](docs/agents/questions/notarial-nomenclature.md): Q-017 despre aplicarea reviziilor oficiale și păstrarea regulilor istorice, Q-018 despre accesul de citire pentru `arhivar` și Q-019 despre un ecran dedicat consultării nomenclatorului și importului actualizărilor din CSV.
+
+**Ce am făcut cu ea** — Am confirmat D-007 și D-017 și am ajustat planul și apoi am aprobat forma lui finală pentru prima etapă.

@@ -19,7 +19,6 @@
 - D-020 · Screen inventory and role-based access control
 
 ### [Archive workflows](decisions/archive-workflows.md)
-- D-021 · Upload review, metadata, and Document Versions
 - D-022 · PII detection and Redaction coverage
 - D-023 · Archive browsing, Folder Permissions, and search
 - D-024 · Share Link access and lifecycle
@@ -28,6 +27,8 @@
 - D-027 · Retention, destruction, and retained audit evidence
 - D-028 · DOCX originals and derived PDFs
 - D-029 · Live acceptance corpus
+- D-030 · Physical Dossiers, Document Versions, and metadata changes
+- D-031 · Upload review, metadata, and Document Versions
 
 ---
 
@@ -89,6 +90,7 @@
 - **Rejected:** Multi-tenant / multi-organisation database partitioning, tenant routing, and cross-organisation isolation.
 - **Evidence:** README.md
 - **Source:** user · confidence high
+- **Confirmed:** 2026-11-19
 
 ## D-017 · In-app username and password authentication
 - **Status:** approved
@@ -98,6 +100,7 @@
 - **Rejected:** SSO, OAuth2/OIDC, email magic links, and 2FA integrations.
 - **Evidence:** README.md
 - **Source:** user · confidence high
+- **Confirmed:** 2026-11-19
 
 ## D-018 · Romanian-only user interface and system errors
 - **Status:** approved

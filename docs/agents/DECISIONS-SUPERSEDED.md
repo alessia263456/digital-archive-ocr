@@ -18,6 +18,7 @@
 - D-014 · Upload deduplication via exact hash and near-duplicate text warning · _superseded-by D-025_
 - D-015 · Quarantine Queue for consecutive OCR failures · _superseded-by D-026_
 - D-016 · Retention calculation and manual batch destruction confirmation · _superseded-by D-027_
+- D-021 · Upload review, metadata, and Document Versions · _superseded-by D-031_
 
 ---
 
@@ -118,4 +119,12 @@
 - **Why:** Romanian archival law mandates strict oversight over notarial records disposal and prohibits automated purging without Selection Commission review.
 - **Rejected:** Automatic scheduled purging/deletion of expired records; calculating retention from upload or system date.
 - **Evidence:** README.md
+- **Source:** user · confidence high
+
+## D-021 · Upload review, metadata, and Document Versions
+- **Status:** superseded-by D-031
+- **Date:** 2026-11-19
+- **Rule:** An incomplete upload stays a private draft that authorized staff can resume. Before any official save or indexing, an `admin` or `arhivar` must confirm or correct the editable OCR metadata suggestions (including dates, amounts, document numbers, and tags), explicitly approve PII review even when no uncertain matches are flagged, and confirm the Act Date, act number, Physical Dossier Number, and Inventory Number. Enter the Act Date manually when OCR misses it. Assign the Archival Indicator from the selected document type, subtype, and Storage Context. Staff can correct the classification. The retention date requirements in D-027 also apply. DS-011 provides inline OCR correction and Redaction. Edits create a new immutable Document Version. The current approved version remains searchable and viewable during review. After approval, only the latest version is indexed. Older versions remain available to `admin` and `arhivar` through version history.
+- **Why:** Keeps draft content out of search and preserves approved versions during review.
+- **Evidence:** D-020 and owner confirmation in the requirements review
 - **Source:** user · confidence high

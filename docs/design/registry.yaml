@@ -16,7 +16,7 @@ designs:
     status: approved
     design_ref: mocks/DS-002.html
     roles: [admin, arhivar, cititor]
-    decisions: [D-004, D-020, D-021, D-022, D-023, D-024]
+    decisions: [D-004, D-020, D-031, D-022, D-023, D-024]
     description: "Consultare document în regim de citire, navigare între pagini, căutare în document, descărcare PDF și partajarea versiunii selectate pentru rolurile autorizate. Link cu expirare prestabilită sau personalizată și parolă opțională. Acces la Editor și la versiunile anterioare pentru admin și arhivar."
 
   - id: DS-003
@@ -24,7 +24,7 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-002, D-020, D-021, D-025, D-026, D-028]
+    decisions: [D-002, D-020, D-031, D-025, D-026, D-028]
     description: "Încărcare multiplă PDF, JPG, PNG și DOCX, cu OCR asincron și ciorne private. Hash-ul SHA-256 identic blochează salvarea. Numărul și data actului identice declanșează avertismentul de posibil duplicat."
 
   - id: DS-004
@@ -32,7 +32,7 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-019, D-020, D-021, D-022, D-026]
+    decisions: [D-019, D-020, D-031, D-022, D-026]
     description: "Coadă pentru revizuire PII cu deschidere în DS-011. Carantină după eșecul inițial și trei reîncercări eșuate."
 
   - id: DS-005
@@ -56,7 +56,7 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-019, D-020, D-021, D-026, D-027]
+    decisions: [D-019, D-020, D-031, D-026, D-027]
     description: "Indicatori volum arhivă (documente, spațiu, scanuri), contor alerte revizuire PII și carantină, scadențe de retenție, flux activitate recentă."
 
   - id: DS-008
@@ -88,5 +88,5 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-004, D-020, D-021, D-022, D-027]
+    decisions: [D-004, D-020, D-031, D-022, D-027]
     description: "Corectare OCR, revizuire PII obligatorie, marcaje manuale și generare PDF anonimizat. Confirmarea metadatelor și datei aplicabile de retenție înainte de salvare. Indicativ derivat din clasificarea editabilă."

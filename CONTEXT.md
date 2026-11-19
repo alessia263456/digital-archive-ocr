@@ -62,7 +62,7 @@ _Avoid_: blurring, blacking out, hiding.
 **Human Review Queue** (noun) — The workflow queue for flagged PII detections awaiting review by `admin` or `arhivar`.
 _Avoid_: moderation queue, approval list, pending tasks.
 
-**Document Version** (noun) — An immutable snapshot of a Document Scan, its metadata, and its OCR output. Only the latest approved Document Version is indexed. Earlier versions are available to `admin` and `arhivar` through version history.
+**Document Version** (noun) — An immutable approved snapshot of the underlying document file. After initial approval, a file replacement or update creates a new Document Version. Metadata changes are recorded in the Append-Only Audit Log. Only the latest approved Document Version is indexed. Earlier versions are available to `admin` and `arhivar` through version history.
 _Avoid_: revision, copy, history entry.
 
 **Folder Permission** (noun) — An access control rule assigned by Physical Dossier for `cititor` and applied in all browsing modes. Access is denied by default. An individual permission takes precedence over a role permission.
