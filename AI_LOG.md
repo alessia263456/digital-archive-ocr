@@ -87,3 +87,5 @@ Codex a consemnat stadiul corpusului, intervalul disponibil pentru căutările d
 ## 2026-11-20 · P22-56a · Verificarea găzduirii temporare
 
 Codex a instalat Docker și a configurat Caddy pe mașina virtuală după aprobarea proprietarului. Redirecționarea HTTP a funcționat pe server. Conexiunile externe și validarea certificatului au expirat. Containerul a fost oprit, iar verificarea regulilor Azure rămâne deschisă.
+
+După ce proprietarul a permis traficul către porturile 80 și 443, Codex a repornit Caddy și a verificat certificatul public, redirecționarea HTTP și autentificarea. Chromium a afișat „Hello World” după autentificare. Verificările au trecut și după recrearea containerului cu același volum și certificat.
