@@ -28,7 +28,20 @@ Check off a task after verification. Record approval time, verification time, ev
 - [x] P22-56a · Deploy authenticated “Hello World”
   - Approved 2026-11-20. Docker and the isolated Caddy service were installed. Local Compose and Caddy validation passed, missing credentials failed validation as expected, and HTTP on the VM returned 308. Both public TCP connections and ACME validation timed out. Stopped the placeholder and retained its volume pending ingress inspection.
   - Verified 2026-11-20 at 18:06 EET after the owner added Allow-HTTP (310) and Allow-HTTPS (320). External HTTP returned 308 to HTTPS. Let’s Encrypt issued a trusted certificate. Anonymous requests on two paths and invalid credentials returned 401 with a Basic challenge. Chromium rendered exactly “Hello World” with valid credentials (200). Recreating only Caddy retained its TLS volume and certificate fingerprint. The same external checks passed after redeployment.
-- [ ] P22-05 · Confirm the Screen approval route
+- [x] P22-05 · Confirm the Screen approval route
+  - The owner reviews each repository mock or its screenshots in chat and explicitly approves that Screen in chat before implementation. [Q-013](../OPEN-QUESTIONS.md#q-013--where-and-how-will-the-remaining-screen-designs-be-approved)
+  - Of the 12 [registered Screens](../../design/registry.yaml), DS-002 (Document viewer) is approved. The following 11 await approval.
+    - DS-001 · Document list / Search results
+    - DS-003 · Upload
+    - DS-004 · Human Review & Quarantine Queue
+    - DS-005 · Retention & Destruction list
+    - DS-006 · Admin panel
+    - DS-007 · Dashboard
+    - DS-008 · Audit Log viewer
+    - DS-009 · Public share link viewer
+    - DS-010 · Login
+    - DS-011 · Document Editor & Anonymization
+    - DS-012 · Notarial Nomenclature
 - [ ] P22-49a · Inventory first corpus batch
 
 ## Day 2 · Prepare 30 test documents from about 10 templates
