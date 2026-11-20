@@ -1,0 +1,13 @@
+{
+	persist_config off
+	servers {
+		protocols h1 h2
+	}
+}
+
+arhivar.swedencentral.cloudapp.azure.com {
+	basic_auth {
+		import /run/secrets/placeholder-auth
+	}
+	respond "Hello World"
+}

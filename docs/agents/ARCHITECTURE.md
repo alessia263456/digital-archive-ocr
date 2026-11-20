@@ -63,6 +63,8 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 ## Build, deploy, runtime
 Compose runs the local Laravel service `backend` against PostgreSQL after its readiness check passes. The `pgdata` volume holds the development database `archive` and the dedicated PHPUnit database `archive_test`. On the first start PostgreSQL creates both databases. Laravel exposes its boot health route at `/up` on loopback port 8000. Rebuild after source changes. Compose also defines the one-shot `ocr-worker` service. Build it with `docker compose build ocr-worker` and verify Romanian OCR with `docker compose run --rm ocr-worker`. The service checks Tesseract TSV against a synthetic fixture. Laravel queue integration is pending. See [D-001](DECISIONS.md#D-001) and [AGENTS.md](../../AGENTS.md) sections 2 and 5.
 
+The [temporary Caddy service](../../docker/placeholder/README.md) has a separate Compose project on the Azure VM. It owns TCP 80 and 443 when running. The authenticated placeholder is live. Public HTTPS and credential checks passed before and after container recreation using the same certificate volume.
+
 ## Boundaries
 - Frontend / Backend REST API boundary with role-based token authentication.
 - Folder Permissions restrict `cititor` by Physical Dossier. External access is limited to the selected PDF through its Share Link.

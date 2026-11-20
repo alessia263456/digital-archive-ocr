@@ -77,3 +77,15 @@ Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs
 **Ce am cerut** — Implementarea planului aprobat pentru containerul OCR, cu o imagine sintetică și verificări ale textului și coordonatelor TSV.
 
 **Ce am primit** — Serviciul `ocr-worker` a extras „Știință și cultură în România” cu Tesseract 5.3.0 și modelul `ron`. Verificarea a acceptat cele cinci casete de delimitare și a respins antetul TSV incorect, lipsa unui cuvânt, coordonata negativă, înălțimea zero și depășirea limitelor imaginii. Linterul Ledger a trecut.
+
+## 2026-11-20 · P22-04 · Coordonarea predării și a testării
+
+Am aprobat planul și i-am cerut lui Codex să strângă detaliile despre predarea șabloanelor, accesul la găzduire, cele două programări cu Secretarul Notarial și predarea proiectului la curs. Confirmările se consemnează în [lista de sarcini](docs/agents/plans/p22-task-checklist.md).
+
+Codex a consemnat stadiul corpusului, intervalul disponibil pentru căutările de acceptanță și cerințele de predare pe care le-am furnizat. Pentru găzduire, am discutat oferta Azure for Students și alternativa Oracle Cloud Always Free. Am activat abonamentul Azure for Students, am creat mașina virtuală și am confirmat numele de gazdă, accesul SSH și drepturile de administrator. Voi stabili sesiunea de căutări cu Secretarul Notarial când aplicația este disponibilă online, înainte de 4 decembrie, și voi consemna rezultatele în `INTERVIEW.md`.
+
+## 2026-11-20 · P22-56a · Verificarea găzduirii temporare
+
+Codex a instalat Docker și a configurat Caddy pe mașina virtuală după aprobarea proprietarului. Redirecționarea HTTP a funcționat pe server. Conexiunile externe și validarea certificatului au expirat. Containerul a fost oprit, iar verificarea regulilor Azure rămâne deschisă.
+
+După ce proprietarul a permis traficul către porturile 80 și 443, Codex a repornit Caddy și a verificat certificatul public, redirecționarea HTTP și autentificarea. Chromium a afișat „Hello World” după autentificare. Verificările au trecut și după recrearea containerului cu același volum și certificat.
