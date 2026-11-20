@@ -15,7 +15,7 @@ Check off a task after verification. Record approval time, verification time, ev
 - [ ] P22-05 · Confirm the Screen approval route
 - [ ] P22-49a · Inventory first corpus batch
 
-## Day 2 · Prepare all 30 templates and document input
+## Day 2 · Prepare 30 test documents from about 10 templates
 
 - [ ] P22-49b · Finish the corpus inventory
 - [ ] P22-03 · React and Playwright scaffold
@@ -67,6 +67,7 @@ Check off a task after verification. Record approval time, verification time, ev
 - [ ] P22-26 · Retention calculation and validation
 - [ ] P22-30a · Design DS-005
 - [ ] P22-30b · Design DS-007
+- [ ] Design and build DS-012 for Nomenclature browsing and CSV revisions
 - [ ] P22-30c · Design DS-008
 - [ ] P22-30d · Review DS-009 mock
 

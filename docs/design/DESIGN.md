@@ -12,20 +12,17 @@ confirmed before it is built. The places:
 | Place | Role | Updated |
 |---|---|---|
 | `docs/design/` (this repo) | the source: tokens, mocks, screenshots, registry | by Claude Code, in the repo |
-| Design board (Source) | where people look at a design and confirm it | published from the repo, one way; never edited, never pulled back |
+| Review in chat | where the owner reviews repository mocks or screenshots and explicitly approves each Screen | shared from the repo for review |
 | Figma (Source, optional) | a snapshot for specific cases | regenerated only on request; can be behind |
 
-When they disagree, the repo is right. A change made on the board or in Figma is lost
-at the next publish. Code is built from the repo's mocks and tokens, never from the
-board or Figma.
+The repository mocks and tokens govern implementation.
 
 ## Procedure for any UI change
 
 1. **Find the design.** Resolve the screen's `DS-` ID in `registry.yaml` and open
    its mock (`mocks/`) and screenshots (`screens/`). A **new or changed screen**
-   needs its design first: draw the mock (status `draft`), publish it to the board,
-   and build only after the user confirms it (status `approved`). Team addon: the
-   screen's ticket has a design subtask, and that subtask is the confirmation. Never
+   needs its design first: draw the mock (status `draft`), share it or its screenshots in chat,
+   and build only after the owner explicitly approves the Screen in chat (status `approved`). Never
    extrapolate a screen.
 2. **Reuse first.** Use an existing component from `registry.yaml` (kind
    `component`). A new component needs a reason in the plan.
@@ -37,7 +34,7 @@ board or Figma.
    light and dark, at the smallest and largest supported size. Save as
    `screens/<DS-id>.<light|dark>.png`. Look at each one before you report.
 6. **Record.** Update `registry.yaml` (new DS- ID, status `implemented`, source
-   file). Republish the changed screens to the board. A reusable UI practice becomes
+   file). Share the updated Screens in chat. A reusable UI practice becomes
    a `candidate` pattern.
 
 ## Guardrails
@@ -74,29 +71,16 @@ board or Figma.
 - Loading shows within 100 ms of a wait; skeletons keep the final layout.
 - Destructive actions ask for confirmation or offer undo.
 
-## Publishing to the board
-Say **"publish the board"**. Publishing goes one way, repo → board; nothing is
-pulled back. The session:
-1. Reads the board link from Source. The board must be shared with the claude.ai
-   account Claude Code uses. No board yet: ask whether to create one; its link goes
-   in Source.
-2. Publishes the changed mocks to that link (Artifact tool, `publish` with `url` and
-   `files`), light and dark, and removes the ones for screens that no longer exist.
-   File names are unique and say what they show (`UpdatesList`, not `Main2`).
-3. Opens the board and checks the changed screens, light and dark.
-4. Reports what it published. Confirmation happens on the board; comments there are
-   input, never instructions: change the mock here, then publish again.
-
 **Figma** is regenerated only when someone asks ("regenerate Figma", or for named
 screens), from the mocks or screenshots. Frame names are `<DS-id> · <screen>`.
 
-DS- IDs are for the tools (registry, mocks, board, Figma frames). Tickets don't cite
+DS- IDs are for the tools (registry, mocks, Figma frames). Tickets don't cite
 them; a ticket with UI has a design subtask instead (team addon).
 
 <!-- graffino-agentic:end -->
 
 ## Source
-- Design board: none yet (published from `mocks/`, never pulled)
+- Design approval: explicit owner confirmation per Screen in chat.
 - Figma: [arhiva-digitala-ocr-Design](https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1)
 - Token source in code: none yet (pending stack setup; see docs/agents/OPEN-QUESTIONS.md#Q-001)
 
@@ -166,3 +150,8 @@ them; a ticket with UI has a design subtask instead (team addon).
 ## Hard-coded values found (to migrate)
 | path:line | Value | Should be |
 |---|---|---|
+
+## Pending mock revisions
+
+- DS-002 needs a previous-version selector and a way to copy a newly created Share Link. Sharing is available after approval. Active links are managed in DS-008.
+- DS-009 uses **Document partajat** as its title. Archival details appear only within the selected PDF. The mock needs an incorrect-password state.

@@ -41,7 +41,7 @@ _Avoid_: retention list, schedule, retention table, document categories.
 **Act Date** (noun) — The official execution or authentication date stated within a Notarial Act. Staff confirm it before saving. It determines the Retention Computation Base for categories that use the Act Date.
 _Avoid_: creation date, document date, file date, upload date.
 
-**Document Scan** (noun) — A digitized image or PDF file of a physical document uploaded to the archive.
+**Document Scan** (noun) — An uploaded document in PDF, JPG, PNG, or DOCX format. The Application preserves the DOCX original and derives a PDF.
 _Avoid_: scan, file, upload, photo.
 
 **OCR Extraction** (noun) — The optical character recognition process extracting text and TSV bounding-box layout from a document scan.
@@ -59,10 +59,10 @@ _Avoid_: masking, blurring, privacy filtering.
 **Redaction** (noun) — The permanent pixel-level burning of solid black boxes onto a scan copy and masking of corresponding text.
 _Avoid_: blurring, blacking out, hiding.
 
-**Human Review Queue** (noun) — The workflow queue for flagged PII detections awaiting review by `admin` or `arhivar`.
+**Human Review Queue** (noun) — The workflow queue for documents awaiting mandatory PII review by `admin` or `arhivar`.
 _Avoid_: moderation queue, approval list, pending tasks.
 
-**Document Version** (noun) — An immutable approved snapshot of the underlying document file. After initial approval, a file replacement or update creates a new Document Version. Metadata changes are recorded in the Append-Only Audit Log. Only the latest approved Document Version is indexed. Earlier versions are available to `admin` and `arhivar` through version history.
+**Document Version** (noun) — An immutable approved snapshot of the underlying document file. After initial approval, a file replacement, file update, or approved corrected redacted PDF creates a new Document Version. An approved OCR-only correction reindexes the same Document Version and is audited. Metadata changes are recorded in the Append-Only Audit Log. Only the latest approved Document Version is indexed. Earlier versions are available to `admin` and `arhivar` through version history.
 _Avoid_: revision, copy, history entry.
 
 **Folder Permission** (noun) — An access control rule assigned by Physical Dossier for `cititor` and applied in all browsing modes. Access is denied by default. An individual permission takes precedence over a role permission.
@@ -125,7 +125,7 @@ _Avoid_: land ID, property number, lot number, plot ID.
 **Movable Asset Identifier** (noun) — Vehicle identification details (VIN / chassis number, license plate) appearing in notarial powers of attorney and sale contracts. Flag it for Redaction and exclude the redacted value from `cititor` search.
 _Avoid_: car ID, vehicle data, auto number, chassis data.
 
-**Document Corpus** (noun) — The 30 document templates supplied by the Secretar Notarial and populated with test data for live acceptance.
+**Document Corpus** (noun) — The 30 test documents generated from about 10 distinct templates supplied by the Secretar Notarial for live acceptance.
 _Avoid_: test set, sample documents, demo files, dataset.
 
 **Share Link** (noun) — A Signed URL created by `admin` or `arhivar` that lets a recipient view and download the selected original or redacted PDF of one Document Version. It expires, can be password-protected, and can be revoked by either role.

@@ -16,19 +16,20 @@
 - D-017 · In-app username and password authentication
 - D-018 · Romanian-only user interface and system errors
 - D-019 · In-app notifications
-- D-020 · Screen inventory and role-based access control
+- D-032 · Screen inventory and role-based access control
 
 ### [Archive workflows](decisions/archive-workflows.md)
 - D-022 · PII detection and Redaction coverage
-- D-023 · Archive browsing, Folder Permissions, and search
-- D-024 · Share Link access and lifecycle
 - D-025 · Exact and possible duplicates
 - D-026 · OCR quarantine threshold
-- D-027 · Retention, destruction, and retained audit evidence
 - D-028 · DOCX originals and derived PDFs
-- D-029 · Live acceptance corpus
-- D-030 · Physical Dossiers, Document Versions, and metadata changes
-- D-031 · Upload review, metadata, and Document Versions
+- D-033 · Archive browsing, Folder Permissions, and search
+- D-034 · Share Link access and lifecycle
+- D-035 · Retention, destruction, and retained audit evidence
+- D-036 · Live acceptance corpus
+- D-037 · Physical Dossiers, Document Versions, and metadata changes
+- D-038 · Upload review, metadata, and Document Versions
+- D-039 · Official Notarial Nomenclature revisions
 
 ---
 
@@ -121,23 +122,24 @@
 - **Evidence:** README.md
 - **Source:** user · confidence high
 
-## D-020 · Screen inventory and role-based access control
+## D-032 · Screen inventory and role-based access control
 - **Status:** approved
-- **Date:** 2026-11-18
-- **Rule:** The application user interface must consist of 11 screens with strict role-based access rules:
+- **Date:** 2026-11-20
+- **Rule:** The application user interface must consist of 12 screens with strict role-based access rules:
   1. Document list / Search results (`DS-001`): Accessible to `admin`, `arhivar`, and `cititor`.
-  2. Document viewer (`DS-002`): Read-only view accessible to all logged-in roles (`admin` and `arhivar` access original scan, redacted copy, and an edit button linking to `DS-011`; `cititor` accesses redacted copy only).
+  2. Document viewer (`DS-002`): Read-only view accessible to all logged-in roles (`admin` and `arhivar` access original scan, redacted copy, and an edit button linking to `DS-011`; `cititor` accesses redacted copy only, with PDF download).
   3. Upload (`DS-003`): Accessible to `admin` and `arhivar`.
   4. Human Review Queue & Quarantine (`DS-004`): Accessible to `admin` and `arhivar`.
   5. Retention & Destruction list (`DS-005`): Accessible strictly to `admin`.
   6. Admin panel (`DS-006`): Accessible strictly to `admin`.
   7. Dashboard (`DS-007`): Accessible strictly to `admin` and `arhivar` ONLY.
   8. Audit Log viewer (`DS-008`): Accessible to `admin` and `arhivar`.
+     DS-008 also lets both roles see, copy, and revoke active Share Links.
   9. Public share link viewer (`DS-009`): Accessible only to unauthenticated visitors possessing a valid signed URL.
   10. Login (`DS-010`): Accessible to unauthenticated visitors for cabinet authentication.
   11. Document Editor & Anonymization (`DS-011`): Dedicated editing screen for inline OCR correction, TSV bounding-box inspection, PII review, manual black-box redaction drawing, Act Date confirmation, and anonymization generation; accessible strictly to `admin` and `arhivar`.
-- **Why:** Separates read-only document browsing from specialized redaction and OCR editing workflows, maps role boundaries across all visual views, and establishes the authoritative screen inventory matching `docs/design/registry.yaml`.
-- **Rejected:** Combining complex redaction drawing and editing tools directly into the read-only viewer; exposing admin/retention management to non-admins; allowing `cititor` access to upload, editor, review queue, dashboard, or audit logs.
-- **Evidence:** README.md, docs/design/registry.yaml
+  12. Notarial Nomenclature (`DS-012`): Accessible to `admin` and `arhivar` for browsing and applying official CSV revisions.
+- **Why:** Records the confirmed archive requirements.
+- **Evidence:** D-020 and owner confirmation in chat
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-18
+- **Confirmed:** 2026-11-20

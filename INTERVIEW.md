@@ -71,7 +71,7 @@ Pentru că un document este valid doar în forma lui fizică, tipărită, ștamp
 
 ## 3. Verificare și Căutare în Aplicație (Cerință Definition of Done)
 
-> Notă: Această secțiune va fi completată după încărcarea corpusului de 30 de documente reale și testarea căutării full-text de către persoana din cabinet.
+> Notă: Această secțiune va fi completată după încărcarea corpusului de 30 de documente cu date de test, obținute din aproximativ 10 șabloane și testarea căutării full-text de către persoana din cabinet.
 
 | # | Document căutat | Criterii căutare (cuvinte-cheie / filtre) | Timp răspuns (< 2s) | Rezultat găsit corect (Da/Nu) | Observații arhivar |
 |---|-----------------|-------------------------------------------|---------------------|-------------------------------|--------------------|

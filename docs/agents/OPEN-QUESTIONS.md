@@ -21,15 +21,15 @@
 - Q-010 · How many consecutive OCR processing failures before a document is moved to the Quarantine Queue? · _answered_
 - Q-011 · What text similarity threshold defines a Near-Duplicate at upload time? · _answered_
 - Q-012 · What expiry options are available when creating a Share Link (fixed durations, custom date, or both)? · _answered_
-- Q-013 · Where and how will the remaining Screen designs be approved?
-- Q-014 · What should staff do if a required retention event has not occurred?
-- Q-015 · What should the audit record identify for an unauthenticated Share Link access?
-- Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
+- Q-013 · Where and how will the remaining Screen designs be approved? · _answered_
+- Q-014 · What should staff do if a required retention event has not occurred? · _answered_
+- Q-015 · What should the audit record identify for an unauthenticated Share Link access? · _answered_
+- Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong? · _answered_
 
 ### [Notarial nomenclature](questions/notarial-nomenclature.md)
-- Q-017 · How should official revisions to the Notarial Nomenclature be applied?
-- Q-018 · Should Arhivar have read-only access to the Notarial Nomenclature in the Application?
-- Q-019 · Should there be a dedicated Screen to view the Notarial Nomenclature and import CSV updates?
+- Q-017 · How should official revisions to the Notarial Nomenclature be applied? · _answered_
+- Q-018 · Should Arhivar have read-only access to the Notarial Nomenclature in the Application? · _answered_
+- Q-019 · Should there be a dedicated Screen to view the Notarial Nomenclature and import CSV updates? · _answered_
 
 ---
 
@@ -99,7 +99,7 @@
 
 ## Q-009 · Will a Figma account be used as an external design source / snapshot tool for this project?
 - **Status:** answered 2026-11-18
-- **Blocks:** `docs/design/DESIGN.md` Source section; design board publishing workflow
+- **Blocks:** `docs/design/DESIGN.md` Source section and optional Figma snapshots
 - **Who answers:** repository owner
 - **Proposed answer:**
 - **Answer:** Yes, external Figma design project linked at https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1 as an external snapshot/review board.
@@ -130,33 +130,33 @@
 - **Recorded as:** D-024
 
 ## Q-013 · Where and how will the remaining Screen designs be approved?
-- **Status:** open
-- **Blocks:** Approval and implementation of the ten remaining Screen designs. The owner deferred the approval process.
+- **Status:** answered 2026-11-20
+- **Blocks:** Approval and implementation of the remaining Screen designs.
 - **Who answers:** repository owner
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Review repository mocks or screenshots in chat and explicitly approve each Screen in chat.
+- **Recorded as:** docs/design/DESIGN.md
 
 ## Q-014 · What should staff do if a required retention event has not occurred?
-- **Status:** open
-- **Blocks:** Final save for documents whose contract expires, dossier resolves, or deposit is released later. D-027 requires a confirmed date. The handling of a future event whose actual date cannot yet be confirmed is unresolved.
+- **Status:** answered 2026-11-20
+- **Blocks:** Final save for documents whose contract expires, dossier resolves, or deposit is released later.
 - **Who answers:** repository owner
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Approve with the retention date pending when unknown. Enter it once confirmed and keep the document off the Destruction List until a deadline can be calculated. Confirm known future contractual expiry dates at approval.
+- **Recorded as:** D-035
 
 ## Q-015 · What should the audit record identify for an unauthenticated Share Link access?
-- **Status:** open
-- **Blocks:** Audit event fields and verification of external views and downloads. D-024 confirms the events, with recipient verification handled offline.
+- **Status:** answered 2026-11-20
+- **Blocks:** Audit event fields and verification of external views and downloads.
 - **Who answers:** repository owner
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Record link ID, exact Document Version, action, and time for every external view or download. Verify recipient identity offline.
+- **Recorded as:** D-034
 
 ## Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong?
-- **Status:** open
-- **Blocks:** DS-011 classification controls and validation. D-031 allows correction through editable classification. Whether a manual override of the derived Archival Indicator is also allowed is unresolved.
+- **Status:** answered 2026-11-20
+- **Blocks:** DS-011 classification controls and validation.
 - **Who answers:** repository owner
 - **Proposed answer:**
-- **Answer:**
-- **Recorded as:**
+- **Answer:** Correct the document type, subtype, or Storage Context so the Application derives the proper Archival Indicator and retention rule.
+- **Recorded as:** D-038
