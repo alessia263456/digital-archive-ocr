@@ -77,7 +77,7 @@ reported with its output; never call a failed or skipped check done.
 - A reusable practice you established → `candidate` entry in `docs/agents/PATTERNS.md`.
 - A constraint the work settled → decision PROPOSAL to the user.
 - A question that came up and stays open → `Q-` entry.
-- Commit: `<type>(<scope>): <what and why>` with the session's co-author trailer.
+- Commit: `<type>(<scope>): <what and why>`. Omit `Co-authored-by` trailers (see AGENTS.md).
 
 ## 7. Report
 What changed (files), tests (added · passing · assertions changed: must be 0),

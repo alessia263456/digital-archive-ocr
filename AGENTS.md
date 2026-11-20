@@ -58,6 +58,7 @@ without new evidence. A rejected proposal is added there with the reason.
   to make code pass; an assertion you think is wrong goes to the user.
 - Never write a secret, token, password or personal data into a file, commit or log.
 - Never push, tag, release, or deploy without the user's go for that action.
+- Omit `Co-authored-by` trailers from every commit in this repository.
 - When you cite past work, label the intent: **replicate** (only for an `approved`
   pattern) or **for awareness only**. History is not a template.
 - The code wins over any document. When they disagree, say so and fix the document.
