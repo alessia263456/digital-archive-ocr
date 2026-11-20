@@ -1,3 +1,39 @@
 services:
   ocr-worker:
     build: ./docker/ocr-worker
+
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: archive
+      POSTGRES_USER: archive
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/backend/init-test-database.sql:/docker-entrypoint-initdb.d/01-test.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "archive", "-d", "archive"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: local
+      APP_KEY:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: archive
+      DB_USERNAME: archive
+      DB_PASSWORD:
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+
+volumes:
+  pgdata:

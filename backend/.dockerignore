@@ -1,0 +1,8 @@
+.env*
+!.env.example
+vendor/
+auth.json
+.phpunit*
+storage/*.key
+storage/logs/*.log
+bootstrap/cache/*.php

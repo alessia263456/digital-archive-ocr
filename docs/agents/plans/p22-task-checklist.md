@@ -13,7 +13,10 @@ Check off a task after verification. Record approval time, verification time, ev
   - Compose configuration and image build passed. Tesseract 5.3.0 with `ron` read “Știință și cultură în România” and emitted five valid TSV word Bounding Boxes.
   - Negative verification rejected a malformed TSV header, a missing word, a negative left coordinate, zero height, and an out-of-bounds word. Ledger lint passed.
   - The sandbox initially blocked writes to Docker Buildx state and access to the Docker socket. Both checks passed with escalation.
-- [ ] P22-02 · Laravel, PostgreSQL and PHPUnit scaffold
+- [x] P22-02 · Laravel, PostgreSQL and PHPUnit scaffold
+  - Build approved on 2026-11-20 before setup at 13:38 EET. Verified by 13:44 EET. Exact approval time and review duration were not measured.
+  - Laravel 13.43.0 returned HTTP 200 at `/up`. All three scaffold migrations ran on a fresh PostgreSQL 17 database. PHPUnit 12.5.45 passed twice (3 tests, 6 assertions). The first run migrated only `archive_test` and left the development schema empty.
+  - The Composer image lacked `mbstring`. In the backend image the smoke test rejected the SQLite configuration as expected, then passed with PostgreSQL. Compose validation, the backend image build, Composer platform checks, Romanian OCR and Ledger lint passed.
 - [ ] P22-04 · Corpus, live access and submission logistics
 - [ ] P22-56a · Deploy authenticated “Hello World”
 - [ ] P22-05 · Confirm the Screen approval route

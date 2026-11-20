@@ -1,6 +1,6 @@
 # Plan — P22-02 · Laravel, PostgreSQL and PHPUnit scaffold
 
-**Status:** Plan approved on 2026-11-20. Build authorization pending.
+**Status:** Plan approved on 2026-11-20. Build authorized and verified on 2026-11-20. See the [task checklist](p22-task-checklist.md).
 
 ## Size
 
@@ -31,7 +31,7 @@ Scaffold Laravel under `backend/` using its standard project structure, boot hea
 | 4 | The existing OCR workflow still runs independently | Run `docker compose run --rm ocr-worker` and check the Romanian text and TSV result. |
 | 5 | The Ledger passes validation | Run `python3 docs/agents/tools/ledger-lint.py`. |
 
-Playwright and screenshots are outside this backend-only task. Implementation checks are pending approval.
+Playwright and screenshots are outside this backend-only task.
 
 ## Sequencing
 

@@ -6,5 +6,11 @@
 <!-- graffino-agentic:end -->
 
 ## Index
+- PATTERN-001 · Isolate Laravel migration smoke tests in PostgreSQL · candidate
 
 ---
+
+## PATTERN-001 · Isolate Laravel migration smoke tests in PostgreSQL
+- **Status:** candidate
+- **How:** Select the dedicated test database in PHPUnit configuration. Check the live PDO driver and database name before applying scaffold migrations.
+- **Example:** [Migration smoke test](../../backend/tests/Feature/MigrationSmokeTest.php) and [PHPUnit configuration](../../backend/phpunit.xml).

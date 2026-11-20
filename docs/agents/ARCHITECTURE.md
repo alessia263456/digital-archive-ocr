@@ -26,9 +26,9 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 | Part | Path | Responsibility | Talks to |
 |---|---|---|---|
 | Frontend | `frontend/` (pending) | React visual UI for archive browsing, scan uploads, bounding box correction, and archivist review | Laravel Backend |
-| Backend API | `backend/` (pending) | Laravel application: auth, folder permissions, versioning, PII detection, retention | PostgreSQL, Storage, Tesseract |
+| Backend API | `backend/` | Laravel scaffold and boot health check. Archive workflows are planned. | PostgreSQL, Storage, Tesseract |
 | OCR Engine | `docker/ocr-worker/` | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Planned Laravel integration |
-| Database | Docker service | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
+| Database | Compose service `postgres` | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
 | Storage | Private object storage | Original Document Scans and derived redacted copies | Laravel Backend |
 | Visual Testing | `frontend/` (Playwright) | Automated desktop and mobile screenshot capture in light/dark themes ([D-006](DECISIONS.md#D-006)) | Frontend UI |
 
@@ -54,14 +54,14 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 ## Configuration
 | Name | Where set | Used by | Notes |
 |---|---|---|---|
-| `DB_*` | `.env` / Docker Compose | Laravel Backend | PostgreSQL connection parameters |
-| `APP_KEY` | `.env` | Laravel Backend | Encryption key |
+| `DB_*` | Compose environment | Laravel Backend | PostgreSQL connection parameters |
+| `APP_KEY` | Compose environment | Laravel Backend | Encryption key |
 | `TESSERACT_PATH` | `.env` | Laravel Backend | Path to Tesseract binary with `ron` support |
 | `VITE_*` | `frontend/.env` | React Frontend | API URL and frontend environment |
 <!-- names only, never values -->
 
 ## Build, deploy, runtime
-Docker Compose currently defines the one-shot `ocr-worker` service. Build it with `docker compose build ocr-worker` and verify Romanian OCR with `docker compose run --rm ocr-worker`. The service checks Tesseract TSV against a synthetic fixture. Laravel queue integration is pending. See [D-001](DECISIONS.md#D-001) and [AGENTS.md](../../AGENTS.md) sections 2 and 5.
+Compose runs the local Laravel service `backend` against PostgreSQL after its readiness check passes. The `pgdata` volume holds the development database `archive` and the dedicated PHPUnit database `archive_test`. On the first start PostgreSQL creates both databases. Laravel exposes its boot health route at `/up` on loopback port 8000. Rebuild after source changes. Compose also defines the one-shot `ocr-worker` service. Build it with `docker compose build ocr-worker` and verify Romanian OCR with `docker compose run --rm ocr-worker`. The service checks Tesseract TSV against a synthetic fixture. Laravel queue integration is pending. See [D-001](DECISIONS.md#D-001) and [AGENTS.md](../../AGENTS.md) sections 2 and 5.
 
 ## Boundaries
 - Frontend / Backend REST API boundary with role-based token authentication.

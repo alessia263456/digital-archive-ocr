@@ -87,18 +87,19 @@ Supports document scan uploads, Romanian OCR text extraction with bounding boxes
 React frontend, Laravel backend, PostgreSQL database, and Docker containerization ([D-001](docs/agents/DECISIONS.md#D-001)).
 
 ```bash
-# install
-# not run: pending project scaffolding
+# Local backend. Supply APP_KEY and DB_PASSWORD from your password manager.
+# For a new disposable environment you can generate both in this shell:
+export APP_KEY="base64:$(openssl rand -base64 32)"
+export DB_PASSWORD="$(openssl rand -hex 32)"
+# Reuse the same values on subsequent starts with the same database volume.
+docker compose up --build -d backend
+docker compose exec backend php artisan migrate
+curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
+docker compose exec backend vendor/bin/phpunit
 
-# build
-# not run: pending project scaffolding
-
-# run
+# Romanian OCR smoke
 docker compose build ocr-worker
 docker compose run --rm ocr-worker
-
-# test (backend)
-# not run: pending Laravel PHPUnit setup (see D-003)
 
 # lint / type-check
 python3 docs/agents/tools/ledger-lint.py
