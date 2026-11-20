@@ -94,7 +94,8 @@ React frontend, Laravel backend, PostgreSQL database, and Docker containerizatio
 # not run: pending project scaffolding
 
 # run
-# not run: pending docker-compose configuration
+docker compose build ocr-worker
+docker compose run --rm ocr-worker
 
 # test (backend)
 # not run: pending Laravel PHPUnit setup (see D-003)

@@ -1,10 +1,10 @@
 # Plan — P22-01 · Container and Romanian OCR smoke
 
-**Status:** Draft. Awaiting build approval.
+**Status:** Approved for build on 2026-11-20.
 
 ## Size
 
-S · 90-minute roadmap checkpoint. One Docker Compose worker, one synthetic PNG, and one repeatable integration check. [Day 1 roadmap](p22-14-day-roadmap.md#day-1--start-the-stack-and-take-delivery-of-the-corpus)
+S · 90-minute roadmap checkpoint. One Docker Compose worker, one synthetic PNG, and one repeatable integration check. [Day 1 roadmap](p22-roadmap.md#day-1--start-the-stack-and-take-delivery-of-the-corpus)
 
 ## Approach
 

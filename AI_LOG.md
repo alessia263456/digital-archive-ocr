@@ -69,3 +69,11 @@ Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs
 - Trei [întrebări deschise](docs/agents/questions/notarial-nomenclature.md): Q-017 despre aplicarea reviziilor oficiale și păstrarea regulilor istorice, Q-018 despre accesul de citire pentru `arhivar` și Q-019 despre un ecran dedicat consultării nomenclatorului și importului actualizărilor din CSV.
 
 **Ce am făcut cu ea** — Am confirmat D-007 și D-017 și am ajustat planul și apoi am aprobat forma lui finală pentru prima etapă.
+
+## 2026-11-20 · P22-01 · Verificarea OCR în limba română
+
+**Unealta:** OpenAI Codex, Docker Compose și Tesseract.
+
+**Ce am cerut** — Implementarea planului aprobat pentru containerul OCR, cu o imagine sintetică și verificări ale textului și coordonatelor TSV.
+
+**Ce am primit** — Serviciul `ocr-worker` a extras „Știință și cultură în România” cu Tesseract 5.3.0 și modelul `ron`. Verificarea a acceptat cele cinci casete de delimitare și a respins antetul TSV incorect, lipsa unui cuvânt, coordonata negativă, înălțimea zero și depășirea limitelor imaginii. Linterul Ledger a trecut.

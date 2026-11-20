@@ -2,13 +2,17 @@
 
 **Status:** Revised draft. Roadmap approval is pending and all tasks await individual approval.
 
-See the [14-day roadmap](p22-14-day-roadmap.md) for scope, dependencies, verification and daily outcomes.
+See the [14-day roadmap](p22-roadmap.md) for scope, dependencies, verification and daily outcomes.
 
 Check off a task after verification. Record approval time, verification time, evidence and any blockers under the entry. Track your active review time separately from elapsed turnaround. Use Days 1–2 measurements and the Day 4 checkpoint to update the delivery forecast.
 
 ## Day 1 · Start the stack and take delivery of the corpus
 
-- [ ] P22-01 · Container and Romanian OCR smoke
+- [x] P22-01 · Container and Romanian OCR smoke
+  - Approved on 2026-11-20 before local setup at 08:58 EET. Verified by 09:02 EET. The timed setup and verification window was about four minutes. Exact approval time and approval wait were not measured.
+  - Compose configuration and image build passed. Tesseract 5.3.0 with `ron` read “Știință și cultură în România” and emitted five valid TSV word Bounding Boxes.
+  - Negative verification rejected a malformed TSV header, a missing word, a negative left coordinate, zero height, and an out-of-bounds word. Ledger lint passed.
+  - The sandbox initially blocked writes to Docker Buildx state and access to the Docker socket. Both checks passed with escalation.
 - [ ] P22-02 · Laravel, PostgreSQL and PHPUnit scaffold
 - [ ] P22-04 · Corpus, live access and submission logistics
 - [ ] P22-56a · Deploy authenticated “Hello World”

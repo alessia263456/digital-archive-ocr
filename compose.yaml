@@ -1,0 +1,3 @@
+services:
+  ocr-worker:
+    build: ./docker/ocr-worker

@@ -27,7 +27,7 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 |---|---|---|---|
 | Frontend | `frontend/` (pending) | React visual UI for archive browsing, scan uploads, bounding box correction, and archivist review | Laravel Backend |
 | Backend API | `backend/` (pending) | Laravel application: auth, folder permissions, versioning, PII detection, retention | PostgreSQL, Storage, Tesseract |
-| OCR Engine | Docker (Tesseract) | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Laravel Backend |
+| OCR Engine | `docker/ocr-worker/` | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Planned Laravel integration |
 | Database | Docker service | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
 | Storage | Private object storage | Original Document Scans and derived redacted copies | Laravel Backend |
 | Visual Testing | `frontend/` (Playwright) | Automated desktop and mobile screenshot capture in light/dark themes ([D-006](DECISIONS.md#D-006)) | Frontend UI |
@@ -61,7 +61,7 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 <!-- names only, never values -->
 
 ## Build, deploy, runtime
-Multi-container architecture managed via Docker Compose ([D-001](DECISIONS.md#D-001)). See [AGENTS.md](../../AGENTS.md) sections 2 and 5.
+Docker Compose currently defines the one-shot `ocr-worker` service. Build it with `docker compose build ocr-worker` and verify Romanian OCR with `docker compose run --rm ocr-worker`. The service checks Tesseract TSV against a synthetic fixture. Laravel queue integration is pending. See [D-001](DECISIONS.md#D-001) and [AGENTS.md](../../AGENTS.md) sections 2 and 5.
 
 ## Boundaries
 - Frontend / Backend REST API boundary with role-based token authentication.
