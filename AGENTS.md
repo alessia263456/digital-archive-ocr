@@ -105,8 +105,9 @@ docker compose run --rm ocr-worker
 # lint / type-check
 python3 docs/agents/tools/ledger-lint.py
 
-# screenshot (visual apps)
-# not run: pending Playwright setup (see D-006)
+# Build React and run Playwright on desktop and mobile in light and dark modes.
+# Screenshots are written under frontend/test-results/.
+docker compose run --build --rm frontend-test
 ```
 
 ## 3. Layout

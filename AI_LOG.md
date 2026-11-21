@@ -89,3 +89,13 @@ Codex a consemnat stadiul corpusului, intervalul disponibil pentru căutările d
 Codex a instalat Docker și a configurat Caddy pe mașina virtuală după aprobarea proprietarului. Redirecționarea HTTP a funcționat pe server. Conexiunile externe și validarea certificatului au expirat. Containerul a fost oprit, iar verificarea regulilor Azure rămâne deschisă.
 
 După ce proprietarul a permis traficul către porturile 80 și 443, Codex a repornit Caddy și a verificat certificatul public, redirecționarea HTTP și autentificarea. Chromium a afișat „Hello World” după autentificare. Verificările au trecut și după recrearea containerului cu același volum și certificat.
+
+## 2026-11-21 · P22-03 · React și Playwright
+
+**Unealta:** Codex CLI.
+
+**Ce am cerut:** Implementarea planului aprobat, cu testele scrise înaintea codului React și verificarea în Docker.
+
+**Ce am primit:** Un proiect React minimal și o comandă Compose care compilează proiectul și rulează Chromium pe desktop și mobil, în mod luminos și întunecat. GitHub Actions folosește aceeași comandă.
+
+**Verificare:** În prima rulare, titlul lipsea în toate cele patru configurații. După implementare, aceleași teste au trecut. Cele patru capturi au fost inspectate. PHPUnit și verificarea registrului au trecut local. Prima rulare găzduită în GitHub Actions așteaptă autorizarea publicării ramurii.

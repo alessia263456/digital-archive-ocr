@@ -82,7 +82,7 @@ them; a ticket with UI has a design subtask instead (team addon).
 ## Source
 - Design approval: explicit owner confirmation per Screen in chat.
 - Figma: [arhiva-digitala-ocr-Design](https://www.figma.com/design/r5IWZRotEZKlAGFdzwnPlx/arhiva-digitala-ocr-Design?node-id=0-1&m=dev&t=amZfs8cD2ZGcZonq-1)
-- Token source in code: none yet (pending stack setup; see docs/agents/OPEN-QUESTIONS.md#Q-001)
+- The [frontend theme stylesheet](../../frontend/src/theme.css) implements the Design Tokens used by the scaffold.
 
 ## Tokens
 

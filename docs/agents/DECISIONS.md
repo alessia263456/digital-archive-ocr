@@ -41,7 +41,7 @@
 - **Rejected:** Monolithic full-stack frameworks (Next.js, Nuxt), SQLite, or uncontainerized host services.
 - **Evidence:** docs/agents/OPEN-QUESTIONS.md:Q-001
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-16
+- **Confirmed:** 2026-11-21
 
 ## D-002 · Digital archive core scope and capabilities
 - **Status:** approved
@@ -61,7 +61,7 @@
 - **Rejected:** Untested backend endpoints; Pest (unless explicitly selected later).
 - **Evidence:** docs/agents/OPEN-QUESTIONS.md:Q-003
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-16
+- **Confirmed:** 2026-11-21
 
 ## D-004 · OCR extraction via Tesseract with Romanian language and TSV bounding boxes
 - **Status:** approved
@@ -81,7 +81,7 @@
 - **Rejected:** Puppeteer scripts; Cypress.
 - **Evidence:** docs/agents/OPEN-QUESTIONS.md:Q-004, docs/agents/OPEN-QUESTIONS.md:Q-007
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-16
+- **Confirmed:** 2026-11-21
 
 ## D-007 · Single-tenant Notary Cabinet scope
 - **Status:** approved
@@ -111,7 +111,7 @@
 - **Rejected:** Multi-language switchers, English UI translations, and complex i18n bundling.
 - **Evidence:** README.md
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-19
+- **Confirmed:** 2026-11-21
 
 ## D-019 · In-app notifications
 - **Status:** approved

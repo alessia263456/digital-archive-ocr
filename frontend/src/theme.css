@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light;
+  --color-bg-primary: #faf8f5;
+  --color-text-primary: #072d5c;
+  --font-body: 'Public Sans', system-ui, sans-serif;
+  --font-heading: var(--font-body);
+  --text-body: 400 16px/24px var(--font-body);
+  --text-h1: 700 32px/40px var(--font-heading);
+  --space-md: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg-primary: #1e293b;
+    --color-text-primary: #f8fafc;
+  }
+}
+
+body {
+  margin: 0;
+  padding: var(--space-md);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: var(--text-body);
+}
+
+h1 {
+  margin: 0;
+  font: var(--text-h1);
+}

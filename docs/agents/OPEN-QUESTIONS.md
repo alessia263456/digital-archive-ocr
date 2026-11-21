@@ -136,6 +136,7 @@
 - **Proposed answer:**
 - **Answer:** Review repository mocks or screenshots in chat and explicitly approve each Screen in chat.
 - **Recorded as:** docs/design/DESIGN.md
+- **Confirmed:** 2026-11-21
 
 ## Q-014 · What should staff do if a required retention event has not occurred?
 - **Status:** answered 2026-11-20
