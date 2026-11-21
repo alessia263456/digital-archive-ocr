@@ -51,7 +51,7 @@ Check off a task after verification. Record approval time, verification time, ev
 - [x] P22-03 · React and Playwright scaffold
   - Approved on 2026-11-21 and verified locally at 10:39 EET. Exact approval time and active review time were not measured.
   - The initial Docker run built the empty mount and all four tests failed with “element(s) not found”. After mounting React, all four viewport/theme combinations passed with the original assertions. Inspected all four screenshots. Compose validation, the production build, PHPUnit (3 tests, 6 assertions) and Ledger lint passed.
-  - The frontend GitHub Actions job uses the verified local command. Hosted verification awaits an authorized push. PHPUnit and Ledger lint integration in CI remain a follow-up.
+  - The frontend GitHub Actions job uses the verified local command. The [first hosted frontend run](https://github.com/alessia263456/digital-archive-ocr/actions/runs/44886763178) passed on the feature branch. PHPUnit and Ledger lint integration in CI remain a follow-up.
 - [ ] P22-06a · Rasterize PDF, JPG and PNG
 - [ ] P22-06b · Verify multipage and rotated geometry
 - [ ] P22-07 · Convert DOCX and preserve the original
