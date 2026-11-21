@@ -1,0 +1,21 @@
+{
+	persist_config off
+	servers {
+		protocols h1 h2
+	}
+}
+
+arhivar.swedencentral.cloudapp.azure.com {
+	route {
+		basic_auth {
+			import /run/secrets/placeholder-auth
+		}
+		@laravel path /up /api /api/*
+		reverse_proxy @laravel backend:8000 {
+			header_up -Authorization
+		}
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

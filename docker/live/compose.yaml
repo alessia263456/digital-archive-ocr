@@ -1,0 +1,74 @@
+name: archive-live
+services:
+  caddy:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/live/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - type: bind
+        source: /etc/archive-placeholder/auth
+        target: /run/secrets/placeholder-auth
+        read_only: true
+        bind:
+          create_host_path: false
+      - tls_data:/data
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/live/backend.Dockerfile
+      target: live
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://arhivar.swedencentral.cloudapp.azure.com
+      APP_KEY: ${APP_KEY:?supply APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: archive
+      DB_USERNAME: archive
+      DB_PASSWORD: ${DB_PASSWORD:?supply DB_PASSWORD}
+    volumes:
+      - ./FrankenPHP.Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(file_get_contents('http://127.0.0.1:8000/up') === false ? 1 : 0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: archive
+      POSTGRES_USER: archive
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?supply DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "archive", "-d", "archive"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  ocr-worker:
+    profiles: [smoke]
+    build: ../ocr-worker
+
+volumes:
+  pgdata:
+  tls_data:
+    external: true
+    name: ${PLACEHOLDER_TLS_VOLUME:-archive-placeholder_tls_data}

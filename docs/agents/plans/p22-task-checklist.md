@@ -62,7 +62,12 @@ Check off a task after verification. Record approval time, verification time, ev
 - [x] P22-07 · Convert DOCX and preserve the original
   - [Approved plan](p22-07-convert-docx-and-preserve-original.md). The real Writer integration produced two PDF pages with the expected Romanian markers in order. The renderer returned pages 1 and 2. The preserved DOCX matched its pre-conversion SHA-256.
   - Eight DOCX cases passed with 43 assertions, including invalid input, timeout, missing output, retry and concurrent publication. The full Docker PHPUnit suite passed with 29 tests and 141 assertions. Backend image build, frontend production build and Ledger lint passed.
-- [ ] P22-54a · Prepare the live skeleton configuration
+- [x] P22-54a · Prepare the live skeleton configuration
+  - [Approved plan](p22-54a-live-skeleton-configuration.md) and [operator procedure](../../../docker/live/README.md). Verified locally on 2026-11-21. Both Compose configuration tests passed. Missing runtime inputs and a missing Caddy auth import failed validation as expected.
+  - The PHP 8.4.28 image passed package discovery and Composer platform checks. The HTTP probe confirmed FrankenPHP classic mode, non-root execution, required extensions and GD codecs. A synthetic render initially returned HTTP 500 because `PHP_BINARY` was empty in the web runtime. Using the installed PHP CLI produced the expected 2 × 3 image through the same HTTP request.
+  - Anonymous and invalid credentials received 401 on frontend, asset, health and API paths. Authenticated requests served React, its asset, Laravel health and JSON 404s. The backend probe received the query string and no hosting credential. Migrations survived service recreation. The separate OCR smoke produced five valid word Bounding Boxes.
+  - On disposable infrastructure the certificate fingerprint matched before cutover, after cutover and after rollback to the authenticated placeholder. The public Azure endpoint returned HTTP 308 and trusted HTTPS 401 with a Basic challenge on a read-only check. Live deployment belongs to P22-56b.
+  - PHPUnit passed on the development and FrankenPHP images (29 tests, 141 assertions each). The React production build, four Playwright viewport/theme checks and Ledger lint passed.
 
 ## Day 3 · Deploy the skeleton and prove permanent Redaction
 

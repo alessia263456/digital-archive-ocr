@@ -65,6 +65,8 @@ Compose runs the local Laravel service `backend` against PostgreSQL after its re
 
 The [temporary Caddy service](../../docker/placeholder/README.md) has a separate Compose project on the Azure VM. It owns TCP 80 and 443 when running. The authenticated placeholder is live. Public HTTPS and credential checks passed before and after container recreation using the same certificate volume.
 
+The [live skeleton configuration](../../docker/live/README.md) uses a separate Compose project named `archive-live`. Its public Caddy service serves the React build, challenges all requests using the placeholder’s bcrypt import and forwards `/up`, `/api` and `/api/*` to the private FrankenPHP classic listener. Caddy removes the hosting credential before forwarding. Laravel uses PostgreSQL on the project network. Only Caddy publishes host ports and mounts the external placeholder certificate volume. P22-56b owns the future listener switch and can restore the placeholder by stopping live Caddy and restarting placeholder Caddy.
+
 ## Boundaries
 - Frontend / Backend REST API boundary with role-based token authentication.
 - Folder Permissions restrict `cititor` by Physical Dossier. External access is limited to the selected PDF through its Share Link.

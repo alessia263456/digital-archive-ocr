@@ -12,7 +12,7 @@ def config(**inputs):
         env.pop(key, None)
     env.update(inputs)
     return subprocess.run(
-        ["docker", "compose", "--env-file", "/dev/null", "-f",
+        ["docker", "compose", "--profile", "smoke", "--env-file", "/dev/null", "-f",
          str(Path(__file__).with_name("compose.yaml")), "config", "--format", "json"],
         env=env, capture_output=True, text=True,
     )

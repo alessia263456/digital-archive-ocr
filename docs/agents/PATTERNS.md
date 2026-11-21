@@ -10,6 +10,7 @@
 - PATTERN-002 · Run frontend browser checks against the containerized production build · candidate
 - PATTERN-003 · Publish complete page sets with a directory rename · candidate
 - PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
+- PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
 
 ---
 
@@ -33,3 +34,8 @@
 - **Status:** candidate
 - **How:** Stage and validate a single derivative in a private directory on the destination filesystem. Create the final name with a hard link. Concurrent writers receive a conflict if that name already exists. Remove the temporary name during cleanup.
 - **Example:** [DOCX conversion service](../../backend/app/Services/DocxConversionService.php) and [concurrent publication test](../../backend/tests/Feature/DocxConversionServiceTest.php).
+
+## PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume
+- **Status:** candidate
+- **How:** Start the placeholder and replacement as separate local Compose projects using one synthetic hostname, a local CA and a shared disposable certificate volume. Switch only the public listener. Check the certificate fingerprint, authentication challenge and expected response before the switch, after the switch and after restoring the placeholder.
+- **Example:** [Live skeleton procedure](../../docker/live/README.md) and [verification plan](plans/p22-54a-live-skeleton-configuration.md).

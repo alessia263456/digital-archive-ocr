@@ -126,7 +126,7 @@ final class DocumentPageRenderer
 
     private function image(string $action, string $path, int $pixels, int $bytes, float $deadline, string ...$output): string
     {
-        return $this->run([PHP_BINARY, '-d', 'gd.jpeg_ignore_warning=0', dirname(__DIR__, 2).'/bin/render-page.php',
+        return $this->run([PHP_BINDIR.'/php', '-d', 'gd.jpeg_ignore_warning=0', dirname(__DIR__, 2).'/bin/render-page.php',
             $action, $path, (string) $pixels, ...$output], $deadline, $bytes);
     }
 
