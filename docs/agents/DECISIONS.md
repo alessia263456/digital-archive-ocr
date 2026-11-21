@@ -51,7 +51,7 @@
 - **Rejected:** Unversioned document overwrite; unindexed storage; unanonymized public document access.
 - **Evidence:** docs/agents/OPEN-QUESTIONS.md:Q-002
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-16
+- **Confirmed:** 2026-11-21
 
 ## D-003 · Backend automated testing with PHPUnit
 - **Status:** approved
@@ -71,7 +71,7 @@
 - **Rejected:** Cloud OCR APIs (AWS Textract, Google Cloud Vision) due to privacy, data sovereignty, and offline Docker requirements; plain text OCR output without bounding boxes.
 - **Evidence:** docs/agents/OPEN-QUESTIONS.md:Q-005
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-16
+- **Confirmed:** 2026-11-21
 
 ## D-006 · Frontend visual testing and screenshots via Playwright
 - **Status:** approved

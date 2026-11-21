@@ -118,7 +118,7 @@
 - **Why:** Records the confirmed archive requirements.
 - **Evidence:** D-029 and owner confirmation in chat
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-20
+- **Confirmed:** 2026-11-21
 
 ## D-037 · Physical Dossiers, Document Versions, and metadata changes
 - **Status:** approved

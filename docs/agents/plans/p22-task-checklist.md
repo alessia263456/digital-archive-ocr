@@ -56,7 +56,9 @@ Check off a task after verification. Record approval time, verification time, ev
   - [Approved plan](p22-06a-rasterize-pdf-jpg-and-png.md). Local implementation and backend verification ran from approximately 11:20 to 11:28 EET on 2026-11-21. Exact approval time and owner review duration were not measured.
   - The first 16 PHPUnit cases failed with the missing renderer. The complete backend suite passed with 20 tests and 77 assertions, including a late-truncated PNG regression. Concurrent publishers, timeout cleanup, file-content validation and numeric order through page 12 were verified. Backend image build, Composer platform checks, Compose configuration, React production build, Romanian OCR smoke and Ledger lint passed.
   - Internal budgets per conversion are 60 seconds, 32 MiB input, 64 pages, 180 million cumulative pixels and 128 MiB staged PNGs. Each child has a 512 MiB address-space ceiling. The test container saw 3,933,856 KiB of system RAM. Single-page fixtures took 46–75 ms and produced 1,315–61,920 bytes. The 12-page synthetic PDF took 549 ms. These are local fixture measurements. P22-06b covers representative geometry.
-- [ ] P22-06b · Verify multipage and rotated geometry
+- [x] P22-06b · Verify multipage and rotated geometry
+  - [Approved plan](p22-06b-verify-multipage-and-rotated-geometry.md). The PHPUnit fixture verified page order, displayed dimensions and all four rectangle edges on upright and quarter-turned pages.
+  - Local TEST-001 acceptance passed at 300 dpi. Pages 1 and 2 each measured 2481 × 3509 pixels in both the application and MuPDF. The four edges of the selected ink region on each page agreed within one pixel. Full PHPUnit passed with 21 tests and 98 assertions.
 - [ ] P22-07 · Convert DOCX and preserve the original
 - [ ] P22-54a · Prepare the live skeleton configuration
 
