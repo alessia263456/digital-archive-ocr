@@ -78,6 +78,10 @@ Check off a task after verification. Record approval time, verification time, ev
 - [x] P22-09b · Verify no residual PDF text
   - Approved 2026-11-21 and verified by 16:23 EET. Verified extractable target words on both pages of TEST-003 before Redaction. Its derivative had black pixels at both targets and yielded only whitespace to pdftotext. The rotated synthetic PDF passed all four pixel-edge checks. Full worker PHPUnit passed (37 tests, 175 assertions), along with Romanian OCR smoke, Compose validation, React build, four Playwright checks and ledger lint. [Approved plan](p22-08-09-ocr-persistence-and-permanent-redaction.md)
 - [ ] P22-11 · Private object storage and Signed URLs
+  - The implementation is present in commit `821d83f`: private `documents` disk with local and S3-compatible R2 configurations, encrypted URL-safe tokens, expiring Laravel signed delivery, streaming security headers, and `storage:r2-smoke`.
+  - Focused PHPUnit verification passed: `docker compose run --rm backend vendor/bin/phpunit --filter DocumentStorageTest` (12 tests, 35 assertions). The live R2 smoke command is implemented but could not run its object cycle because R2 credentials are not configured in this environment.
+  - Full PHPUnit passed in an isolated Compose project with a fresh disposable PostgreSQL volume and generated local-only credentials (49 tests, 198 assertions; 2 skipped). The existing `proiect1_pgdata` volume was left untouched. The two earlier environment errors were resolved by supplying `APP_KEY` and `DB_PASSWORD` to the fresh stack.
+  - P22-11 remains unchecked until the real R2 round-trip and Caddy/FrankenPHP delivery verification are recorded during P22-56b, as required by the approved plan.
 - [ ] P22-56b · Deploy the live skeleton
 - [ ] P22-10a · Design DS-003
 - [ ] P22-10b · Design DS-004
