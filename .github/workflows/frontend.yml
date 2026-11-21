@@ -1,0 +1,10 @@
+name: Frontend
+on: push
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose run --build --rm frontend-test

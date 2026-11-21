@@ -1,4 +1,12 @@
 services:
+  frontend-test:
+    profiles: [test]
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend-test/Dockerfile
+    volumes:
+      - ./frontend/test-results:/app/test-results
+
   ocr-worker:
     build: ./docker/ocr-worker
 
