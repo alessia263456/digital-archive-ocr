@@ -52,16 +52,15 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 | P22-05 · Confirm the Screen approval route | Q-013 | 45m | Record how the owner reviews each Screen before implementation. | Verify that the [review queue](p22-task-checklist.md#day-1--start-the-stack-and-take-delivery-of-the-corpus) accounts for all 12 registered Screens, with 11 awaiting approval and one approved. |
 | P22-49a · Inventory first corpus batch | 04, template handoff | 60m | List the first templates in CORPUS.md. Identify representative formats, quality, handwriting and PII. | Check synthetic values and choose fixtures for 06–09. |
 
-## Day 2 · Prepare all 30 templates and document input
+## Day 2 · Scaffold React and prepare document input
 
-**Outcome:** All 30 corpus entries are ready to use. Representative PDF/image/DOCX inputs produce ordered page images. The skeleton has a repeatable start procedure. Complete the placeholder deployment today if it was blocked on Day 1.
+**Outcome:** Representative PDF/image/DOCX inputs produce ordered page images. The skeleton has a repeatable start procedure. Complete the placeholder deployment today if it was blocked on Day 1.
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
-| P22-49b · Finish the corpus inventory | 49a | 90m | Complete all 30 entries and tag the five Redaction cases and search candidates. | Check distinct references, approved formats and absence of real personal data or official documents. |
 | P22-03 · React and Playwright scaffold | — | 75m | Scaffold React under frontend/. Add a React root, theme entry point and Playwright desktop/mobile configuration. | React builds. **PW:** Scaffold smoke runs on desktop and mobile with both theme modes. |
 | P22-06a · Rasterize PDF, JPG and PNG | 01–02 | 90m | Add page rendering with stable order and dimensions. | P/I: one-page PDF, JPG and PNG. |
-| P22-06b · Verify multipage and rotated geometry | 06a, 49b | 60m | Normalize orientation and validate coordinate mapping with representative inputs. | P/I: rotated and multipage fixtures produce matching page and pixel geometry. |
+| P22-06b · Verify multipage and rotated geometry | 06a, 49a (TEST-001) | 60m | Normalize orientation and validate coordinate mapping with representative inputs. | P/I: rotated and multipage fixtures produce matching page and pixel geometry. |
 | P22-07 · Convert DOCX and preserve the original | 06 | 75m | Add a DOCX conversion service. Keep the original object key separate from the derived PDF key. | Preserve DOCX bytes and derive a PDF for OCR, viewing, Redaction and sharing. **I:** Multi-page conversion and original hash comparison. |
 | P22-54a · Prepare the live skeleton configuration | 04, 01–03 | 75m | Prepare live Compose configuration, prerequisites and smoke/rollback commands. | I: validate Compose configuration and host reachability. |
 
@@ -71,7 +70,7 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
-| P22-08 · Persist OCR text and TSV | 06b, 49b | 75m | Add a Tesseract runner and TSV parser. Persist text, confidence, page and Bounding Box for each word. | Record ordered Romanian OCR words and Bounding Boxes in the rendering coordinate system. **P/I:** Diacritics, page association and malformed TSV. |
+| P22-08 · Persist OCR text and TSV | 06b, 49a (TEST-002 and TEST-004) | 75m | Add a Tesseract runner and TSV parser. Persist text, confidence, page and Bounding Box for each word. | Record ordered Romanian OCR words and Bounding Boxes in the rendering coordinate system. **P/I:** Diacritics, page association and malformed TSV. |
 | P22-09a · Burn Bounding Boxes into a new PDF | 08 | 90m | Apply solid black pixels and serialize a fresh PDF. | I: verify pixel positions and original digest. |
 | P22-09b · Verify no residual PDF text | 09a | 75m | Exercise a text-layer PDF and rotated input and fix geometry or output issues. | I: covered text cannot be extracted, and coverage matches rendered pixels. |
 | P22-11 · Private object storage and Signed URLs | 02 | 90m | Configure a private object-storage disk and add a service to issue authorized expiring delivery URLs. | Originals and derivatives are private and delivered through expiring Signed URLs. **I:** Anonymous access fails, authorized access succeeds, expiry is enforced. |
@@ -82,10 +81,11 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 
 ## Day 4 · Run batches without blocking the worker
 
-**Outcome:** The worker quarantines a corrupt item on failure four and processes the next valid item. Staff draft resume and quarantine actions work at the API level.
+**Outcome:** All 30 test documents are inventoried. The worker quarantines a corrupt item on failure four and processes the next valid item. Staff draft resume and quarantine actions work at the API level.
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
+| P22-49b · Finish the corpus inventory | 49a | 90m | Complete all 30 entries and tag the five Redaction cases and search candidates. | Check distinct references, approved formats and absence of real personal data or official documents. |
 | P22-12a · Private draft intake and status | 07–08, 11 | 90m | Add draft schema, upload and per-document status endpoints. | P: mixed batch and persisted status. |
 | P22-12b · Resume and isolate drafts | 12a | 75m | Add resume and protected draft retrieval. | P: draft access isolation and resume. |
 | P22-13a · Worker job and backoff | 08, 12a | 90m | Dispatch queued OCR to a separate worker, apply retry/backoff and persist final quarantine. | P/I: four attempts and final state. |

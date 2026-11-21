@@ -46,9 +46,8 @@ Check off a task after verification. Record approval time, verification time, ev
   - Approved 2026-11-20. On 2026-11-21 the owner confirmed synthetic data for TEST-001 through TEST-010, identified the signatures as Signatory Party signatures and clarified the vehicle registration numbers. Exact review duration was not measured.
   - The [inventory](../../../CORPUS.md#inventory) records eight scanned PDFs, one original PDF and one DOCX, with fixtures selected for P22-06 through P22-09. Follow up on single-page PDF, JPG and PNG coverage and verify the text layer of TEST-003 before the dependent checks.
 
-## Day 2 · Prepare 30 test documents from about 10 templates
+## Day 2 · Scaffold React and prepare document input
 
-- [ ] P22-49b · Finish the corpus inventory
 - [ ] P22-03 · React and Playwright scaffold
 - [ ] P22-06a · Rasterize PDF, JPG and PNG
 - [ ] P22-06b · Verify multipage and rotated geometry
@@ -68,6 +67,7 @@ Check off a task after verification. Record approval time, verification time, ev
 
 ## Day 4 · Run batches without blocking the worker
 
+- [ ] P22-49b · Finish the corpus inventory
 - [ ] P22-12a · Private draft intake and status
 - [ ] P22-12b · Resume and isolate drafts
 - [ ] P22-13a · Worker job and backoff
