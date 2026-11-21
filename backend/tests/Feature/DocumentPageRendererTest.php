@@ -42,6 +42,34 @@ class DocumentPageRendererTest extends TestCase
         self::assertSame(hash_file('sha256', $page['path']), hash_file('sha256', $again[0]['path']));
     }
 
+    public function test_multipage_pdf_rotation_maps_marks_to_display_pixels(): void
+    {
+        $pages = (new DocumentPageRenderer)->render(self::FIXTURES.'rotated-pages.pdf', $this->dest);
+        self::assertSame([1, 2], array_column($pages, 'page'));
+
+        // Both source pages are 72 × 144 points. At 300 dpi, 12 points = 50 pixels.
+        // Rectangle (x, y, w, h) in PDF points, measured from the bottom left:
+        // p1 (12, 24, 24, 36), upright; p2 (36, 72, 12, 24), rotated clockwise 90°.
+        $geometry = [
+            [300, 600, 50, 350, 150, 500],
+            [600, 300, 300, 150, 400, 200],
+        ];
+        foreach ($pages as $index => $page) {
+            [$width, $height, $left, $top, $right, $bottom] = $geometry[$index];
+            $image = imagecreatefrompng($page['path']);
+            self::assertSame([$width, $height], [$page['width'], $page['height']]);
+            self::assertSame([$width, $height], [imagesx($image), imagesy($image)]);
+            $x = intdiv($left + $right, 2);
+            $y = intdiv($top + $bottom, 2);
+            foreach ([[$left, $y], [$right - 1, $y], [$x, $top], [$x, $bottom - 1]] as [$px, $py]) {
+                self::assertSame(0, imagecolorat($image, $px, $py));
+            }
+            foreach ([[$left - 1, $y], [$right, $y], [$x, $top - 1], [$x, $bottom]] as [$px, $py]) {
+                self::assertSame(0xffffff, imagecolorat($image, $px, $py));
+            }
+        }
+    }
+
     public static function images(): array
     {
         return [['jpg'], ['png']];
