@@ -42,7 +42,9 @@ Check off a task after verification. Record approval time, verification time, ev
     - DS-010 · Login
     - DS-011 · Document Editor & Anonymization
     - DS-012 · Notarial Nomenclature
-- [ ] P22-49a · Inventory first corpus batch
+- [x] P22-49a · Inventory first corpus batch
+  - Approved 2026-11-20. On 2026-11-21 the owner confirmed synthetic data for TEST-001 through TEST-010, identified the signatures as Signatory Party signatures and clarified the vehicle registration numbers. Exact review duration was not measured.
+  - The [inventory](../../../CORPUS.md#inventory) records eight scanned PDFs, one original PDF and one DOCX, with fixtures selected for P22-06 through P22-09. Follow up on single-page PDF, JPG and PNG coverage and verify the text layer of TEST-003 before the dependent checks.
 
 ## Day 2 · Prepare 30 test documents from about 10 templates
 
