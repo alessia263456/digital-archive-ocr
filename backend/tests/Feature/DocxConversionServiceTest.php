@@ -29,7 +29,7 @@ final class DocxConversionServiceTest extends TestCase
         self::assertSame(hash('sha256', $this->original), hash('sha256', $this->disk->get('original.docx')));
         $pdf = $this->disk->path('derived/document.pdf');
         foreach ([1 => 'Prima pagină', 2 => 'A doua pagină'] as $page => $marker) {
-            $text = new Process(['pdftotext', '-f', $page, '-l', $page, $pdf, '-']);
+            $text = new Process(['pdftotext', '-nopgbrk', '-f', $page, '-l', $page, $pdf, '-']);
             self::assertSame($marker, trim($text->mustRun()->getOutput()));
         }
         $pages = (new DocumentPageRenderer)->render($pdf, $this->disk->path('pages'));

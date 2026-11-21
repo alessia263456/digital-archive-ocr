@@ -58,7 +58,7 @@
 - **Why:** Keeps the uploaded original and gives the Application a consistent format to serve.
 - **Evidence:** Owner confirmation in the requirements review
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-19
+- **Confirmed:** 2026-11-21
 
 ## D-029 · Live acceptance corpus
 - **Status:** superseded-by D-036

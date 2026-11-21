@@ -9,6 +9,7 @@
 - PATTERN-001 · Isolate Laravel migration smoke tests in PostgreSQL · candidate
 - PATTERN-002 · Run frontend browser checks against the containerized production build · candidate
 - PATTERN-003 · Publish complete page sets with a directory rename · candidate
+- PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
 
 ---
 
@@ -27,3 +28,8 @@
 - **Status:** candidate
 - **How:** Stage each conversion in a private sibling directory. Validate every expected page, then lock the parent directory around the destination check and rename. On failure remove only the current run’s staging files. Concurrent conversions can render independently.
 - **Example:** [Renderer](../../backend/app/Services/DocumentPageRenderer.php) and [concurrent publication test](../../backend/tests/Feature/DocumentPageRendererTest.php).
+
+## PATTERN-004 · Publish a local derivative with a create-only hard link
+- **Status:** candidate
+- **How:** Stage and validate a single derivative in a private directory on the destination filesystem. Create the final name with a hard link. Concurrent writers receive a conflict if that name already exists. Remove the temporary name during cleanup.
+- **Example:** [DOCX conversion service](../../backend/app/Services/DocxConversionService.php) and [concurrent publication test](../../backend/tests/Feature/DocxConversionServiceTest.php).

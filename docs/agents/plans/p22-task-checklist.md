@@ -59,7 +59,9 @@ Check off a task after verification. Record approval time, verification time, ev
 - [x] P22-06b · Verify multipage and rotated geometry
   - [Approved plan](p22-06b-verify-multipage-and-rotated-geometry.md). The PHPUnit fixture verified page order, displayed dimensions and all four rectangle edges on upright and quarter-turned pages.
   - Local TEST-001 acceptance passed at 300 dpi. Pages 1 and 2 each measured 2481 × 3509 pixels in both the application and MuPDF. The four edges of the selected ink region on each page agreed within one pixel. Full PHPUnit passed with 21 tests and 98 assertions.
-- [ ] P22-07 · Convert DOCX and preserve the original
+- [x] P22-07 · Convert DOCX and preserve the original
+  - [Approved plan](p22-07-convert-docx-and-preserve-original.md). The real Writer integration produced two PDF pages with the expected Romanian markers in order. The renderer returned pages 1 and 2. The preserved DOCX matched its pre-conversion SHA-256.
+  - Eight DOCX cases passed with 43 assertions, including invalid input, timeout, missing output, retry and concurrent publication. The full Docker PHPUnit suite passed with 29 tests and 141 assertions. Backend image build, frontend production build and Ledger lint passed.
 - [ ] P22-54a · Prepare the live skeleton configuration
 
 ## Day 3 · Deploy the skeleton and prove permanent Redaction
