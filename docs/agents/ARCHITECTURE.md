@@ -26,7 +26,7 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 | Part | Path | Responsibility | Talks to |
 |---|---|---|---|
 | Frontend | `frontend/` | React scaffold with browser-selected light and dark themes | Standalone static assets |
-| Backend API | `backend/` | Laravel scaffold and boot health check. Archive workflows are planned. | PostgreSQL, Storage, Tesseract |
+| Backend API | `backend/` | Laravel scaffold, boot health check and local PDF/JPG/PNG page rendering with Poppler and PHP GD. | PostgreSQL, Storage, Tesseract |
 | OCR Engine | `docker/ocr-worker/` | Tesseract OCR with `tesseract-ocr-ron` producing TSV word coordinates | Planned Laravel integration |
 | Database | Compose service `postgres` | PostgreSQL relational database for catalog, versions, PII detections, and access rules | Laravel Backend |
 | Storage | Private object storage | Original Document Scans and derived redacted copies | Laravel Backend |

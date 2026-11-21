@@ -19,4 +19,15 @@ On 2026-11-21 the owner confirmed that all ten documents below use synthetic dat
 | TEST-009 | Contract vânzare-cumpărare | Scanned PDF | 4 pages, slight rotation, visible borders | Names, CNP, addresses, identity-card details, land details, land-book number, cadastral number, adjoining properties, land-book extract, tax clearance certificate, marriage certificate, CNARNN extract. |
 | TEST-010 | Contract vânzare-cumpărare | Scanned PDF | 5 pages, slight rotation, low quality | Names, CNP, addresses, identity-card details, land details, land-book number, cadastral number, adjoining properties, land-book extract, tax clearance certificate, marriage certificate, CNARNN extract, IBAN. |
 
-For P22-06a, the first batch supplies PDF input. The single-page PDF, standalone JPG and PNG fixtures still need references. For P22-09b, verify that text can be extracted from the target region of TEST-003 before using it to check for residual text after Redaction.
+For P22-06a, the first batch supplies PDF input. The separate synthetic renderer fixtures are listed below. For P22-09b, verify that text can be extracted from the target region of TEST-003 before using it to check for residual text after Redaction.
+
+
+## Synthetic renderer fixtures
+
+These repository fixtures exercise P22-06a independently of live acceptance.
+
+| Input | Source and expected result |
+|---|---|
+| [Single-page PDF](backend/tests/Fixtures/rendering/mark.pdf) | A drawn black rectangle on a 72 × 144 point page. At 300 dpi the output is 300 × 600 pixels. |
+| [JPG](backend/tests/Fixtures/rendering/romanian.jpg) and [PNG](backend/tests/Fixtures/rendering/romanian.png) | JPEG encoding and unchanged copy of the [Romanian OCR smoke image](docker/ocr-worker/smoke/romanian.png). Both render at 1000 × 160 pixels. |
+| [Ordering PDF](backend/tests/Fixtures/rendering/ordering.pdf) | Twelve synthetic pages to exercise numeric order across 9 and 10 and cumulative limits. TEST-001 remains the geometry acceptance fixture for P22-06b. |

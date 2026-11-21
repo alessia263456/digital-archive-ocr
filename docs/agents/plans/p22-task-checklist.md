@@ -52,7 +52,10 @@ Check off a task after verification. Record approval time, verification time, ev
   - Approved on 2026-11-21 and verified locally at 10:39 EET. Exact approval time and active review time were not measured.
   - The initial Docker run built the empty mount and all four tests failed with “element(s) not found”. After mounting React, all four viewport/theme combinations passed with the original assertions. Inspected all four screenshots. Compose validation, the production build, PHPUnit (3 tests, 6 assertions) and Ledger lint passed.
   - The frontend GitHub Actions job uses the verified local command. The [first hosted frontend run](https://github.com/alessia263456/digital-archive-ocr/actions/runs/44886763178) passed on the feature branch. PHPUnit and Ledger lint integration in CI remain a follow-up.
-- [ ] P22-06a · Rasterize PDF, JPG and PNG
+- [x] P22-06a · Rasterize PDF, JPG and PNG
+  - [Approved plan](p22-06a-rasterize-pdf-jpg-and-png.md). Local implementation and backend verification ran from approximately 11:20 to 11:28 EET on 2026-11-21. Exact approval time and owner review duration were not measured.
+  - The first 16 PHPUnit cases failed with the missing renderer. The complete backend suite passed with 20 tests and 77 assertions, including a late-truncated PNG regression. Concurrent publishers, timeout cleanup, file-content validation and numeric order through page 12 were verified. Backend image build, Composer platform checks, Compose configuration, React production build, Romanian OCR smoke and Ledger lint passed.
+  - Internal budgets per conversion are 60 seconds, 32 MiB input, 64 pages, 180 million cumulative pixels and 128 MiB staged PNGs. Each child has a 512 MiB address-space ceiling. The test container saw 3,933,856 KiB of system RAM. Single-page fixtures took 46–75 ms and produced 1,315–61,920 bytes. The 12-page synthetic PDF took 549 ms. These are local fixture measurements. P22-06b covers representative geometry.
 - [ ] P22-06b · Verify multipage and rotated geometry
 - [ ] P22-07 · Convert DOCX and preserve the original
 - [ ] P22-54a · Prepare the live skeleton configuration

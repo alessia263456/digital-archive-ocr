@@ -94,6 +94,13 @@ class DocumentPageRendererTest extends TestCase
         $this->assertFailureAndRetry(new DocumentPageRenderer, $file);
     }
 
+    public function test_png_with_missing_end_chunk_fails_cleanly(): void
+    {
+        $input = $this->root.'/incomplete.png';
+        file_put_contents($input, substr(file_get_contents(self::FIXTURES.'romanian.png'), 0, -12));
+        $this->assertFailureAndRetry(new DocumentPageRenderer, $input);
+    }
+
     public static function limits(): array
     {
         return [

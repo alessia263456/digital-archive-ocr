@@ -99,3 +99,7 @@ După ce am permis traficul către porturile 80 și 443, Codex a repornit Caddy 
 **Ce am primit:** Un proiect React minimal și o comandă Compose care compilează proiectul și rulează Chromium pe desktop și mobil, în mod luminos și întunecat. GitHub Actions folosește aceeași comandă.
 
 **Verificare:** În prima rulare, titlul lipsea în toate cele patru configurații. După implementare, aceleași teste au trecut. Cele patru capturi au fost inspectate. PHPUnit și verificarea registrului au trecut local. Prima rulare găzduită în GitHub Actions așteaptă autorizarea publicării ramurii.
+
+## 2026-11-21 · P22-06a · Rasterizarea documentelor
+
+Codex a implementat planul aprobat pentru PDF, JPG și PNG, cu publicarea atomică a paginilor și limite de timp, memorie și volum. Primele 16 teste au eșuat deoarece serviciul lipsea. La prima rulare după implementare, două teste au arătat că procesele copil nu primeau calea executabilelor de test. După corectare, suita completă a trecut cu 20 de teste și 77 de aserțiuni. Verificarea OCR în limba română a trecut. Geometria documentelor reprezentative rămâne pentru P22-06b.
