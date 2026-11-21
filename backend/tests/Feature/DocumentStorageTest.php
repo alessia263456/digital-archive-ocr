@@ -6,6 +6,7 @@ use App\Services\DocumentStorageService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -29,7 +30,7 @@ final class DocumentStorageTest extends TestCase
 
     public function test_production_fails_when_r2_configuration_is_missing(): void
     {
-        Config::set('app.env', 'production');
+        $this->app['env'] = 'production';
         Config::set('filesystems.disks.documents.driver', 'local');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Configurația Cloudflare R2 este obligatorie în producție.');
@@ -66,6 +67,16 @@ final class DocumentStorageTest extends TestCase
         self::assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $token);
     }
 
+    public function test_signed_url_path_strictly_matches_live_caddy_api_proxy_pattern(): void
+    {
+        $url = $this->service->temporaryUrl('originals/test.pdf', Carbon::now()->addHour());
+        $path = parse_url($url, PHP_URL_PATH);
+
+        // Caddyfile defines `@laravel path /up /api /api/*`
+        // Reverse proxy forwards only requests matching this pattern to FrankenPHP
+        self::assertMatchesRegularExpression('#^/api/documents/deliver/[A-Za-z0-9_-]+$#', $path);
+    }
+
     public function test_valid_signed_url_delivers_document_with_security_headers_and_correct_mime(): void
     {
         $payload = '%PDF-1.4 synthetic content';
@@ -78,10 +89,10 @@ final class DocumentStorageTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
-        $response->assertHeader('Cache-Control', 'private, no-store, max-age=0');
+        $response->assertHeader('Cache-Control', 'max-age=0, no-store, private');
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         self::assertStringContainsString('inline', $response->headers->get('Content-Disposition') ?? '');
-        self::assertSame($payload, $response->getContent());
+        self::assertSame($payload, $response->streamedContent());
     }
 
     public function test_anonymous_request_without_signature_is_rejected_with_403_and_romanian_error(): void
