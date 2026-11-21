@@ -100,7 +100,7 @@
 - **Why:** Records the confirmed archive requirements.
 - **Evidence:** D-024 and owner confirmation in chat
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-20
+- **Confirmed:** 2026-11-21
 
 ## D-035 · Retention, destruction, and retained audit evidence
 - **Status:** approved

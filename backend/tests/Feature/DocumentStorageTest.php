@@ -1,0 +1,184 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Services\DocumentStorageService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Tests\TestCase;
+
+final class DocumentStorageTest extends TestCase
+{
+    private DocumentStorageService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Config::set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
+        Config::set('filesystems.default_document_disk', 'documents');
+        Config::set('filesystems.disks.documents', [
+            'driver' => 'local',
+            'root' => sys_get_temp_dir().'/disks/documents',
+            'visibility' => 'private',
+        ]);
+        Storage::fake('documents');
+        $this->service = new DocumentStorageService('documents');
+    }
+
+    public function test_production_fails_when_r2_configuration_is_missing(): void
+    {
+        Config::set('app.env', 'production');
+        Config::set('filesystems.disks.documents.driver', 'local');
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Configurația Cloudflare R2 este obligatorie în producție.');
+        new DocumentStorageService('documents');
+    }
+
+    public function test_stores_and_retrieves_binary_streams_on_documents_disk(): void
+    {
+        $payload = '%PDF-1.4 synthetic test pdf stream';
+        $path = 'originals/2026/test-doc.pdf';
+        $this->service->put($path, $payload);
+
+        self::assertTrue($this->service->exists($path));
+        self::assertSame($payload, stream_get_contents($this->service->readStream($path)));
+    }
+
+    public function test_generates_signed_url_with_url_safe_opaque_token_without_raw_path(): void
+    {
+        $path = 'originals/2026/confidential.pdf';
+        $this->service->put($path, 'content');
+        $expiresAt = Carbon::now()->addHour();
+
+        $url = $this->service->temporaryUrl($path, $expiresAt);
+
+        self::assertStringNotContainsString('originals/2026/confidential.pdf', $url);
+        self::assertStringNotContainsString('confidential', $url);
+        self::assertStringContainsString('/api/documents/deliver/', $url);
+        self::assertStringContainsString('signature=', $url);
+        self::assertStringContainsString('expires=', $url);
+
+        // Verify token characters are URL-safe (no +, /, or = characters in the path segment)
+        $parsedPath = parse_url($url, PHP_URL_PATH);
+        $token = basename($parsedPath);
+        self::assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $token);
+    }
+
+    public function test_valid_signed_url_delivers_document_with_security_headers_and_correct_mime(): void
+    {
+        $payload = '%PDF-1.4 synthetic content';
+        $path = 'originals/doc.pdf';
+        $this->service->put($path, $payload);
+
+        $url = $this->service->temporaryUrl($path, Carbon::now()->addMinutes(15));
+
+        $response = $this->get($url);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $response->assertHeader('Cache-Control', 'private, no-store, max-age=0');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
+        self::assertStringContainsString('inline', $response->headers->get('Content-Disposition') ?? '');
+        self::assertSame($payload, $response->getContent());
+    }
+
+    public function test_anonymous_request_without_signature_is_rejected_with_403_and_romanian_error(): void
+    {
+        $path = 'originals/doc.pdf';
+        $this->service->put($path, 'payload');
+        $validUrl = $this->service->temporaryUrl($path, Carbon::now()->addMinutes(15));
+        $unsignedUrl = strtok($validUrl, '?');
+
+        $response = $this->get($unsignedUrl);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'eroare' => 'Semnătură nevalidă sau expirată.',
+        ]);
+    }
+
+    public function test_expired_signed_url_is_rejected_with_403_and_romanian_error(): void
+    {
+        $path = 'originals/doc.pdf';
+        $this->service->put($path, 'payload');
+        $expiredUrl = $this->service->temporaryUrl($path, Carbon::now()->subMinute());
+
+        $response = $this->get($expiredUrl);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'eroare' => 'Semnătură nevalidă sau expirată.',
+        ]);
+    }
+
+    public function test_tampered_signature_or_query_is_rejected_with_403(): void
+    {
+        $path = 'originals/doc.pdf';
+        $this->service->put($path, 'payload');
+        $validUrl = $this->service->temporaryUrl($path, Carbon::now()->addMinutes(15));
+        $tamperedUrl = $validUrl.'&tampered=1';
+
+        $response = $this->get($tamperedUrl);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'eroare' => 'Semnătură nevalidă sau expirată.',
+        ]);
+    }
+
+    public function test_malformed_opaque_token_returns_404(): void
+    {
+        $url = URL::temporarySignedRoute(
+            'documents.deliver',
+            Carbon::now()->addMinutes(15),
+            ['token' => 'invalid-non-decryptable-token']
+        );
+
+        $response = $this->get($url);
+
+        $response->assertStatus(404);
+        $response->assertJson([
+            'eroare' => 'Fișierul solicitat nu a fost găsit.',
+        ]);
+    }
+
+    public function test_missing_file_with_valid_token_and_signature_returns_404(): void
+    {
+        $url = $this->service->temporaryUrl('missing/file.pdf', Carbon::now()->addMinutes(15));
+
+        $response = $this->get($url);
+
+        $response->assertStatus(404);
+        $response->assertJson([
+            'eroare' => 'Fișierul solicitat nu a fost găsit.',
+        ]);
+    }
+
+    public function test_content_disposition_parameter_toggles_attachment_download_with_filename(): void
+    {
+        $path = 'originals/act-notarial.pdf';
+        $this->service->put($path, '%PDF-1.4 payload');
+
+        $url = $this->service->temporaryUrl(
+            $path,
+            Carbon::now()->addMinutes(15),
+            disposition: 'attachment',
+            filename: 'Descarcare Act.pdf'
+        );
+
+        $response = $this->get($url);
+
+        $response->assertStatus(200);
+        self::assertStringContainsString('attachment', $response->headers->get('Content-Disposition') ?? '');
+        self::assertStringContainsString('Descarcare Act.pdf', $response->headers->get('Content-Disposition') ?? '');
+    }
+
+    public function test_r2_smoke_artisan_command_is_registered_and_fails_safely_when_unconfigured(): void
+    {
+        $this->artisan('storage:r2-smoke')
+            ->expectsOutputToContain('Cloudflare R2')
+            ->assertExitCode(1);
+    }
+}
