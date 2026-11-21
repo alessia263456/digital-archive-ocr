@@ -65,7 +65,17 @@ services:
 
   ocr-worker:
     profiles: [smoke]
-    build: ../ocr-worker
+    build:
+      context: ../ocr-worker
+      additional_contexts:
+        backend: service:backend
+    environment:
+      APP_KEY:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: archive
+      DB_USERNAME: archive
+      DB_PASSWORD: ${DB_PASSWORD:-}
 
 volumes:
   pgdata:

@@ -70,11 +70,13 @@ final class DocumentPageRenderer
                 $result[] = ['page' => $page, 'path' => "$destination/$name", 'width' => $width, 'height' => $height];
             }
 
+            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($stage.'/fontconfig');
             unlink($source);
             $this->publish($stage, $destination, $deadline);
             return $result;
         } finally {
             if (is_dir($stage)) {
+                (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($stage.'/fontconfig');
                 foreach (new \FilesystemIterator($stage) as $file) {
                     unlink($file->getPathname());
                 }
@@ -121,7 +123,7 @@ final class DocumentPageRenderer
         }
 
         $this->run(['pdftoppm', ...$range, '-r', (string) self::DPI, '-cropbox', '-singlefile',
-            '-png', $source, substr($path, 0, -4)], $deadline, $bytes);
+            '-png', $source, substr($path, 0, -4)], $deadline, $bytes, dirname($source));
     }
 
     private function image(string $action, string $path, int $pixels, int $bytes, float $deadline, string ...$output): string
@@ -130,10 +132,10 @@ final class DocumentPageRenderer
             $action, $path, (string) $pixels, ...$output], $deadline, $bytes);
     }
 
-    private function run(array $command, float $deadline, int $maxFileBytes): string
+    private function run(array $command, float $deadline, int $maxFileBytes, ?string $cache = null): string
     {
         $process = new Process(['prlimit', '--core=0', '--as='.$this->memoryBytes, '--fsize='.$maxFileBytes, '--', ...$command],
-            env: ['LC_ALL' => 'C', 'PATH' => getenv('PATH')], timeout: $this->timeLeft($deadline));
+            env: ['LC_ALL' => 'C', 'XDG_CACHE_HOME' => $cache ?? false, 'PATH' => getenv('PATH')], timeout: $this->timeLeft($deadline));
         // Keep document metadata and decoder diagnostics out of logs and bounded in memory.
         $output = '';
         $diagnostic = false;

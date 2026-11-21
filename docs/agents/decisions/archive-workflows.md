@@ -7,7 +7,7 @@
 - **Why:** Defines what staff must check and what remains visible in the anonymized copy.
 - **Evidence:** Q-006, D-004, D-020, and owner confirmation in the requirements review
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-19
+- **Confirmed:** 2026-11-21
 
 ## D-023 · Archive browsing, Folder Permissions, and search
 - **Status:** superseded-by D-033
@@ -127,7 +127,7 @@
 - **Why:** Records the confirmed archive requirements.
 - **Evidence:** D-030 and owner confirmation in chat
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-20
+- **Confirmed:** 2026-11-21
 
 ## D-038 · Upload review, metadata, and Document Versions
 - **Status:** approved
@@ -136,7 +136,7 @@
 - **Why:** Records the confirmed archive requirements.
 - **Evidence:** D-031 and owner confirmation in chat
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-20
+- **Confirmed:** 2026-11-21
 
 ## D-039 · Official Notarial Nomenclature revisions
 - **Status:** approved

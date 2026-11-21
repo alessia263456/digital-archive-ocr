@@ -1,6 +1,6 @@
 FROM dunglas/frankenphp:1-php8.4-bookworm@sha256:2721ad9a89b1e34da343f584c063b397012c8c48f0d5727cad657fe2cdf8763f AS base
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends poppler-utils libreoffice-writer-nogui fonts-liberation util-linux \
+    && apt-get install -y --no-install-recommends img2pdf poppler-utils libreoffice-writer-nogui fonts-liberation util-linux \
     && rm -rf /var/lib/apt/lists/* \
     && install-php-extensions pdo_pgsql mbstring gd zip posix \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"

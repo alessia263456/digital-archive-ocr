@@ -8,7 +8,17 @@ services:
       - ./frontend/test-results:/app/test-results
 
   ocr-worker:
-    build: ./docker/ocr-worker
+    build:
+      context: ./docker/ocr-worker
+      additional_contexts:
+        backend: service:backend
+    environment:
+      APP_KEY:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: archive
+      DB_USERNAME: archive
+      DB_PASSWORD: ${DB_PASSWORD:-}
 
   postgres:
     image: postgres:17-bookworm

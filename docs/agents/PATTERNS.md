@@ -11,6 +11,7 @@
 - PATTERN-003 · Publish complete page sets with a directory rename · candidate
 - PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
 - PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
+- PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks · candidate
 
 ---
 
@@ -39,3 +40,8 @@
 - **Status:** candidate
 - **How:** Start the placeholder and replacement as separate local Compose projects using one synthetic hostname, a local CA and a shared disposable certificate volume. Switch only the public listener. Check the certificate fingerprint, authentication challenge and expected response before the switch, after the switch and after restoring the placeholder.
 - **Example:** [Live skeleton procedure](../../docker/live/README.md) and [verification plan](plans/p22-54a-live-skeleton-configuration.md).
+
+## PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks
+- **Status:** candidate
+- **How:** Verify the source marker extracts successfully. Extract from the fresh derivative and check its rendered page plus the embedded image at the rectangle edges. Hash the source before and after.
+- **Example:** [Redaction integration test](../../backend/tests/Feature/RedactedPdfTest.php).

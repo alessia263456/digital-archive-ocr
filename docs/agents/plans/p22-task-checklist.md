@@ -71,9 +71,12 @@ Check off a task after verification. Record approval time, verification time, ev
 
 ## Day 3 · Deploy the skeleton and prove permanent Redaction
 
-- [ ] P22-08 · Persist OCR text and TSV
-- [ ] P22-09a · Burn Bounding Boxes into a new PDF
-- [ ] P22-09b · Verify no residual PDF text
+- [x] P22-08 · Persist OCR text and TSV
+  - Approved 2026-11-21 and verified by 16:23 EET. Reloaded Romanian OCR word boxes on both pages of TEST-002 and TEST-004. PHPUnit exercised second-page failure, rollback and retry.
+- [x] P22-09a · Burn Bounding Boxes into a new PDF
+  - Approved 2026-11-21 and verified by 16:23 EET. Burned persisted boxes on both pages of TEST-002. Verified black pixels in the rendered derivative and the original SHA-256.
+- [x] P22-09b · Verify no residual PDF text
+  - Approved 2026-11-21 and verified by 16:23 EET. Verified extractable target words on both pages of TEST-003 before Redaction. Its derivative had black pixels at both targets and yielded only whitespace to pdftotext. The rotated synthetic PDF passed all four pixel-edge checks. Full worker PHPUnit passed (37 tests, 175 assertions), along with Romanian OCR smoke, Compose validation, React build, four Playwright checks and ledger lint. [Approved plan](p22-08-09-ocr-persistence-and-permanent-redaction.md)
 - [ ] P22-11 · Private object storage and Signed URLs
 - [ ] P22-56b · Deploy the live skeleton
 - [ ] P22-10a · Design DS-003
