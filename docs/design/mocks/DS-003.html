@@ -4,8 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Încărcare documente · Arhivă digitală</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap">
   <style>
+    /* latin-ext */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    /* latin */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
     /* Design Tokens from ../DESIGN.md */
     :root {
       color-scheme: light;
@@ -20,6 +38,9 @@
       --action-text: #FFFFFF;
       --notice-bg: #F9F1E9;
       --notice-text: #79502A;
+      --review-accent: #CE8946;
+      --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
       --font: "Public Sans", system-ui, sans-serif;
       --h1: 700 32px/40px var(--font);
       --h2: 600 24px/32px var(--font);
@@ -38,21 +59,20 @@
       --shadow: 0 1px 2px rgba(0, 0, 0, .05);
       --fast: 150ms ease;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        color-scheme: dark;
-        --bg: #1E293B;
-        --surface: #283548;
-        --subtle: #16202E;
-        --text: #F8FAFC;
-        --muted: #94A3B8;
-        --border: #334155;
-        --focus: #46CFC3;
-        --action-bg: #60A5FA;
-        --action-text: #16202E;
-        --notice-bg: #3A302A;
-        --notice-text: #E7B587;
-      }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #1E293B;
+      --surface: #283548;
+      --subtle: #16202E;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --border: #334155;
+      --focus: #46CFC3;
+      --action-bg: #60A5FA;
+      --action-text: #16202E;
+      --notice-bg: #3A302A;
+      --notice-text: #E7B587;
+      --review-accent: #E59E5B;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -65,7 +85,7 @@
     h3 { font: var(--h3); }
     ul, ol { margin: 0; padding: 0; list-style: none; }
     button, a { color: inherit; font: inherit; }
-    button, a.action {
+    button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -80,7 +100,6 @@
       text-align: center;
       transition: background var(--fast);
     }
-    a.action { text-decoration: none; }
     a.inline {
       display: inline-flex;
       align-items: center;
@@ -89,21 +108,76 @@
       font-weight: 600;
       text-underline-offset: var(--xs);
     }
-    button:not(:disabled):hover, a.action:hover { background: var(--subtle); }
-    button:not(:disabled):active, a.action:active { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
+    button:not(:disabled):hover { background: var(--subtle); }
+    button:not(:disabled):active { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
     button:disabled { opacity: .55; cursor: default; }
     .primary, .primary:not(:disabled):hover { background: var(--action-bg); color: var(--action-text); border-color: var(--action-bg); }
     .primary:not(:disabled):hover { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
     svg { inline-size: var(--lg); block-size: var(--lg); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
     .wrap { width: min(100%, calc(var(--3xl) * 17)); margin-inline: auto; padding-inline: var(--md); }
+    .mock-ribbon {
+      padding: var(--xs) var(--md);
+      background: var(--subtle);
+      border-bottom: thin solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sm);
+    }
+    .mock-switch-group { display: flex; flex-wrap: wrap; gap: var(--xs); align-items: center; }
+    .mock-pill { font: var(--small); padding-inline: var(--sm); border-radius: var(--focus-width); }
+    .mock-pill svg { inline-size: var(--md); block-size: var(--md); }
+    .mock-pill[data-scenario][aria-pressed=true], .mock-pill[data-scenario][aria-pressed=true]:hover { background: var(--action-bg); color: var(--action-text); border-color: var(--action-bg); }
+    .mock-pill[data-scenario][aria-pressed=true]:hover { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
     .masthead { border-bottom: thin solid var(--border); background: var(--surface); }
     .masthead .wrap { min-block-size: var(--3xl); display: flex; gap: var(--sm); align-items: center; font-weight: 700; }
     main.wrap { display: grid; gap: var(--lg); padding-block: var(--xl) var(--3xl); }
     .card { min-inline-size: 0; background: var(--surface); border: thin solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
     .workspace { padding: var(--lg); display: grid; gap: var(--md); }
-    .modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sm); }
-    .mode { text-align: start; justify-content: flex-start; min-block-size: var(--3xl); }
-    .mode[aria-pressed=true] { background: var(--subtle); border-color: var(--text); box-shadow: inset 0 calc(-1 * var(--xs)) var(--text); }
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: thin solid var(--muted);
+      border-radius: var(--radius);
+    }
+    .mode {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      align-content: start;
+      gap: var(--xs) var(--sm);
+      padding: var(--md);
+      text-align: start;
+      border: 0;
+      border-radius: 0;
+      overflow-wrap: anywhere;
+    }
+    .mode:first-child {
+      border-start-start-radius: var(--radius);
+      border-end-start-radius: var(--radius);
+    }
+    .mode:last-child {
+      border-inline-start: thin solid var(--muted);
+      border-start-end-radius: var(--radius);
+      border-end-end-radius: var(--radius);
+    }
+    .mode:focus-visible { outline-offset: calc(-1 * var(--xs)); }
+    .mode-copy { display: grid; gap: var(--xs); }
+    .mode[aria-pressed=true] {
+      background: var(--color-accent-teal);
+      color: var(--color-version-navy);
+    }
+    .mode[aria-pressed=true]:not(:disabled):hover {
+      background: var(--color-accent-teal);
+      box-shadow: inset 0 0 0 var(--focus-width) var(--color-version-navy);
+    }
+    .mode[aria-pressed=true]:focus-visible { outline-color: var(--color-version-navy); }
+    .mode[aria-pressed=true] .muted { color: inherit; }
+    .mode-state { visibility: hidden; grid-column: 2; color: inherit; font: var(--small); font-weight: 700; }
+    .mode[aria-pressed=true] .mode-state { visibility: visible; }
+    .modes:has(.mode:disabled) { border-style: dashed; }
+    .mode:disabled { color: var(--muted); opacity: 1; }
+    .mode:disabled[aria-pressed=true] { color: var(--color-version-navy); }
     .drop {
       display: grid;
       gap: var(--sm);
@@ -115,25 +189,58 @@
       background: var(--bg);
       transition: background var(--fast);
     }
-    .drop[data-over] { background: var(--subtle); outline: var(--focus-width) solid var(--focus); }
     .drop > svg { inline-size: var(--xl); block-size: var(--xl); }
     .muted { color: var(--muted); font: var(--small); }
     .organizer { display: grid; gap: var(--sm); }
     .assembly { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sm); }
     .lower { display: grid; align-items: start; gap: var(--md); }
-    .section-head { padding: var(--md); border-bottom: thin solid var(--border); }
-    .section-head p { margin-top: var(--xs); }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sm);
+      padding: var(--md);
+      border-bottom: thin solid var(--border);
+    }
+    .count {
+      display: inline-grid;
+      place-items: center;
+      min-inline-size: var(--xl);
+      min-block-size: var(--lg);
+      padding-inline: var(--sm);
+      border-radius: var(--focus-width);
+      background: var(--subtle);
+      font: var(--small);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    #count-ready[data-positive] { background: var(--review-accent); color: var(--action-text); }
+    [data-theme="light"] #count-ready[data-positive] { color: var(--text); }
+    .rows { display: grid; gap: var(--sm); }
+    .lower .rows { padding: var(--md); }
     .rows > li {
       min-inline-size: 0;
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-content: start;
       gap: var(--xs);
       padding: var(--sm) var(--md);
-      border-bottom: thin solid var(--border);
+      background: var(--surface);
+      border: thin solid var(--border);
+      border-radius: var(--radius);
     }
-    .rows > li:last-child { border-bottom: 0; }
-    .filename { overflow-wrap: anywhere; font-weight: 600; }
+    .filename {
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    #saved-toggle { font: var(--small); font-weight: 600; }
     .empty, .section-foot { padding: var(--md); }
     .section-foot { padding-block: var(--xs); border-top: thin solid var(--border); }
+    .saved-foot { display: flex; justify-content: flex-end; padding-block: var(--sm); }
     .state {
       justify-self: start;
       padding: var(--xs) var(--sm);
@@ -145,8 +252,6 @@
     .notice, .state[data-warning] { background: var(--notice-bg); color: var(--notice-text); }
     .notice { padding: var(--sm) var(--md); border-radius: var(--radius); }
     progress { inline-size: 100%; accent-color: var(--action-bg); }
-    #drafts > li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sm); }
-    #drafts .filename { grid-column: 1 / -1; }
     .rows a, .rows button { justify-self: start; }
     .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--3xl) * 3)), 1fr)); gap: var(--sm); }
     .page {
@@ -161,19 +266,40 @@
     }
     .page[data-over] { outline: var(--focus-width) solid var(--focus); }
     .thumbnail {
-      position: relative;
       display: grid;
       place-items: center;
       background: var(--subtle);
       min-block-size: calc(var(--3xl) + var(--md));
-      cursor: grab;
     }
     .thumbnail svg { inline-size: var(--xl); block-size: var(--xl); }
-    .thumbnail img { max-inline-size: 100%; block-size: calc(var(--3xl) + var(--md)); object-fit: contain; }
     .thumbnail .sample { inline-size: var(--2xl); block-size: var(--3xl); color: var(--text); }
-    .number { position: absolute; inset: var(--xs) auto auto var(--xs); cursor: inherit; }
-    .controls { display: flex; flex-wrap: wrap; gap: var(--xs); }
-    .controls button { padding: var(--xs); min-inline-size: calc(var(--xl) + var(--sm) + var(--xs)); }
+    .page-tools { display: flex; align-items: center; gap: var(--sm); }
+    .drag-handle { display: inline-grid; place-items: center; padding: var(--xs); cursor: grab; color: var(--muted); }
+    .drag-handle:active { cursor: grabbing; }
+    .page-tools svg { inline-size: var(--md); block-size: var(--md); }
+    .page-actions { position: relative; margin-inline-start: auto; }
+    .page-more {
+      min-inline-size: calc(var(--xl) + var(--sm) + var(--xs));
+      padding: var(--xs);
+      border-color: transparent;
+      background: transparent;
+    }
+    .page-more[aria-expanded=true] { background: var(--subtle); border-color: var(--muted); }
+    .page-action-list {
+      position: absolute;
+      z-index: 1;
+      inset-block-start: calc(100% + var(--xs));
+      inset-inline-end: 0;
+      display: grid;
+      inline-size: calc(var(--3xl) * 2 + var(--xl));
+      padding: var(--xs);
+    }
+    .page-action-list button {
+      justify-content: flex-start;
+      padding-inline: var(--sm);
+      border: 0;
+      font: var(--small);
+    }
     .visually-hidden {
       position: absolute;
       inline-size: var(--xs);
@@ -184,13 +310,17 @@
     }
     @media (max-width: 639px) {
       .workspace { padding: var(--md); }
-      .mode { padding-inline: var(--sm); font-size: inherit; }
+      .mode { grid-template-columns: 1fr; padding: var(--sm); }
+      .mode-state { grid-column: 1; }
       .mode svg { inline-size: var(--md); block-size: var(--md); }
-      #drafts > li { grid-template-columns: 1fr; }
     }
     @media (min-width: 640px) {
       .wrap { padding-inline: var(--lg); }
       .lower { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .saved-section { grid-column: 1 / -1; }
+    }
+    @media (min-width: 1024px) {
+      #saved { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; }
@@ -207,10 +337,36 @@
       <path d="M17 12h14M9 22h30M9 27h30M9 32h22M9 40h30M9 45h30M9 50h16" stroke="var(--muted)"/>
     </symbol>
     <symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
-    <symbol id="up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
-    <symbol id="down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
-    <symbol id="remove" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="grip" viewBox="0 0 24 24">
+      <circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/>
+      <circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>
+      <circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/>
+    </symbol>
+    <symbol id="more" viewBox="0 0 24 24">
+      <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+    </symbol>
+    <symbol id="moon" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 4a8 8 0 1 0 11 11Z"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2m0-14-2 2M7 17l-2 2"/></symbol>
   </svg>
+  <aside class="mock-ribbon" aria-label="Comenzi mock de test">
+    <span class="muted">DS-003 · Previzualizare</span>
+    <div class="mock-switch-group" role="group" aria-label="Scenariu demonstrativ">
+      <button type="button" class="mock-pill" data-scenario="gol" aria-pressed="true">Gol</button>
+      <button type="button" class="mock-pill" data-scenario="pdf" aria-pressed="false">PDF / DOCX</button>
+      <button type="button" class="mock-pill" data-scenario="imagini" aria-pressed="false">Asamblare imagini</button>
+      <button type="button" class="mock-pill" data-scenario="incarcare" aria-pressed="false">Se încarcă</button>
+      <button type="button" class="mock-pill" data-scenario="procesare" aria-pressed="false">Procesare</button>
+      <button type="button" class="mock-pill" data-scenario="gata" aria-pressed="false">Gata de revizuit</button>
+      <button type="button" class="mock-pill" data-scenario="ciorna" aria-pressed="false">Ciornă salvată</button>
+      <button type="button" class="mock-pill" data-scenario="eroare" aria-pressed="false">Eroare</button>
+      <button type="button" class="mock-pill" data-scenario="duplicat" aria-pressed="false">Duplicat exact</button>
+      <button type="button" class="mock-pill" data-scenario="carantina" aria-pressed="false">Carantină</button>
+      <button type="button" class="mock-pill" data-scenario="lung" aria-pressed="false">Nume lungi</button>
+      <button type="button" class="mock-pill" id="theme" aria-label="Comută tema între luminos și întunecat" aria-pressed="false">
+        <svg aria-hidden="true"><use id="theme-icon" href="#moon"/></svg><span id="theme-label">Mod întunecat</span>
+      </button>
+    </div>
+  </aside>
   <header class="masthead">
     <div class="wrap"><svg aria-hidden="true"><use href="#archive"/></svg>Arhivă digitală</div>
   </header>
@@ -219,47 +375,68 @@
     <section class="card workspace" aria-labelledby="workspace-title">
       <h2 id="workspace-title">Adaugă documente</h2>
       <div class="modes" role="group" aria-label="Metodă de încărcare">
-        <button class="mode" type="button" data-mode="documents" aria-pressed="true"><svg aria-hidden="true"><use href="#document"/></svg>PDF / DOCX</button>
-        <button class="mode" type="button" data-mode="images" aria-pressed="false"><svg aria-hidden="true"><use href="#image"/></svg>Imagini (JPG / PNG)</button>
+        <button class="mode" type="button" data-mode="documents" aria-labelledby="mode-documents" aria-describedby="mode-documents-description" aria-pressed="true">
+          <svg aria-hidden="true"><use href="#document"/></svg>
+          <span class="mode-copy"><span id="mode-documents">PDF / DOCX</span><span class="muted" id="mode-documents-description">Mai multe documente independente.</span></span>
+          <span class="mode-state" aria-hidden="true">✓ Selectat</span>
+        </button>
+        <button class="mode" type="button" data-mode="images" aria-labelledby="mode-images" aria-describedby="mode-images-description" aria-pressed="false">
+          <svg aria-hidden="true"><use href="#image"/></svg>
+          <span class="mode-copy"><span id="mode-images">Imagini (JPG / PNG)</span><span class="muted" id="mode-images-description">Imagini ordonate într-un singur document.</span></span>
+          <span class="mode-state" aria-hidden="true">✓ Selectat</span>
+        </button>
       </div>
       <div id="dropzone" class="drop" data-testid="dropzone">
         <svg aria-hidden="true"><use href="#upload"/></svg>
         <h3 id="drop-title">Trage aici fișierele PDF sau DOCX</h3>
         <p id="drop-description" class="muted">Fiecare fișier se încarcă și se procesează separat.</p>
         <button type="button" id="choose" class="primary" aria-describedby="drop-description">Alege fișiere</button>
-        <input type="file" id="files" accept=".pdf,.docx" multiple hidden>
       </div>
       <div class="organizer" id="organizer" hidden>
         <div class="assembly"><h3>Ordinea paginilor</h3><span id="page-count" class="muted"></span></div>
-        <p class="muted">Trage o pagină sau folosește săgețile pentru a-i schimba poziția.</p>
+        <p class="muted">Folosește mânerul sau meniul paginii pentru a schimba ordinea.</p>
         <ol id="pages" class="pages" aria-label="Ordinea paginilor"></ol>
         <p class="muted" id="no-pages">Adaugă imagini pentru a stabili ordinea paginilor.</p>
         <button type="button" id="undo" hidden>Anulează eliminarea paginii</button>
-        <div class="notice" id="image-duplicate" role="alert" hidden></div>
         <button type="button" class="primary" id="save" disabled>Salvează și procesează</button>
       </div>
       <p id="announcement" class="visually-hidden" role="status"></p>
-      <ul id="transfers" class="rows" aria-label="Validare și transfer" hidden></ul>
+      <ul id="transfers" class="rows" aria-label="Selecție și transfer" hidden></ul>
+      <ul id="quarantine" class="rows" aria-label="Documente trimise în carantină" hidden></ul>
     </section>
     <div class="lower">
       <section class="card" aria-labelledby="processing-title">
-        <header class="section-head"><h2 id="processing-title">În procesare</h2></header>
+        <header class="section-head">
+          <h2 id="processing-title">În procesare</h2>
+          <span class="count" id="count-processing" role="group" aria-label="Număr documente">0</span>
+        </header>
         <p class="empty muted" id="no-processing">Nu ai documente în procesare.</p>
         <ul id="processing" class="rows" hidden></ul>
       </section>
-      <section class="card" aria-labelledby="drafts-title">
+      <section class="card" aria-labelledby="ready-title">
         <header class="section-head">
-          <h2 id="drafts-title">Ciorne recente</h2>
-          <p class="muted">Documente private, pregătite pentru revizuire.</p>
+          <h2 id="ready-title">Gata de revizuit</h2>
+          <span class="count" id="count-ready" role="group" aria-label="Număr documente">0</span>
         </header>
-        <p class="empty muted" id="no-drafts">Documentele pregătite pentru revizuire vor apărea aici.</p>
-        <ul id="drafts" class="rows" hidden></ul>
+        <p class="empty muted" id="no-ready">Documentele procesate care așteaptă prima revizuire vor apărea aici.</p>
+        <ul id="ready" class="rows" hidden></ul>
         <footer class="section-foot"><a class="inline" href="?ecran=DS-004">Deschide coada de revizuire</a></footer>
+      </section>
+      <section class="card saved-section" aria-labelledby="saved-title">
+        <header class="section-head">
+          <h2 id="saved-title">Ciorne salvate</h2>
+          <span class="count" id="count-saved" role="group" aria-label="Număr documente">0</span>
+        </header>
+        <p class="empty muted" id="no-saved">Revizuirile începute și salvate vor apărea aici.</p>
+        <ul id="saved" class="rows" hidden></ul>
+        <footer class="section-foot saved-foot" id="saved-footer" hidden>
+          <button type="button" id="saved-toggle" aria-controls="saved" aria-expanded="false">Vezi toate</button>
+        </footer>
       </section>
     </div>
   </main>
   <main class="wrap" id="destination" hidden>
-    <a class="inline" href="./DS-003.html">Înapoi la încărcare</a>
+    <a class="inline" id="back-to-upload" href="./DS-003.html">Înapoi la încărcare</a>
     <div>
       <h1 id="destination-title"></h1>
       <p class="muted" id="destination-file"></p>
@@ -269,63 +446,94 @@
 
   <template id="page-template">
     <li class="page">
-      <div class="thumbnail" draggable="true">
-        <span class="number state"></span>
-        <svg aria-hidden="true"><use href="#image"/></svg>
-        <img alt="" draggable="false" hidden>
+      <div class="thumbnail">
+        <svg class="sample" aria-hidden="true"><use href="#sample"/></svg>
       </div>
       <span class="filename"></span>
-      <div class="controls">
-        <button type="button" data-action="up"><svg aria-hidden="true"><use href="#up"/></svg></button>
-        <button type="button" data-action="down"><svg aria-hidden="true"><use href="#down"/></svg></button>
-        <button type="button" data-action="remove"><svg aria-hidden="true"><use href="#remove"/></svg></button>
+      <div class="page-tools">
+        <span class="number state"></span>
+        <span class="drag-handle" draggable="true" title="Trage pentru a muta pagina" aria-hidden="true">
+          <svg><use href="#grip"/></svg>
+        </span>
+        <div class="page-actions">
+          <button class="page-more" type="button" aria-expanded="false">
+            <svg aria-hidden="true"><use href="#more"/></svg>
+          </button>
+          <div class="page-action-list card" hidden>
+            <button type="button" data-action="left">Mută la stânga</button>
+            <button type="button" data-action="right">Mută la dreapta</button>
+            <button type="button" data-action="remove">Elimină pagina</button>
+          </div>
+        </div>
       </div>
     </li>
   </template>
   <script>
     const byId = id => document.getElementById(id);
     const params = new URLSearchParams(location.search);
-    const dropzone = byId('dropzone');
-    const choose = byId('choose');
-    const input = byId('files');
-    const save = byId('save');
-    const transfers = [];
-    const processing = [];
-    const drafts = [];
-    const pages = [];
-    const exactPages = ['pagina-1.jpg', 'pagina-2.png', 'pagina-1.jpg'];
-    const similarity = 'Posibil duplicat după OCR. Compară documentele în timpul revizuirii.';
-    const existing = '?ecran=DS-002&document=exemplu-existent';
     const modes = document.querySelectorAll('[data-mode]');
-    let mode = 'documents';
-    let sequence = 0;
-    let draggedPage;
-    let lastRemoval;
+    const scenarioButtons = document.querySelectorAll('[data-scenario]');
+    const choose = byId('choose');
+    const save = byId('save');
+    const undo = byId('undo');
+    const pageList = byId('pages');
+    const savedToggle = byId('saved-toggle');
+    const savedPreviewLimit = 3;
+    const placeholderPages = ['pagina-1.jpg', 'pagina-2.png', 'pagina-3.jpg', 'pagina-4.png'];
 
-    const statusText = {
-      transferring: 'Transfer în curs',
-      transferFailed: 'Transfer eșuat',
-      invalid: 'Format neacceptat',
-      duplicate: 'Duplicat exact',
-      queued: 'În așteptare',
-      ocr: 'OCR în curs',
-      extracted: 'OCR finalizat',
-      failed: 'OCR eșuat',
-      quarantined: 'În carantină',
-      ready: 'Nerevizuită',
-      started: 'Revizuire începută',
+    const contract = 'Contract_exemplu.pdf';
+    const inventory = 'Inventar_exemplu.docx';
+    const powerOfAttorney = 'Procură_exemplu.docx';
+    const longName = 'Dosar_sintetic_' + 'documente_justificative_'.repeat(8) + 'exemplu.docx';
+    const similarity = 'Posibil duplicat după OCR. Compară documentele în timpul revizuirii.';
+    const reviewReady = { name: contract, status: 'Nerevizuită', action: 'start' };
+    // Synthetic drafts are ordered from most to least recently saved.
+    const savedReviews = [
+      powerOfAttorney,
+      'Declarație_exemplu.docx',
+      'Certificat_exemplu.pdf',
+      'Cerere_exemplu.pdf',
+      'Act_exemplu.docx',
+    ].map(name => ({ name, status: 'Revizuire începută', action: 'resume' }));
+    const processing = [
+      { name: contract, status: 'OCR în curs', detail: 'Se extrage textul din document.' },
+      { name: inventory, status: 'În așteptare', detail: 'Se păstrează originalul DOCX și se pregătește PDF-ul derivat.' },
+    ];
+
+    // Each scene is an independent snapshot. The toolbar changes the illustrated state.
+    const scenes = {
+      gol: {},
+      pdf: { transfers: [
+        { name: contract, status: 'Selectat' },
+        { name: inventory, status: 'Selectat', detail: 'Original DOCX și PDF derivat pentru vizualizare.' },
+      ] },
+      imagini: { mode: 'images', pages: placeholderPages.slice(0, 3) },
+      incarcare: { transfers: [{ name: contract, status: 'Transfer în curs', progress: 64 }], locked: true },
+      procesare: { processing },
+      gata: { ready: [reviewReady, { name: inventory, status: 'Nerevizuită', action: 'start', detail: similarity, warning: true }] },
+      ciorna: { processing: [processing[1]], ready: [reviewReady], saved: savedReviews },
+      eroare: { processing: [
+        { name: contract, status: 'OCR eșuat', detail: 'OCR nu a putut citi documentul. Reîncercarea automată este programată.', warning: true },
+      ] },
+      duplicat: { transfers: [
+        { name: contract, status: 'Duplicat exact', detail: 'Un fișier identic există deja în arhivă. Salvarea este blocată.', action: 'existing', warning: true },
+      ] },
+      carantina: { quarantine: [
+        { name: 'Scanare_deteriorată.pdf', status: 'În carantină', detail: 'OCR a eșuat la prima încercare și la toate cele trei reîncercări.', action: 'quarantine', warning: true },
+      ] },
+      lung: { processing, ready: [{ name: longName, status: 'Nerevizuită', action: 'start' }], saved: savedReviews },
     };
+
+    let scenario;
+    let mode;
+    let pages = [];
+    let lastRemoval;
+    let draggedPage;
 
     function element(tag, className, text) {
       const node = document.createElement(tag);
       node.className = className;
       node.textContent = text;
-      return node;
-    }
-
-    function link(text, href) {
-      const node = element('a', 'inline', text);
-      node.href = href;
       return node;
     }
 
@@ -339,310 +547,245 @@
       byId('announcement').textContent = text;
     }
 
-    function entry(name, status, extra = {}) {
-      return { id: ++sequence, name, status, ...extra };
-    }
-
-    function reviewLink(item) {
-      const url = new URLSearchParams({ ecran: 'DS-011', document: item.id });
-      if (item.warning) url.set('ocr', '1');
-      if (item.status === 'started') url.set('reluare', '1');
-      return link(item.status === 'started' ? 'Continuă revizuirea' : 'Începe revizuirea', '?' + url);
+    function destinationLink(label, query, item) {
+      const url = new URLSearchParams(query);
+      if (item) url.set('document', item.name);
+      url.set('stare', scenario);
+      const link = element('a', 'inline', label);
+      link.href = '?' + url;
+      return link;
     }
 
     function row(item) {
       const node = document.createElement('li');
-      const badge = element('span', 'state', statusText[item.status]);
-      badge.toggleAttribute('data-warning', ['invalid', 'duplicate', 'transferFailed', 'failed', 'quarantined'].includes(item.status));
+      const badge = element('span', 'state', item.status);
+      badge.toggleAttribute('data-warning', Boolean(item.warning));
       node.append(filename(item.name), badge);
-      if (item.docx && item.status !== 'transferring' && item.status !== 'transferFailed') {
-        node.append(element('span', 'muted', 'Original DOCX păstrat'), element('span', 'muted', 'PDF derivat pentru vizualizare și anonimizare'));
-      }
-      if (item.docx && item.status === 'transferring') {
-        node.append(element('span', 'muted', 'Se păstrează originalul DOCX și se generează un PDF.'));
-      }
-      if (item.detail) node.append(element('p', 'muted', item.detail));
-      if (item.status === 'transferring') {
+      if (item.detail) node.append(element('p', item.warning ? 'notice' : 'muted', item.detail));
+      if (item.progress !== undefined) {
         const progress = document.createElement('progress');
-        progress.value = item.progress ?? 36;
+        progress.value = item.progress;
         progress.max = 100;
         progress.setAttribute('aria-label', 'Transfer pentru ' + item.name);
         node.append(progress);
       }
-      if (item.status === 'duplicate') node.append(link('Vezi documentul existent', existing));
-      if (item.status === 'transferFailed') {
-        const retry = element('button', '', 'Reîncearcă transferul');
-        retry.addEventListener('click', () => startTransfer(item, true));
-        node.append(retry);
+      switch (item.action) {
+        case 'start':
+          node.append(destinationLink('Începe revizuirea', { ecran: 'DS-011', ...(item.warning && { ocr: '1' }) }, item));
+          break;
+        case 'resume':
+          node.append(destinationLink('Continuă revizuirea', { ecran: 'DS-011', reluare: '1' }, item));
+          break;
+        case 'existing':
+          node.append(destinationLink('Vezi documentul existent', { ecran: 'DS-002' }, item));
+          break;
+        case 'quarantine':
+          node.append(destinationLink('Deschide coada de carantină', { ecran: 'DS-004', carantina: '1' }));
+          break;
       }
-      if (item.status === 'quarantined') node.append(link('Deschide coada de carantină', '?ecran=DS-004&carantina=1'));
-      if (item.warning && item.status === 'extracted') node.append(element('p', 'notice', similarity));
-      if (item.status === 'ready' || item.status === 'started') node.append(reviewLink(item));
       return node;
     }
 
-    function renderList(id, items) {
+    function renderList(id, items = [], total = items.length) {
       const list = byId(id);
-      const previous = new Map(Array.from(list.children, node => [Number(node.dataset.entry), node]));
-      items.forEach((item, index) => {
-        const snapshot = JSON.stringify(item);
-        const old = previous.get(item.id);
-        const node = old?.dataset.snapshot === snapshot ? old : row(item);
-        if (node !== old) {
-          node.dataset.entry = item.id;
-          node.dataset.snapshot = snapshot;
-          if (old) old.replaceWith(node);
-        }
-        if (list.children[index] !== node) list.insertBefore(node, list.children[index] ?? null);
-        previous.delete(item.id);
-      });
-      for (const stale of previous.values()) stale.remove();
-      list.hidden = items.length === 0;
+      list.replaceChildren(...items.map(row));
+      list.hidden = !items.length;
       const empty = byId('no-' + id);
-      if (empty) empty.hidden = items.length > 0;
-    }
-
-    function renderLists() {
-      renderList('transfers', transfers.filter(item => item.mode === mode));
-      renderList('processing', processing);
-      renderList('drafts', drafts.slice(0, 5));
-    }
-
-    function moveEntry(item, from, to, status) {
-      from.splice(from.indexOf(item), 1);
-      item.status = status;
-      item.detail = status === 'queued' && item.docx ? 'Se pregătește PDF-ul derivat.' : '';
-      to.unshift(item);
-      renderLists();
-    }
-
-    function completeOcr(item) {
-      if (item.outcome === 'quarantine') {
-        item.status = 'quarantined';
-        item.detail = 'OCR a eșuat la prima încercare și la toate cele trei reîncercări.';
-      } else if (item.outcome === 'ocrFailed') {
-        item.status = 'failed';
-        item.detail = 'OCR nu a putut citi documentul. Reîncercarea automată este programată.';
-      } else {
-        item.status = 'extracted';
-        item.warning = item.outcome === 'similar';
-        item.detail = 'Se pregătește ciorna privată pentru revizuire.';
-        setTimeout(() => {
-          moveEntry(item, processing, drafts, 'ready');
-          announce(item.name + ' este disponibil în Ciorne recente.');
-        }, 5000);
+      if (empty) empty.hidden = Boolean(items.length);
+      const count = byId('count-' + id);
+      if (count) {
+        count.textContent = total;
+        if (id === 'ready') count.toggleAttribute('data-positive', total > 0);
       }
-      if (item.status === 'failed') {
-        setTimeout(() => {
-          item.status = 'ocr';
-          item.detail = 'Reîncercare automată în curs.';
-          renderLists();
-          setTimeout(() => {
-            item.outcome = 'success';
-            completeOcr(item);
-          }, 3500);
-        }, 4000);
-      }
-      renderLists();
     }
 
-    function startTransfer(item, retry = false) {
-      item.status = 'transferring';
-      item.detail = '';
-      item.progress = 36;
-      renderLists();
-      if (retry) choose.focus();
-      setTimeout(() => {
-        item.progress = 72;
-        renderLists();
-      }, 350);
-      setTimeout(() => {
-        if (item.outcome === 'transferFailed' && !retry) {
-          item.status = 'transferFailed';
-          item.detail = 'Transferul a fost întrerupt. Reîncearcă pentru a continua încărcarea.';
-          renderLists();
-          return;
-        }
-        moveEntry(item, transfers, processing, 'queued');
-        setTimeout(() => {
-          item.status = 'ocr';
-          item.detail = 'Se extrage textul din document.';
-          renderLists();
-          setTimeout(() => completeOcr(item), item.outcome === 'active' ? 8000 : 4000);
-        }, 1500);
-      }, 900);
+    function renderSaved(expanded = false) {
+      const saved = scenes[scenario].saved ?? [];
+      renderList('saved', expanded ? saved : saved.slice(0, savedPreviewLimit), saved.length);
+      byId('saved-footer').hidden = saved.length <= savedPreviewLimit;
+      savedToggle.setAttribute('aria-expanded', expanded);
+      savedToggle.textContent = expanded ? 'Arată mai puține' : 'Vezi toate';
     }
 
-    function showImageDuplicate() {
-      const names = pages.map(page => page.name);
-      const sameOrder = JSON.stringify(names) === JSON.stringify(exactPages);
-      const samePages = JSON.stringify(names.toSorted()) === JSON.stringify(exactPages.toSorted());
-      const notice = byId('image-duplicate');
-      notice.hidden = !samePages;
-      notice.replaceChildren();
-      if (sameOrder) {
-        notice.append('Duplicat exact. Aceeași succesiune de pagini există deja în arhivă. ', link('Vezi documentul existent', existing));
-      } else if (samePages) {
-        notice.textContent = 'Posibil duplicat. Aceleași pagini, în altă ordine. Poți continua.';
-      }
-      save.disabled = !pages.length || sameOrder;
-    }
+    savedToggle.addEventListener('click', () => {
+      renderSaved(savedToggle.getAttribute('aria-expanded') === 'false');
+    });
 
     function renderPages() {
-      const list = byId('pages');
-      list.replaceChildren();
-      pages.forEach((page, index) => {
+      pageList.replaceChildren();
+      pages.forEach((name, index) => {
         const node = byId('page-template').content.firstElementChild.cloneNode(true);
-        node.dataset.page = page.id;
-        node.querySelector('.number').textContent = index + 1;
-        node.querySelector('.filename').replaceWith(filename(page.name));
-        const image = node.querySelector('img');
-        const icon = node.querySelector('.thumbnail > svg');
-        if (page.sample) {
-          icon.classList.add('sample');
-          icon.querySelector('use').setAttribute('href', '#sample');
-        }
-        if (page.preview) {
-          image.addEventListener('load', () => {
-            image.hidden = false;
-            icon.setAttribute('hidden', '');
-          });
-          image.src = page.preview;
-        }
-        const up = node.querySelector('[data-action=up]');
-        const down = node.querySelector('[data-action=down]');
-        const remove = node.querySelector('[data-action=remove]');
-        up.disabled = index === 0;
-        down.disabled = index === pages.length - 1;
-        up.setAttribute('aria-label', 'Mută pagina ' + (index + 1) + ' mai sus');
-        down.setAttribute('aria-label', 'Mută pagina ' + (index + 1) + ' mai jos');
-        remove.setAttribute('aria-label', 'Elimină pagina ' + (index + 1));
-        list.append(node);
+        const position = index + 1;
+        node.querySelector('.number').textContent = position;
+        node.querySelector('.filename').replaceWith(filename(name));
+        const trigger = node.querySelector('.page-more');
+        const panel = node.querySelector('.page-action-list');
+        panel.id = 'page-actions-' + position;
+        trigger.setAttribute('aria-controls', panel.id);
+        trigger.setAttribute('aria-label', 'Acțiuni pentru pagina ' + position);
+        node.querySelector('[data-action=left]').disabled = index === 0;
+        node.querySelector('[data-action=right]').disabled = index === pages.length - 1;
+        pageList.append(node);
       });
-      byId('no-pages').hidden = pages.length > 0;
+      byId('no-pages').hidden = Boolean(pages.length);
       byId('page-count').textContent = pages.length === 1 ? '1 pagină' : pages.length + ' pagini';
-      showImageDuplicate();
-    }
-
-    function movePage(from, to, action) {
-      if (from === to) return;
-      const [page] = pages.splice(from, 1);
-      pages.splice(to, 0, page);
-      renderPages();
-      const card = byId('pages').children[to];
-      const preferred = card.querySelector('[data-action=' + action + ']');
-      (preferred.disabled ? card.querySelector('button:not(:disabled)') : preferred).focus();
-      announce(page.name + ' a fost mutată la poziția ' + (to + 1) + '.');
-    }
-
-    function accept(files) {
-      for (const file of files) {
-        const name = file.name;
-        const extension = /\.([^.]+)$/.exec(name)?.[1].toLowerCase();
-        const allowed = mode === 'images' ? ['jpg', 'jpeg', 'png'] : ['pdf', 'docx'];
-        if (!allowed.includes(extension) || !file.size) {
-          const detail = file.size
-            ? 'Alege un fișier ' + (mode === 'images' ? 'JPG sau PNG.' : 'PDF sau DOCX.')
-            : 'Fișierul este gol. Alege un fișier care conține pagini.';
-          transfers.push(entry(name, 'invalid', { mode, detail }));
-          continue;
-        }
-        if (mode === 'images') {
-          pages.push(entry(name, '', { preview: URL.createObjectURL(file) }));
-          continue;
-        }
-        if (/^duplicat\.(pdf|docx)$/i.test(name)) {
-          transfers.push(entry(name, 'duplicate', { mode, detail: 'Un fișier identic există deja în arhivă. Salvarea este blocată.' }));
-          continue;
-        }
-        const outcomes = {
-          'transfer.pdf': 'transferFailed',
-          'corupt.pdf': 'ocrFailed',
-          'carantina.pdf': 'quarantine',
-          'similar.pdf': 'similar',
-        };
-        const item = entry(name, 'transferring', { mode, outcome: outcomes[name] ?? 'active' });
-        item.docx = extension === 'docx';
-        transfers.push(item);
-        startTransfer(item);
-      }
-      renderLists();
-      renderPages();
-      announce(mode === 'images' ? 'Pagini în document: ' + pages.length + '.' : 'Fișierele selectate au fost verificate.');
+      undo.hidden = !lastRemoval;
+      choose.disabled = mode === 'images' ? pages.length === placeholderPages.length : Boolean(scenes[scenario].locked);
+      save.disabled = !pages.length;
     }
 
     function selectMode(next) {
       mode = next;
       const images = mode === 'images';
-      for (const button of modes) button.setAttribute('aria-pressed', button.dataset.mode === mode);
-      input.accept = images ? '.jpg,.jpeg,.png' : '.pdf,.docx';
+      const scene = scenes[scenario];
+      for (const button of modes) {
+        button.setAttribute('aria-pressed', button.dataset.mode === mode);
+        button.disabled = Boolean(scene.locked);
+      }
       byId('drop-title').textContent = images ? 'Trage aici paginile JPG sau PNG' : 'Trage aici fișierele PDF sau DOCX';
       byId('drop-description').textContent = images
         ? 'Imaginile formează un singur document, în ordinea aleasă.'
         : 'Fiecare fișier se încarcă și se procesează separat.';
       choose.textContent = images ? 'Adaugă imagini' : 'Alege fișiere';
       byId('organizer').hidden = !images;
-      renderLists();
+      renderList('transfers', images ? [] : scene.transfers);
+      renderPages();
     }
+
+    function applyScenario(next) {
+      const scene = scenes[next];
+      scenario = next;
+      pages = [...(scene.pages ?? [])];
+      lastRemoval = undefined;
+      draggedPage = undefined;
+      for (const button of scenarioButtons) button.setAttribute('aria-pressed', button.dataset.scenario === next);
+      selectMode(scene.mode ?? 'documents');
+      renderList('processing', scene.processing);
+      renderList('quarantine', scene.quarantine);
+      renderList('ready', scene.ready);
+      renderSaved();
+    }
+
+    function movePage(from, to) {
+      if (from === to) return;
+      const [name] = pages.splice(from, 1);
+      pages.splice(to, 0, name);
+      renderPages();
+      pageList.children[to].querySelector('.page-more').focus();
+      announce(name + ' a fost mutată la poziția ' + (to + 1) + '.');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const dark = theme === 'dark';
+      byId('theme').setAttribute('aria-pressed', dark);
+      byId('theme-icon').setAttribute('href', dark ? '#sun' : '#moon');
+      byId('theme-label').textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+    }
+
+    const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const requestedTheme = params.get('tema');
+    let themeOverridden = requestedTheme === 'light' || requestedTheme === 'dark';
+    setTheme(themeOverridden ? requestedTheme : preferredTheme.matches ? 'dark' : 'light');
+    preferredTheme.addEventListener('change', event => {
+      if (!themeOverridden) setTheme(event.matches ? 'dark' : 'light');
+    });
+    byId('theme').addEventListener('click', () => {
+      themeOverridden = true;
+      setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    });
 
     for (const button of modes) button.addEventListener('click', () => selectMode(button.dataset.mode));
-    choose.addEventListener('click', () => input.click());
-    input.addEventListener('change', () => {
-      accept(input.files);
-      input.value = '';
+    for (const button of scenarioButtons) {
+      button.addEventListener('click', () => {
+        byId('upload-screen').hidden = false;
+        byId('destination').hidden = true;
+        applyScenario(button.dataset.scenario);
+        announce('Previzualizare: ' + button.textContent + '.');
+      });
+    }
+
+    choose.addEventListener('click', () => {
+      if (mode === 'documents') {
+        applyScenario('pdf');
+        announce('Au fost selectate două documente demonstrative.');
+        return;
+      }
+      const name = placeholderPages.find(candidate => !pages.includes(candidate));
+      if (!name) return;
+      pages.push(name);
+      if (lastRemoval?.name === name) lastRemoval = undefined;
+      renderPages();
+      if (choose.disabled) save.focus();
+      announce(name + ' a fost adăugată.');
     });
-    dropzone.addEventListener('dragover', event => {
-      event.preventDefault();
-      dropzone.toggleAttribute('data-over', true);
-    });
-    dropzone.addEventListener('dragleave', event => {
-      if (!dropzone.contains(event.relatedTarget)) dropzone.removeAttribute('data-over');
-    });
-    dropzone.addEventListener('drop', event => {
-      event.preventDefault();
-      dropzone.removeAttribute('data-over');
-      accept(event.dataTransfer.files);
+    save.addEventListener('click', () => {
+      announce('Ordinea paginilor demonstrative a fost păstrată în previzualizare.');
     });
 
-    const pageList = byId('pages');
-    const undo = byId('undo');
-    function clearUndo() {
-      if (lastRemoval?.page.preview) URL.revokeObjectURL(lastRemoval.page.preview);
-      lastRemoval = undefined;
-      undo.hidden = true;
-    }
     undo.addEventListener('click', () => {
-      const { index, page } = lastRemoval;
-      pages.splice(index, 0, page);
+      const { index, name } = lastRemoval;
+      const restoredIndex = Math.min(index, pages.length);
+      pages.splice(restoredIndex, 0, name);
       lastRemoval = undefined;
-      undo.hidden = true;
       renderPages();
-      pageList.children[index].querySelector('[data-action=remove]').focus();
-      announce(page.name + ' a fost readăugată.');
+      pageList.children[restoredIndex].querySelector('.page-more').focus();
+      announce(name + ' a fost readăugată.');
     });
-    const pageIndex = card => pages.findIndex(page => String(page.id) === card?.dataset.page);
+    const pageIndex = card => Array.from(pageList.children).indexOf(card);
+    function setPageActions(trigger, expanded) {
+      trigger.setAttribute('aria-expanded', expanded);
+      byId(trigger.getAttribute('aria-controls')).hidden = !expanded;
+    }
+
+    function openPageActions() {
+      return pageList.querySelector('.page-more[aria-expanded=true]');
+    }
+
+    function dismissOutside(event) {
+      const trigger = openPageActions();
+      if (trigger && !trigger.closest('.page-actions').contains(event.target)) {
+        setPageActions(trigger, false);
+      }
+    }
+    document.addEventListener('click', dismissOutside);
+    document.addEventListener('focusin', dismissOutside);
+    document.addEventListener('keydown', event => {
+      const trigger = openPageActions();
+      if (event.key !== 'Escape' || !trigger) return;
+      event.preventDefault();
+      setPageActions(trigger, false);
+      trigger.focus();
+    });
+
     pageList.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (!button) return;
+      if (button.matches('.page-more')) {
+        const open = openPageActions();
+        if (open) setPageActions(open, false);
+        if (open !== button) setPageActions(button, true);
+        return;
+      }
       const index = pageIndex(button.closest('.page'));
       const action = button.dataset.action;
       if (action !== 'remove') {
-        movePage(index, index + (action === 'up' ? -1 : 1), action);
+        movePage(index, index + (action === 'left' ? -1 : 1));
         return;
       }
-      const [removed] = pages.splice(index, 1);
-      clearUndo();
-      lastRemoval = { index, page: removed };
-      undo.hidden = false;
+      const [name] = pages.splice(index, 1);
+      lastRemoval = { index, name };
       renderPages();
       const neighbor = pageList.children[Math.min(index, pages.length - 1)];
-      (neighbor?.querySelector('[data-action=remove]') ?? choose).focus();
-      announce(removed.name + ' a fost eliminată.');
+      (neighbor?.querySelector('.page-more') ?? choose).focus();
+      announce(name + ' a fost eliminată.');
     });
+
+    // A drag can reorder an existing placeholder. Other drops never change the mock.
     pageList.addEventListener('dragstart', event => {
-      if (!event.target.closest('.thumbnail')) return;
+      if (!event.target.closest('.drag-handle')) return;
       draggedPage = event.target.closest('.page');
-      event.dataTransfer.setData('text/plain', draggedPage.dataset.page);
+      event.dataTransfer.setData('text/plain', 'Pagină demonstrativă');
       event.dataTransfer.effectAllowed = 'move';
     });
     pageList.addEventListener('dragover', event => {
@@ -660,85 +803,52 @@
     pageList.addEventListener('drop', event => {
       const target = event.target.closest('.page');
       if (!draggedPage || !target) return;
-      event.preventDefault();
       const from = pageIndex(draggedPage);
       const to = pageIndex(target);
-      draggedPage = null;
+      draggedPage = undefined;
       target.removeAttribute('data-over');
-      movePage(from, to, to < from ? 'up' : 'down');
+      movePage(from, to);
     });
     pageList.addEventListener('dragend', () => {
-      draggedPage = null;
+      draggedPage = undefined;
       pageList.querySelector('[data-over]')?.removeAttribute('data-over');
     });
+    document.addEventListener('dragover', event => event.preventDefault());
+    document.addEventListener('drop', event => event.preventDefault());
 
-    save.addEventListener('click', () => {
-      clearUndo();
-      const count = pages.length;
-      const item = entry(count === 1 ? 'Document dintr-o imagine' : 'Document din ' + count + ' imagini', 'transferring', { mode });
-      for (const page of pages.splice(0)) {
-        if (page.preview) URL.revokeObjectURL(page.preview);
-      }
-      transfers.push(item);
-      startTransfer(item);
-      renderPages();
-      choose.focus();
-      announce(item.name + ' se încarcă.');
-    });
-
-    function seed(state) {
-      switch (state) {
-        case 'incarcare':
-          transfers.push(entry('Dosar_sintetic.docx', 'transferring', { mode: 'documents', progress: 64 }));
-          processing.push(entry('Declarație_exemplu.pdf', 'queued'));
-          break;
-        case 'eroare':
-          transfers.push(
-            entry('duplicat.pdf', 'duplicate', { mode: 'documents', detail: 'Un fișier identic există deja în arhivă. Salvarea este blocată.' }),
-            entry('transfer.pdf', 'transferFailed', { mode: 'documents', detail: 'Transferul a fost întrerupt. Reîncearcă pentru a continua încărcarea.' }),
-          );
-          processing.push(
-            entry('Scanare_incompletă.pdf', 'failed', { detail: 'OCR nu a putut citi documentul. Reîncercarea automată este programată.' }),
-            entry('Scanare_deteriorată.pdf', 'quarantined', { detail: 'OCR a eșuat la prima încercare și la toate cele trei reîncercări.' }),
-          );
-          break;
-        case 'lung':
-        case 'succes': {
-          processing.push(
-            entry('Declarație_exemplu.pdf', 'ocr', { detail: 'Se extrage textul din document.' }),
-            entry('Inventar_exemplu.docx', 'queued', { detail: 'Se pregătește PDF-ul derivat.' }),
-          );
-          drafts.push(
-            entry(state === 'lung' ? 'Dosar_sintetic_' + 'documente_justificative_'.repeat(8) + 'exemplu.docx' : 'Contract_exemplu.pdf', 'ready', { warning: true }),
-            entry('Procură_exemplu.docx', 'started'),
-            entry('Document din 3 imagini', 'ready'),
-          );
-          if (state === 'lung') drafts.push(entry('Inventar_sintetic.pdf', 'ready'), entry('Opis_sintetic.pdf', 'started'));
-          for (const name of ['pagina-1.jpg', 'pagina-2.png', 'pagina-3.png']) pages.push(entry(name, '', { sample: true }));
-          break;
-        }
-      }
+    function showDestination(title) {
+      byId('upload-screen').hidden = true;
+      byId('destination').hidden = false;
+      byId('destination-title').textContent = title;
+      byId('destination-file').textContent = params.get('document') ?? '';
+      const hasWarning = params.get('ecran') === 'DS-011' && params.has('ocr');
+      byId('destination-warning').hidden = !hasWarning;
+      byId('destination-warning').textContent = hasWarning ? similarity : '';
     }
 
+    const startScenario = Object.hasOwn(scenes, params.get('stare')) ? params.get('stare') : 'gol';
+    applyScenario(startScenario);
     const destination = {
       'DS-002': 'Document existent · Simulare',
       'DS-004': params.has('carantina') ? 'Coada de carantină · Simulare' : 'Coada de revizuire · Simulare',
       'DS-011': 'Revizuire document · Simulare',
-    }[params.get('ecran')];
-    if (destination) {
-      byId('upload-screen').hidden = true;
-      byId('destination').hidden = false;
-      byId('destination-title').textContent = destination;
-      byId('destination-file').textContent = params.get('ecran') === 'DS-011' ? 'Documentul ' + params.get('document') : '';
-      if (params.get('ecran') === 'DS-011' && params.has('ocr')) {
-        byId('destination-warning').hidden = false;
-        byId('destination-warning').textContent = similarity;
-      }
-    } else {
-      seed(params.get('stare'));
-      renderLists();
-      renderPages();
-    }
+    };
+    const screen = params.get('ecran');
+    if (Object.hasOwn(destination, screen)) showDestination(destination[screen]);
+    byId('upload-screen').addEventListener('click', event => {
+      const link = event.target.closest('a');
+      if (!link) return;
+      const url = new URL(link.href);
+      url.searchParams.set('stare', scenario);
+      url.searchParams.set('tema', document.documentElement.dataset.theme);
+      link.href = url;
+    });
+    byId('back-to-upload').addEventListener('click', event => {
+      event.preventDefault();
+      byId('upload-screen').hidden = false;
+      byId('destination').hidden = true;
+      document.querySelector('[data-scenario][aria-pressed=true]').focus();
+    });
   </script>
 </body>
 </html>
