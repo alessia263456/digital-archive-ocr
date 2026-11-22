@@ -25,6 +25,8 @@
 - Q-014 · What should staff do if a required retention event has not occurred? · _answered_
 - Q-015 · What should the audit record identify for an unauthenticated Share Link access? · _answered_
 - Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong? · _answered_
+- Q-020 · How should ordered image uploads be checked for duplicates? · _answered_
+- Q-021 · What OCR similarity criterion should trigger a possible-duplicate warning?
 
 ### [Notarial nomenclature](questions/notarial-nomenclature.md)
 - Q-017 · How should official revisions to the Notarial Nomenclature be applied? · _answered_
@@ -161,3 +163,18 @@
 - **Proposed answer:**
 - **Answer:** Correct the document type, subtype, or Storage Context so the Application derives the proper Archival Indicator and retention rule.
 - **Recorded as:** D-038
+
+## Q-020 · How should ordered image uploads be checked for duplicates?
+- **Status:** answered 2026-11-22
+- **Blocks:** Document-level duplicate criteria for uploads assembled from JPG/PNG pages
+- **Who answers:** repository owner
+- **Proposed answer:**
+- **Answer:** Hash each original image with SHA-256 and hash the ordered sequence of digests with a documented, unambiguous encoding. Backend enforcement blocks identical ordered sequences. The same image digests with the same multiplicities in a different order trigger a non-blocking warning. A single matching page does not block an otherwise different document.
+- **Recorded as:** D-040
+
+## Q-021 · What OCR similarity criterion should trigger a possible-duplicate warning?
+- **Status:** open
+- **Blocks:** Specification and implementation of OCR similarity matching under D-040
+- **Who answers:** repository owner
+- **Proposed answer:**
+- **Evidence required:** A justified metric and threshold evaluated with Document Corpus tests that include duplicate examples and distinct notarial acts sharing a template. Q-011's earlier proposed threshold was never approved. The existing act-number and confirmed Act Date warning remains governed by D-025.
