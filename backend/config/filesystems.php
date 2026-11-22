@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'default_document_disk' => env('DOCUMENTS_DISK', 'documents'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -29,6 +31,35 @@ return [
     */
 
     'disks' => [
+
+        'documents' => in_array(env('DOCUMENTS_DISK'), ['r2', 's3'], true) ? [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('R2_DEFAULT_REGION', env('AWS_DEFAULT_REGION', 'auto')),
+            'bucket' => env('R2_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('R2_ENDPOINT', env('AWS_ENDPOINT')),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', false)),
+            'visibility' => 'private',
+            'throw' => true,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/private/documents'),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('R2_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('R2_DEFAULT_REGION', env('AWS_DEFAULT_REGION', 'auto')),
+            'bucket' => env('R2_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('R2_ENDPOINT', env('AWS_ENDPOINT')),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', false)),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
 
         'local' => [
             'driver' => 'local',

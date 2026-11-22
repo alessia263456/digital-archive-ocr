@@ -13,6 +13,7 @@
 - PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
 - PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks · candidate
 - PATTERN-007 · Run standalone mock checks through existing Playwright projects · candidate
+- PATTERN-008 · Verify live Signed URLs with a disposable object · candidate
 
 ---
 
@@ -58,3 +59,8 @@
     -v "$PWD/docs/design/tests/DS-003.spec.js:/app/tests/DS-003.spec.js:ro" \
     frontend-test
   ```
+-
+## PATTERN-008 · Verify live Signed URLs with a disposable object
+- **Status:** candidate
+- **How:** Create a random synthetic object, request it through the authenticated public Caddy listener, check delivery headers and valid/expired/tampered responses, and delete the object from an exit trap. Keep Signed URLs and hosting credentials out of logs and files.
+- **Example:** [Live Signed URL probe](../../docker/live/tests/signed-delivery-smoke.sh) and [P22-56b plan](plans/p22-56b-live-skeleton-deployment.md).

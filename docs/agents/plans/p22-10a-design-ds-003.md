@@ -75,7 +75,7 @@ The owner confirmed that DS-004 remains the full review queue, DS-011 remains th
 
 ### Considered, not applied
 
-- **Signed URL delivery contract (P22-11 branch)** — Governs Signed URL delivery. The duplicate fixture illustrates navigation to the existing document. No delivery interface or consumer changes are proposed.
+- **C-001** — Governs Signed URL delivery. The duplicate fixture illustrates navigation to the existing document. No delivery interface or consumer changes are proposed.
 - **PATTERN-002** — Candidate. The verification requirement comes from AGENTS.md and D-006.
 
 ### Assumptions and open questions
