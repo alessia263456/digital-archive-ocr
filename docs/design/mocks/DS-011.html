@@ -253,8 +253,6 @@
     #workspace { overflow-wrap: anywhere; }
     #content { display: grid; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
     .workflow-actions { border-block-start: thin solid var(--color-border); }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
-    .form-grid h3 { grid-column: 1 / -1; }
     label { display: grid; min-inline-size: 0; gap: var(--space-xs); font: var(--text-small); font-weight: 600; }
     label[for] { margin-block-end: var(--space-xs); }
     input, select, textarea {
@@ -269,8 +267,22 @@
     }
     textarea { display: block; resize: vertical; }
     textarea[readonly], input[readonly] { background: var(--color-bg-subtle); }
-    .retention, .review-tools, .review-row, .summary { display: grid; gap: var(--space-xs); }
-    .retention, .review-row, .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
+    .metadata-section, .identification-fields { display: grid; gap: var(--space-xs); }
+    .metadata-section + .metadata-section { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
+    .metadata-identification { container-type: inline-size; }
+    .metadata-field { display: grid; align-items: center; gap: var(--space-xs) var(--space-sm); }
+    .metadata-field label { display: block; margin: 0; }
+    .metadata-section :is(input, select) { padding-block: var(--space-xs); }
+    @media (min-width: 640px) {
+      .metadata-field { grid-template-columns: calc(var(--space-3xl) * 2 + var(--space-xl)) minmax(0, 1fr); }
+      .metadata-field label::after, .metadata-field h3::after { content: ":" / ""; }
+      .metadata-section :is(input, select) { font: var(--text-small); }
+    }
+    @container (min-width: 640px) {
+      .identification-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-md); }
+    }
+    .review-tools, .review-row, .summary { display: grid; gap: var(--space-xs); }
+    .review-row, .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
     .review-tools { gap: var(--space-sm); }
     .review-list { display: grid; gap: var(--space-sm); padding: 0; list-style: none; }
     .review-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
@@ -318,7 +330,6 @@
       .workflow ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .workflow a { padding-inline: var(--space-sm); gap: var(--space-xs); }
       .ordinal { inline-size: var(--space-md); block-size: var(--space-lg); }
-      .form-grid { grid-template-columns: minmax(0, 1fr); }
       .summary a { justify-self: start; }
       .viewer-header, .panel-header, .workflow-actions, #content { padding-inline: var(--space-sm); }
       .review-row { grid-template-columns: minmax(0, 1fr); }
@@ -440,7 +451,7 @@
     const labels = {
       date: 'Data actului', number: 'Numărul actului', dossier: 'Numărul dosarului fizic',
       inventory: 'Numărul de inventar', amount: 'Sumă', tags: 'Etichete', expiry: 'Data expirării contractului',
-      type: 'Tip document', subtype: 'Subtip', context: 'Context arhivare',
+      type: 'Tip document', subtype: 'Subtip', context: 'Context arhivare', indicator: 'Indicativ arhivistic',
     };
     const requiredMetadata = ['date', 'number', 'dossier', 'inventory'];
     const fixtures = {
@@ -762,15 +773,18 @@
       return `${row[5]} · Expirarea contractului: ${formatDate(draft.metadata.expiry)}`;
     }
 
+    function metadataField(key, control) {
+      return `<div class="metadata-field"><label for="metadata-${key}">${labels[key]}</label>${control}</div>`;
+    }
+
     function field(key, type = 'text') {
-      return `<label>${labels[key]}<input data-metadata="${key}" type="${type}" value="${html(draft.metadata[key])}"></label>`;
+      return metadataField(key, `<input id="metadata-${key}" data-metadata="${key}" type="${type}" value="${html(draft.metadata[key])}">`);
     }
 
     function select(key, choices) {
       const options = choices.map(([value, caption]) =>
         `<option value="${html(value)}" ${draft.metadata[key] === value ? 'selected' : ''}>${html(caption)}</option>`).join('');
-      return `<div><label for="metadata-${key}">${labels[key]}</label>
-        <select id="metadata-${key}" data-metadata="${key}">${options}</select></div>`;
+      return metadataField(key, `<select id="metadata-${key}" data-metadata="${key}">${options}</select>`);
     }
 
     function renderMetadata() {
@@ -779,23 +793,33 @@
       const row = classification();
       const suggestions = ['amount', 'tags'].filter(key => draft.metadata[key] || fixture().metadata[key]);
       $('content').innerHTML = `
-        <div class="form-grid">
+        <section class="metadata-section metadata-identification">
           <h3>Identificarea actului</h3>
-          ${field('date', 'date')}${field('number')}${field('dossier')}${field('inventory')}
+          <div class="identification-fields">
+            ${field('date', 'date')}${field('number')}${field('dossier')}${field('inventory')}
+          </div>
+        </section>
+        <section class="metadata-section">
           <h3>Sugestii OCR</h3>
           ${suggestions.map(key => field(key)).join('')}
+        </section>
+        <section class="metadata-section">
           <h3>Clasificare arhivistică</h3>
           ${select('type', choices(classifications.map(item => item[1])))}
           ${select('subtype', rows.map(([id, , subtype]) => [id, subtype]))}
           ${select('context', choices(rows.map(item => item[3])))}
-          <label>Indicativ arhivistic<input readonly value="${row?.[4] ?? ''}"></label>
-        </div>
-        <div class="retention">
-          <h3>Retenție</h3>
-          <p class="muted">${row?.[6] ?? 'Alege clasificarea aplicabilă.'}</p>
+          ${metadataField('indicator', `<input id="metadata-indicator" readonly value="${row?.[4] ?? ''}">`)}
+        </section>
+        <section class="metadata-section">
+          <div class="metadata-field">
+            <h3>Retenție</h3>
+            <div>
+              <p id="retention-status">${retention()}</p>
+              <p class="muted">${row?.[6] ?? 'Alege clasificarea aplicabilă.'}</p>
+            </div>
+          </div>
           ${row?.[5] !== 'P' ? field('expiry', 'date') : ''}
-          <p id="retention-status">${retention()}</p>
-        </div>
+        </section>
         <div class="actions">
           <button data-action="metadata">Confirmă metadatele</button>
           <span id="metadata-status" class="muted">${draft.confirmed ? 'Metadate confirmate' : 'De confirmat'}</span>

@@ -299,8 +299,12 @@ test('aligns Step 1 metadata labels and keeps fields usable at desktop and narro
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
 
-  await field(page, 'Data actului').focus();
-  await page.keyboard.press('Tab');
+  const date = field(page, 'Data actului');
+  await date.focus();
+  // Chromium can tab through the native date segments before leaving the field.
+  for (let segment = 0; segment < 5 && await date.evaluate(input => input === document.activeElement); segment++) {
+    await page.keyboard.press('Tab');
+  }
   await expect(field(page, 'Numărul actului')).toBeFocused();
   await expect(field(page, 'Numărul actului')).toHaveCSS('outline-style', 'solid');
   await field(page, 'Tip document').focus();
