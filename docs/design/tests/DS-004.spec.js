@@ -61,8 +61,11 @@ test('checks the header and captures both queues at the review widths', async ({
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Carantină' })).toBeFocused();
   await expect(page.getByRole('tabpanel', { name: 'Carantină' })).toBeVisible();
-  await page.getByRole('tabpanel', { name: 'Carantină' }).focus();
+  await page.goto(mock + '?carantina=1');
+  await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: info.outputPath('carantina.png'), fullPage: true, scale: 'css' });
+  await page.getByRole('button', { name: 'Marchează ca eșuat definitiv' }).click();
+  await page.screenshot({ path: info.outputPath('confirmare.png'), fullPage: true, scale: 'css' });
 
   for (const [state, text] of [
     ['gol', 'Nu sunt documente în carantină.'],
@@ -73,5 +76,8 @@ test('checks the header and captures both queues at the review widths', async ({
     await page.goto(mock + '?carantina=1&stare=' + state);
     await expect(page.getByRole('tabpanel', { name: 'Carantină' }).getByText(text, { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+    if (state === 'gol') {
+      await page.screenshot({ path: info.outputPath('carantina-goala.png'), fullPage: true, scale: 'css' });
+    }
   }
 });

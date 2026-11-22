@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cozi de lucru · Arhivă digitală</title>
+  <style>
+    /* latin-ext */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    /* latin */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* Design Tokens from ../DESIGN.md. */
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5;
+      --color-bg-surface: #FFFFFF;
+      --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C;
+      --color-text-secondary: #556070;
+      --color-border: #E5E0D8;
+      --color-accent-mid: #4683CF;
+      --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
+      --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A;
+      --color-archival-label-border: #DEC09F;
+      --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-heading: var(--font-body);
+      --text-body: 400 16px/24px var(--font-body);
+      --text-h3: 600 18px/26px var(--font-heading);
+      --text-small: 400 14px/20px var(--font-body);
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --color-bg-primary: #1E293B;
+        --color-bg-surface: #283548;
+        --color-bg-subtle: #16202E;
+        --color-text-primary: #F8FAFC;
+        --color-text-secondary: #94A3B8;
+        --color-border: #334155;
+        --color-accent-mid: #60A5FA;
+        --color-archival-label-bg: #3A302A;
+        --color-archival-label-text: #E7B587;
+        --color-archival-label-border: #69503A;
+        --color-focus-ring: #46CFC3;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    h1, h2, p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+
+    /* DS-002's slim header with the queue title and back link. */
+    .viewer-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-block-size: calc(var(--space-2xl) + var(--space-xs) + var(--radius-sm));
+      padding-inline: var(--space-md);
+      border-bottom: thin solid var(--color-border);
+      background: var(--color-bg-surface);
+      font: var(--text-small);
+    }
+    .header-nav-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      inline-size: calc(var(--space-xl) + var(--radius-sm));
+      block-size: calc(var(--space-xl) + var(--radius-sm));
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      transition: background-color var(--duration-fast), border-color var(--duration-fast);
+    }
+    .header-nav-btn:hover {
+      background: var(--color-bg-subtle);
+      border-color: var(--color-accent-mid);
+    }
+    .header-nav-btn svg { inline-size: 1em; block-size: 1em; }
+    .doc-title {
+      font: var(--text-body);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mock-ribbon, .tabs, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .mock-ribbon {
+      justify-content: space-between;
+      padding: var(--space-xs) var(--space-md);
+      background: var(--color-bg-subtle);
+      border-bottom: thin solid var(--color-border);
+      color: var(--color-text-secondary);
+      font: var(--text-small);
+    }
+    .wrap {
+      inline-size: min(100%, calc(var(--space-3xl) * 17));
+      margin-inline: auto;
+      padding: var(--space-xl) var(--space-md) var(--space-3xl);
+    }
+    .button, select {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-block-size: calc(var(--space-xl) + var(--space-sm) + var(--space-xs));
+      padding: var(--space-sm) var(--space-md);
+      border: thin solid var(--color-text-secondary);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      color: var(--color-text-primary);
+      font: var(--text-small);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--duration-fast);
+    }
+    .button:hover, select:hover { background: var(--color-bg-subtle); }
+    .button:active { text-decoration: underline; }
+    .button:disabled { color: var(--color-text-secondary); border-style: dashed; cursor: default; }
+    .button[aria-selected="true"], .primary, .primary:hover {
+      background: var(--color-accent-teal);
+      color: var(--color-version-navy);
+    }
+    .button[aria-selected="true"]:hover, .primary:hover {
+      border-color: var(--color-version-navy);
+      text-decoration: underline;
+    }
+    .panel, .destination, dialog {
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    .panel { margin-block-start: var(--space-md); }
+    .panel > h2 { padding: var(--space-md); border-bottom: thin solid var(--color-border); }
+    h2 { font: var(--text-h3); }
+    .rows { display: grid; gap: var(--space-sm); padding: var(--space-md); }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm) var(--space-lg);
+      padding: var(--space-md);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-sm);
+    }
+    .details { display: grid; justify-items: start; gap: var(--space-xs); min-inline-size: 0; overflow-wrap: anywhere; }
+    .filename { font-weight: 600; }
+    .secondary, .badge { font: var(--text-small); }
+    .secondary { color: var(--color-text-secondary); }
+    .badge {
+      padding: 0 var(--space-xs);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      background: var(--color-bg-subtle);
+    }
+    .warning {
+      background: var(--color-archival-label-bg);
+      color: var(--color-archival-label-text);
+    }
+    a.inline {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: calc(var(--space-xl) + var(--space-sm) + var(--space-xs));
+      color: var(--color-text-primary);
+      font: var(--text-small);
+      font-weight: 600;
+      text-underline-offset: var(--space-xs);
+    }
+    .panel-message, .destination { padding: var(--space-md); }
+    .panel-message:not(:empty) { display: grid; justify-items: start; gap: var(--space-sm); }
+    .panel-message:empty { padding: 0; }
+    .panel-message.warning:not(:empty) { border-top: thin solid var(--color-archival-label-border); }
+    .skeleton {
+      inline-size: 100%;
+      min-block-size: var(--space-3xl);
+      border-radius: var(--radius-sm);
+      background: var(--color-bg-subtle);
+    }
+    dialog {
+      color: var(--color-text-primary);
+      inline-size: min(calc(100% - var(--space-xl)), calc(var(--space-3xl) * 8));
+      padding: var(--space-lg);
+    }
+    dialog::backdrop { background: var(--color-bg-subtle); }
+    dialog p { margin-block: var(--space-sm) var(--space-md); }
+    @media (pointer: coarse) {
+      .header-nav-btn::after {
+        /* Preserve the DS-002 alignment while extending the touch target. */
+        content: '';
+        position: absolute;
+        inset: calc(-1 * (var(--space-xs) + var(--radius-sm)));
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="mock-ribbon" aria-label="Comenzi mock de test">
+    <span>DS-004 · Previzualizare</span>
+    <label>Scenariu
+      <select id="scenario">
+        <option value="">Documente în coadă</option>
+        <option value="gol">Coadă goală</option>
+        <option value="incarcare">Se încarcă</option>
+        <option value="eroare">Eroare la încărcare</option>
+        <option value="lung">Nume lungi</option>
+        <option value="eroare-actiune">Eroare la reîncercare</option>
+      </select>
+    </label>
+  </aside>
+
+  <header class="viewer-header">
+    <a class="header-nav-btn" id="back" href="./DS-003.html" aria-label="Înapoi la încărcare">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5m7 7-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="doc-title" id="title">Cozi de lucru</h1>
+  </header>
+
+  <main class="wrap">
+    <div id="queues">
+      <div class="tabs" role="tablist" aria-label="Cozi de lucru">
+        <button class="button" id="review-tab" type="button" role="tab" aria-controls="review" aria-selected="true">Revizuire</button>
+        <button class="button" id="quarantine-tab" type="button" role="tab" aria-controls="quarantine" aria-selected="false" tabindex="-1">Carantină</button>
+      </div>
+
+      <section class="panel" id="review" role="tabpanel" aria-labelledby="review-tab" tabindex="0">
+        <h2>Documente pentru revizuire</h2>
+        <ul class="rows">
+          <li class="row">
+            <div class="details">
+              <span class="filename">Contract_exemplu.pdf</span>
+              <span class="badge">Nerevizuită</span>
+              <p class="secondary">0 potriviri PII incerte</p>
+              <p class="secondary">Revizuirea umană este obligatorie înainte de aprobare.</p>
+            </div>
+            <a class="inline" href="?ecran=DS-011&amp;document=Contract_exemplu.pdf">Începe revizuirea</a>
+          </li>
+          <li class="row">
+            <div class="details">
+              <span class="filename">Procură_exemplu.docx</span>
+              <span class="badge">Revizuire începută</span>
+            </div>
+            <a class="inline" href="?ecran=DS-011&amp;document=Procur%C4%83_exemplu.docx&amp;reluare=1">Continuă revizuirea</a>
+          </li>
+        </ul>
+        <div class="panel-message" data-state="gol" hidden>
+          <p>Nu sunt documente pentru revizuire.</p>
+          <p class="secondary">Documentele procesate care așteaptă revizuirea vor apărea aici.</p>
+          <a class="inline" href="./DS-003.html">Încarcă documente</a>
+        </div>
+      </section>
+
+      <section class="panel" id="quarantine" role="tabpanel" aria-labelledby="quarantine-tab" tabindex="0" hidden>
+        <h2>Documente în carantină</h2>
+        <ul class="rows">
+          <li class="row">
+            <div class="details">
+              <span class="filename">Scanare_deteriorată.pdf</span>
+              <span class="badge warning">În carantină</span>
+              <p class="secondary">4 încercări de OCR eșuate: încercarea inițială și 3 reîncercări.</p>
+            </div>
+            <div class="actions">
+              <button class="button" id="retry" type="button">Reîncearcă procesarea</button>
+              <button class="button" id="mark-failed" type="button">Marchează ca eșuat definitiv</button>
+            </div>
+          </li>
+        </ul>
+        <div class="panel-message" data-state="gol" hidden>
+          <p>Nu sunt documente în carantină.</p>
+          <p class="secondary">Documentele apar aici după încercarea inițială de OCR și 3 reîncercări eșuate.</p>
+        </div>
+        <p class="panel-message" role="status" id="action-status"></p>
+        <p class="panel-message warning" role="alert" id="action-error"></p>
+      </section>
+    </div>
+
+    <section class="destination" id="destination" hidden>
+      <p id="selected-draft"></p>
+      <p id="review-action" class="secondary"></p>
+      <a class="inline" href="./DS-004.html">Înapoi la revizuire</a>
+    </section>
+  </main>
+
+  <dialog id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+    <form method="dialog">
+      <h2 id="confirm-title">Marchezi documentul ca eșuat definitiv?</h2>
+      <p id="confirm-description"><strong>Scanare_deteriorată.pdf</strong><br>Starea documentului devine „Eșuat definitiv”. Fișierul rămâne păstrat.</p>
+      <div class="actions">
+        <button class="button" value="cancel" autofocus>Renunță</button>
+        <button class="button primary" value="confirm">Confirmă schimbarea stării</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="loading">
+    <div class="panel-message" role="status">
+      <p>Se încarcă documentele…</p>
+      <div class="skeleton" aria-hidden="true"></div>
+    </div>
+  </template>
+  <template id="load-error">
+    <div class="panel-message warning">
+      <p role="alert">Nu am putut încărca documentele.</p>
+      <button class="button" type="button" data-reload>Încearcă din nou</button>
+    </div>
+  </template>
+
+  <script>
+    const byId = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const scenario = byId('scenario');
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = tabs.map(tab => byId(tab.getAttribute('aria-controls')));
+    const longName = 'Dosar_sintetic_documente_justificative_documente_justificative_documente_justificative_exemplu.pdf';
+
+    function selectTab(selected) {
+      tabs.forEach((tab, index) => {
+        tab.setAttribute('aria-selected', String(tab === selected));
+        tab.tabIndex = tab === selected ? 0 : -1;
+        panels[index].hidden = tab !== selected;
+      });
+    }
+
+    function setScenario(value) {
+      const next = new URL(location.href);
+      next.searchParams.delete('stare');
+      if (value) next.searchParams.set('stare', value);
+      const quarantine = byId('quarantine-tab').getAttribute('aria-selected') === 'true';
+      next.searchParams.delete('carantina');
+      if (quarantine) next.searchParams.set('carantina', '1');
+      location.assign(next);
+    }
+
+    const state = params.get('stare') || '';
+    scenario.value = state;
+    scenario.addEventListener('change', () => setScenario(scenario.value));
+    selectTab(params.has('carantina') ? tabs[1] : tabs[0]);
+    for (const tab of tabs) {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', event => {
+        const destinations = { ArrowLeft: tabs.find(item => item !== tab), ArrowRight: tabs.find(item => item !== tab), Home: tabs[0], End: tabs[1] };
+        const next = destinations[event.key];
+        if (!next) return;
+        event.preventDefault();
+        selectTab(next);
+        next.focus();
+      });
+    }
+
+    for (const panel of panels) {
+      const rows = panel.querySelector('.rows');
+      if (state === 'gol') {
+        rows.hidden = true;
+        panel.querySelector('[data-state="gol"]').hidden = false;
+      }
+      if (state === 'incarcare' || state === 'eroare') {
+        rows.hidden = true;
+        const template = byId(state === 'incarcare' ? 'loading' : 'load-error');
+        rows.after(template.content.cloneNode(true));
+        panel.querySelector('[data-reload]')?.addEventListener('click', () => setScenario(''));
+      }
+      if (state === 'lung') {
+        const row = document.createElement('li');
+        row.className = 'row';
+        const name = document.createElement('span');
+        name.className = 'details filename';
+        name.textContent = longName;
+        row.append(name);
+        rows.append(row);
+      }
+    }
+
+    const drafts = {
+      'Contract_exemplu.pdf': 'Începe revizuirea',
+      'Procură_exemplu.docx': 'Continuă revizuirea',
+    };
+    const draft = params.get('document');
+    if (params.get('ecran') === 'DS-011' && Object.hasOwn(drafts, draft)) {
+      byId('title').textContent = 'Revizuire document · Simulare';
+      byId('back').href = './DS-004.html';
+      byId('back').setAttribute('aria-label', 'Înapoi la coada de revizuire');
+      byId('queues').hidden = true;
+      scenario.disabled = true;
+      byId('destination').hidden = false;
+      byId('selected-draft').textContent = draft;
+      byId('review-action').textContent = drafts[draft];
+    }
+
+    const dialog = byId('confirm');
+    const retry = byId('retry');
+    const markFailed = byId('mark-failed');
+    const actionStatus = byId('action-status');
+    const actionError = byId('action-error');
+    let retryFails = state === 'eroare-actiune';
+
+    function showActionResult(message) {
+      // End the interaction fixture at feedback. It does not model queue membership after an action.
+      byId('quarantine').querySelector('.rows').hidden = true;
+      actionStatus.textContent = message;
+      byId('quarantine-tab').focus();
+    }
+
+    markFailed.addEventListener('click', () => {
+      dialog.returnValue = 'cancel';
+      dialog.showModal();
+    });
+    dialog.addEventListener('close', () => {
+      if (dialog.returnValue !== 'confirm') return;
+      actionError.textContent = '';
+      showActionResult('Stare actualizată: Eșuat definitiv.');
+    });
+
+    retry.addEventListener('click', () => {
+      actionError.textContent = '';
+      actionStatus.textContent = 'Se trimite documentul la procesare…';
+      retry.disabled = true;
+      markFailed.disabled = true;
+      // Give the pending fixture a frame before showing the simulated result.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        retry.disabled = false;
+        markFailed.disabled = false;
+        retry.focus();
+        if (retryFails) {
+          retryFails = false;
+          actionStatus.textContent = '';
+          actionError.textContent = 'Nu am putut trimite documentul la procesare. Încearcă din nou.';
+          return;
+        }
+        showActionResult('Documentul a fost trimis din nou la procesare.');
+      }));
+    });
+  </script>
+</body>
+</html>
