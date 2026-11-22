@@ -95,6 +95,79 @@ final class DocumentStorageTest extends TestCase
         self::assertSame($payload, $response->streamedContent());
     }
 
+    public function test_signed_url_accepts_the_trusted_caddy_https_forwarded_request(): void
+    {
+        $payload = '%PDF-1.4 forwarded synthetic content';
+        $path = 'originals/forwarded.pdf';
+        $this->service->put($path, $payload);
+        URL::forceRootUrl('https://arhivar.swedencentral.cloudapp.azure.com');
+        URL::forceScheme('https');
+        $url = $this->service->temporaryUrl($path, Carbon::now()->addMinutes(15));
+        $parsed = parse_url($url);
+        self::assertSame('https', $parsed['scheme']);
+        self::assertSame('arhivar.swedencentral.cloudapp.azure.com', $parsed['host']);
+
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '172.20.0.4',
+            'HTTP_HOST' => 'backend:8000',
+            'HTTP_X_FORWARDED_HOST' => 'arhivar.swedencentral.cloudapp.azure.com',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+        ])->get('http://backend:8000'.$parsed['path'].'?'.$parsed['query']);
+
+        self::assertSame('https://arhivar.swedencentral.cloudapp.azure.com', $this->app['request']->getSchemeAndHttpHost());
+        self::assertSame($parsed['path'], $this->app['request']->getPathInfo());
+        self::assertSame($parsed['query'], $this->app['request']->server->get('QUERY_STRING'));
+        self::assertTrue($this->app['url']->hasCorrectSignature($this->app['request']));
+        self::assertTrue($this->app['url']->signatureHasNotExpired($this->app['request']));
+        $response->assertOk();
+        self::assertSame($payload, $response->streamedContent());
+        URL::forceScheme(null);
+        URL::forceRootUrl(null);
+    }
+
+    public function test_signed_url_rejects_a_tampered_forwarded_host(): void
+    {
+        $this->service->put('originals/forwarded.pdf', '%PDF-1.4 payload');
+        URL::forceRootUrl('https://arhivar.swedencentral.cloudapp.azure.com');
+        URL::forceScheme('https');
+        $url = $this->service->temporaryUrl('originals/forwarded.pdf', Carbon::now()->addMinutes(15));
+        $parsed = parse_url($url);
+
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '172.20.0.4',
+            'HTTP_HOST' => 'backend:8000',
+            'HTTP_X_FORWARDED_HOST' => 'attacker.example',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+        ])->get('http://backend:8000'.$parsed['path'].'?'.$parsed['query']);
+
+        $response->assertForbidden();
+        URL::forceScheme(null);
+        URL::forceRootUrl(null);
+    }
+
+    public function test_signed_url_rejects_forwarded_headers_from_an_untrusted_peer(): void
+    {
+        $this->service->put('originals/forwarded.pdf', '%PDF-1.4 payload');
+        URL::forceRootUrl('https://arhivar.swedencentral.cloudapp.azure.com');
+        URL::forceScheme('https');
+        $url = $this->service->temporaryUrl('originals/forwarded.pdf', Carbon::now()->addMinutes(15));
+        $parsed = parse_url($url);
+
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '198.51.100.20',
+            'HTTP_HOST' => 'backend:8000',
+            'HTTP_X_FORWARDED_HOST' => 'arhivar.swedencentral.cloudapp.azure.com',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+        ])->get('http://backend:8000'.$parsed['path'].'?'.$parsed['query']);
+
+        $response->assertForbidden();
+        URL::forceScheme(null);
+        URL::forceRootUrl(null);
+    }
+
     public function test_anonymous_request_without_signature_is_rejected_with_403_and_romanian_error(): void
     {
         $path = 'originals/doc.pdf';
@@ -191,5 +264,25 @@ final class DocumentStorageTest extends TestCase
         $this->artisan('storage:r2-smoke')
             ->expectsOutputToContain('Cloudflare R2')
             ->assertExitCode(1);
+    }
+
+    public function test_r2_smoke_reports_success_without_printing_the_signed_url(): void
+    {
+        Config::set('filesystems.disks.documents', [
+            'driver' => 's3',
+            'key' => 'validation-only',
+            'secret' => 'validation-only',
+            'region' => 'auto',
+            'bucket' => 'validation-only',
+            'endpoint' => 'https://example.eu.r2.cloudflarestorage.com',
+            'use_path_style_endpoint' => false,
+        ]);
+        Storage::fake('documents');
+
+        $this->artisan('storage:r2-smoke')
+            ->doesntExpectOutputToContain('signature=')
+            ->doesntExpectOutputToContain('/api/documents/deliver/')
+            ->expectsOutputToContain('Verificarea Cloudflare R2 a trecut cu succes.')
+            ->assertExitCode(0);
     }
 }

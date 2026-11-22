@@ -24,7 +24,7 @@ curl -sSI "http://arhivar.swedencentral.cloudapp.azure.com/"
 curl -sSI "$url/"
 ```
 
-Supply the persistent Laravel `APP_KEY` and PostgreSQL `DB_PASSWORD` as exported shell variables from the password manager. The Application key uses Laravel’s base64-encoded 32-byte key format. Retain both values for subsequent starts. Use `config -q` for validation so credentials stay out of terminal output. Run the offline configuration tests from the repository root with `python3 docker/live/test_config.py`.
+Supply the persistent Laravel `APP_KEY`, PostgreSQL `DB_PASSWORD`, and the rotated Cloudflare R2 credentials as exported shell variables from the password manager. The Application key uses Laravel’s base64-encoded 32-byte key format. Set `DOCUMENTS_DISK=r2`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, and `R2_ENDPOINT` for the private EU-jurisdiction bucket (endpoint form: `https://<account-id>.eu.r2.cloudflarestorage.com`). `R2_DEFAULT_REGION` defaults to `auto`; `R2_USE_PATH_STYLE_ENDPOINT` defaults to `false`. Keep the bucket private and do not place credentials in tracked files or command arguments. Retain these values in the private deployment environment for subsequent starts. Use `config -q` for validation so credentials stay out of terminal output. Run the offline configuration tests from the repository root with `python3 docker/live/test_config.py`.
 
 ## Local PHP compatibility check
 
@@ -57,9 +57,10 @@ docker compose up -d --wait backend
 docker compose exec -T backend php artisan migrate --force
 docker compose exec -T backend php artisan migrate:status
 docker compose run --rm ocr-worker
+docker compose exec -T backend php artisan storage:r2-smoke
 ```
 
-Check database migrations and the Romanian TSV smoke. Complete P22-11’s signed storage checks before accepting the deployed skeleton. At the agreed cutover, switch the listener with the same certificate volume.
+Check database migrations, the Romanian TSV smoke, and the disposable R2 write/read/delete cycle. The R2 smoke reports the result without printing its generated Signed URL. It must not be run until the rotated R2 credential is configured in the private deployment environment. At the authorized cutover, switch the listener with the same certificate volume.
 
 ```sh
 docker compose -f /opt/archive-placeholder/compose.yaml stop caddy
@@ -74,6 +75,8 @@ curl -i --user preview -H 'Accept: application/json' "$url/api/missing"
 ```
 
 Expect HTTP 200 for health and a Laravel JSON 404 for the absent API route. Anonymous or invalid credentials should receive a 401 challenge on both paths and on frontend assets. Check certificate continuity across the switch.
+
+After the listener switch, run `./tests/signed-delivery-smoke.sh` from `docker/live` on the VM. It creates a random synthetic R2 object and exercises the generated valid, expired and tampered Signed URLs through the public HTTPS listener, resolving the public hostname to loopback so the live Caddy listener and certificate are checked without relying on DNS hairpin routing. Curl prompts for the `preview` Basic Auth password on each request; the script never stores that password or writes Signed URLs to output or files. It checks the delivered bytes, PDF MIME type, cache policy and `nosniff` header, then deletes the synthetic object even after a failed check.
 
 ## Restore the placeholder during P22-56b
 
