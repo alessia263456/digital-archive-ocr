@@ -81,7 +81,7 @@ Check off a task after verification. Record approval time, verification time, ev
   - The owner approved the intake mock, including its processing and draft handoffs. [Plan](p22-10a-design-ds-003.md) · approval commit `d41f747`.
 - [x] P22-10b · Design DS-004
   - The owner approved the review and quarantine mock with counted tabs on 2026-11-22. All 20 Playwright checks passed across desktop and mobile in both themes. [Plan](p22-10b-design-ds-004.md) · approval commit `5672dc0`.
-- [ ] P22-10c · Design DS-011
+- [x] P22-10c · Design DS-011
 
 ## Day 4 · Run batches without blocking the worker
 

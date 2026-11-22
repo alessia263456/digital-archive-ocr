@@ -1,6 +1,6 @@
 # Plan — P22-10c · DS-011 · Editor document & Anonimizare
 
-**Status:** Plan approved by the owner in chat. Build is on hold at the owner's request and requires a separate instruction to start. DS-011 stays `draft` in the registry until the owner explicitly approves the visual result in chat.
+**Status:** The owner approved the revised DS-011 mock in chat.
 
 ## Size and approach
 
