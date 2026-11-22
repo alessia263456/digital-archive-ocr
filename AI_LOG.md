@@ -103,3 +103,13 @@ După ce am permis traficul către porturile 80 și 443, Codex a repornit Caddy 
 ## 2026-11-21 · P22-06a · Rasterizarea documentelor
 
 Codex a implementat planul aprobat pentru PDF, JPG și PNG, cu publicarea atomică a paginilor și limite de timp, memorie și volum. Primele 16 teste au eșuat deoarece serviciul lipsea. La prima rulare după implementare, două teste au arătat că procesele copil nu primeau calea executabilelor de test. După corectare, suita completă a trecut cu 20 de teste și 77 de aserțiuni. Verificarea OCR în limba română a trecut. Geometria documentelor reprezentative rămâne pentru P22-06b.
+
+## 2026-11-22 · P22-11 și P22-56b · Signed URL, verificări live și finalizare
+
+**Unealta:** OpenAI Codex, Docker Compose, SSH și verificările Chrome DevTools ale proprietarului.
+
+Am investigat răspunsul HTTP 403 pentru Signed URL. Laravel nu avea Caddy configurat ca proxy de încredere și reconstruia schema cererii ca HTTP, deși URL-ul era semnat absolut pentru HTTPS. Am limitat antetele proxy de încredere la rețeaua bridge Docker `172.16.0.0/12` și am adăugat teste pentru livrare HTTPS validă (200), URL expirat și modificat (403), gazdă modificată și antete spoofed de la un peer neîncrezător. Rețeaua live `172.19.0.0/16` se află în intervalul configurat.
+
+Proprietarul a autorizat deploy-ul reviziei `f089e2c43f1c287450076e56ffc966296d71822b`. Aceasta a fost transferată privat în Azure; a fost reconstruit și recreat numai serviciul backend. Backend-ul a devenit healthy, iar containerele Caddy și PostgreSQL au rămas neschimbate. Configurația privată, TLS și rollback-ul placeholder au fost păstrate. HTTP a redirecționat către HTTPS (308), certificatul HTTPS a fost valid, iar accesul anonim la frontend, health și API a primit 401.
+
+Proprietarul a raportat că proba live Signed URL a trecut: livrare validă, respingere pentru URL expirat și modificat și curățarea obiectului sintetic. Verificările autentificate au returnat frontend 200, health 200 și fallback API 404. În Chrome DevTools, interfața React s-a randat; JavaScript-ul `index-DOxFgDtR.js` și CSS-ul `index-DV9xApkK.css` au returnat 200, iar documentul HTML principal a returnat 304 din cache. P22-11 și P22-56b au fost marcate complete în checklist. Testele PHPUnit, verificările de configurare, linterul Ledger și `git diff --check` au trecut. Checklist-ul a fost actualizat în commiturile locale `ef1c077` și `65ede59`; fixul este în `f089e2c`. Nu s-a făcut push.
