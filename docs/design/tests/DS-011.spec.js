@@ -182,6 +182,10 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await scan.locator('[data-mark="manual-1"]').click();
   await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
   await expect(manual).toHaveCount(0);
+  await workspace(page).getByRole('button', { name: 'Anulează eliminarea' }).click();
+  await expect(manual).toBeVisible();
+  await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
+  await expect(manual).toHaveCount(0);
   const tool = page.getByRole('button', { name: 'Marchează zonă', exact: true });
   await tool.focus();
   await page.keyboard.press('Enter');
@@ -306,6 +310,7 @@ test('covers review widths, accessibility states and captures each step', async 
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await page.getByRole('button', { name: 'Marchează zona semnăturii' }).click();
+  await capture('marcaj-selectat');
   await step(page, 3);
   await capture('verificare-finala');
   await page.getByRole('button', { name: 'Pagina anterioară' }).click();

@@ -43,7 +43,6 @@
       --font-body: 'Public Sans', system-ui, sans-serif;
       --font-heading: var(--font-body);
       --text-body: 400 16px/24px var(--font-body);
-      --text-h2: 600 24px/32px var(--font-heading);
       --text-mono: 400 13px/20px var(--font-mono);
       --font-mono: 'Fira Code', monospace;
       --text-h3: 600 18px/26px var(--font-heading);
@@ -61,35 +60,37 @@
       --duration-fast: 150ms ease;
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        color-scheme: dark;
-        --color-bg-primary: #1E293B;
-        --color-bg-surface: #283548;
-        --color-bg-subtle: #16202E;
-        --color-text-primary: #F8FAFC;
-        --color-text-secondary: #94A3B8;
-        --color-border: #334155;
-        --color-accent-mid: #60A5FA;
-        --color-archival-label-bg: #3A302A;
-        --color-archival-label-text: #E7B587;
-        --color-archival-label-border: #69503A;
-        --color-focus-ring: #46CFC3;
-      }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg-primary: #1E293B;
+      --color-bg-surface: #283548;
+      --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC;
+      --color-text-secondary: #94A3B8;
+      --color-border: #334155;
+      --color-accent-mid: #60A5FA;
+      --color-archival-label-bg: #3A302A;
+      --color-archival-label-text: #E7B587;
+      --color-archival-label-border: #69503A;
+      --color-focus-ring: #46CFC3;
     }
 
-    :root { --touch: calc(var(--space-xl) + var(--space-sm) + var(--space-xs)); }
+    :root { --target: var(--space-xl); }
+    @media (pointer: coarse), (max-width: 639px) {
+      :root { --target: calc(var(--space-xl) + var(--space-sm) + var(--space-xs)); }
+    }
     *, *::before, *::after { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
     h1, h2, h3, p, ol, ul, dl, dd, fieldset { margin: 0; }
-    h2 { font: var(--text-h2); }
-    h3 { font: var(--text-h3); }
+    h2 { font: var(--text-h3); }
+    h3 { font: var(--text-body); font-weight: 600; }
     a { color: inherit; text-underline-offset: var(--space-xs); }
     :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
     button, input, select, textarea { color: inherit; font: inherit; }
     button, .jump, .workflow a, .entry, .summary a {
-      min-block-size: var(--touch);
+      min-inline-size: var(--space-lg);
+      min-block-size: var(--target);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -98,7 +99,7 @@
       background: var(--color-bg-surface);
       border: thin solid var(--color-text-secondary);
       border-radius: var(--radius-md);
-      padding: var(--space-sm) var(--space-md);
+      padding: var(--space-xs) var(--space-sm);
       font: var(--text-small);
       font-weight: 600;
       cursor: pointer;
@@ -118,10 +119,13 @@
       background: var(--color-bg-surface);
       border-block-end: thin solid var(--color-border);
     }
-    .header > div { display: flex; align-items: baseline; gap: var(--space-md); min-inline-size: 0; }
+    .header-title { display: flex; align-items: baseline; gap: var(--space-sm); min-inline-size: 0; }
     .header h1 { font: var(--text-body); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .back { display: grid; place-items: center; inline-size: var(--touch); block-size: var(--touch); padding: 0; text-decoration: none; }
+    .back { display: grid; place-items: center; inline-size: var(--target); block-size: var(--target); padding: 0; text-decoration: none; }
     .dossier { flex: none; }
+    .header-actions { display: flex; align-items: center; gap: var(--space-sm); }
+    #theme { inline-size: var(--target); padding: 0; }
+    #theme svg { inline-size: var(--space-md); block-size: var(--space-md); fill: none; stroke: currentColor; stroke-width: 1.75; }
     .muted { color: var(--color-text-secondary); font: var(--text-small); }
     .entries {
       display: flex;
@@ -136,48 +140,50 @@
     .entries p { margin-inline-end: auto; }
     .entry, .summary a, .jump { font-weight: 600; }
     .entry[aria-current] { text-decoration: none; }
-    details summary { cursor: pointer; padding-block: var(--space-sm); min-block-size: var(--touch); }
+    details summary { cursor: pointer; padding-block: var(--space-sm); min-block-size: var(--target); }
     #full-name { flex-basis: 100%; overflow-wrap: anywhere; }
     #full-name p { padding-block-end: var(--space-sm); }
     #feedback { padding-inline: var(--space-md); font: var(--text-small); }
     #feedback > :not(:empty) { padding-block: var(--space-sm); }
     .warning { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
-    main { padding: var(--space-lg) var(--space-xl) var(--space-xl); }
+    main { padding: var(--space-sm) var(--space-md) var(--space-md); }
     .workflow ol {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       list-style: none;
       padding: 0;
-      gap: var(--space-sm);
-      margin-block-end: var(--space-lg);
+      gap: var(--space-xs);
+      margin-block-end: var(--space-md);
+      border-block-end: thin solid var(--color-border);
     }
     .workflow a {
       inline-size: 100%;
       justify-content: start;
       gap: var(--space-sm);
-      padding: var(--space-sm) var(--space-md);
-      border: thin solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-bg-surface);
+      block-size: 100%;
+      padding: var(--space-xs) var(--space-sm);
+      border-block-end: var(--radius-sm) solid transparent;
       text-decoration: none;
       font: var(--text-small);
     }
-    .workflow strong, .workflow small { display: block; font: inherit; overflow-wrap: anywhere; }
+    .workflow strong, .workflow small { font: inherit; overflow-wrap: anywhere; }
     .workflow strong { font-weight: 600; }
-    .workflow small { color: var(--color-text-secondary); }
-    .workflow a[aria-current] { border-color: var(--color-text-secondary); box-shadow: inset 0 calc(-1 * var(--space-xs)) var(--color-accent-teal); }
+    .workflow small { display: inline-block; color: var(--color-text-secondary); }
+    .workflow small.warning { color: var(--color-archival-label-text); }
+    .workflow a[aria-current] { border-block-end-color: var(--color-focus-ring); background: var(--color-bg-surface); }
+    .step-caption { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--space-sm); }
     .ordinal {
       display: grid;
       place-items: center;
       flex: none;
-      inline-size: var(--space-xl);
-      block-size: var(--space-xl);
+      inline-size: var(--space-lg);
+      block-size: var(--space-lg);
       background: var(--color-bg-subtle);
       border-radius: var(--radius-md);
       font-weight: 600;
     }
     [aria-current] .ordinal { color: var(--color-version-navy); background: var(--color-accent-teal); }
-    .layout { display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr); align-items: start; gap: var(--space-lg); }
+    .layout { display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr); align-items: start; gap: var(--space-md); }
     .card, dialog {
       min-inline-size: 0;
       background: var(--color-bg-surface);
@@ -185,22 +191,22 @@
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-card);
     }
-    .viewer-header, .panel-header, .workflow-actions { padding: var(--space-md) var(--space-lg); }
+    .viewer-header, .panel-header, .workflow-actions { padding: var(--space-sm) var(--space-md); }
     .viewer-header, .workflow-actions, .actions, .controls, .segmented { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
     .viewer-header, .workflow-actions { justify-content: space-between; }
     .panel-header { border-block-end: thin solid var(--color-border); }
-    .panel-header p { margin-block-start: var(--space-xs); }
+    .panel-header p { margin-block-start: 0; }
     .segmented { gap: 0; }
     .segmented button:first-child { border-start-end-radius: 0; border-end-end-radius: 0; }
     .segmented button:last-child { border-start-start-radius: 0; border-end-start-radius: 0; border-inline-start: 0; }
     .segmented [aria-pressed="true"] { background: var(--color-version-navy); color: var(--scan-paper); }
     .segmented #anonymized[aria-pressed="true"] { background: var(--color-accent-teal); color: var(--color-version-navy); }
-    .controls { justify-content: center; padding: var(--space-sm); font: var(--text-small); }
-    .controls button { min-inline-size: var(--touch); padding-inline: var(--space-xs); }
+    .controls { justify-content: center; padding: var(--space-xs); font: var(--text-small); }
+    .controls button { min-inline-size: var(--target); padding-inline: var(--space-xs); }
     .jump { display: none; }
     #viewport {
       background: var(--color-bg-subtle);
-      padding: var(--space-md);
+      padding: var(--space-sm);
       overflow: auto;
       max-block-size: calc(var(--space-3xl) * 10);
       border-block: thin solid var(--color-border);
@@ -233,50 +239,67 @@
     .signature { font-style: italic; font-size: 4cqi; }
     .scan-region { position: absolute; pointer-events: none; }
     .coverage { background: black; }
-    .inspection { outline: var(--radius-sm) dashed var(--color-focus-ring); outline-offset: var(--radius-sm); }
-    .drawing-guide { border: var(--radius-sm) dashed var(--color-focus-ring); }
+    .scan-region[data-mark] { cursor: pointer; pointer-events: auto; }
+    #scan.drawing .scan-region { pointer-events: none; }
+    .mark-outline, .scan-region[data-mark]:hover, .inspection, .drawing-guide {
+      outline: var(--radius-sm) solid var(--scan-ink);
+      box-shadow: 0 0 0 var(--space-xs) var(--scan-paper);
+    }
+    .mark-outline { outline-style: dashed; }
+    .inspection { outline-offset: var(--radius-sm); }
+    .drawing-guide { outline-style: dashed; }
+    .drawing-cursor { inline-size: var(--space-sm); block-size: var(--space-sm); transform: translate(-50%, -50%); }
     .scan-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
     #workspace { overflow-wrap: anywhere; }
-    #content { display: grid; gap: var(--space-md); padding: var(--space-lg); }
+    #content { display: grid; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
     .workflow-actions { border-block-start: thin solid var(--color-border); }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
-    .form-grid h3, .wide { grid-column: 1 / -1; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+    .form-grid h3 { grid-column: 1 / -1; }
     label { display: grid; min-inline-size: 0; gap: var(--space-xs); font: var(--text-small); font-weight: 600; }
     label[for] { margin-block-end: var(--space-xs); }
     input, select, textarea {
       inline-size: 100%;
       min-inline-size: 0;
-      min-block-size: var(--touch);
+      min-block-size: var(--target);
       background: var(--color-bg-surface);
       border: thin solid var(--color-text-secondary);
       border-radius: var(--radius-sm);
       padding: var(--space-sm);
       font: var(--text-body);
     }
-    textarea { resize: vertical; }
-    input[readonly] { background: var(--color-bg-subtle); }
-    .retention, .passages, .manual, .review-row, .summary {
-      display: grid;
-      gap: var(--space-xs);
-      padding: var(--space-md);
-      border: thin solid var(--color-border);
-      border-radius: var(--radius-sm);
-    }
-    .passages { background: var(--color-bg-subtle); gap: var(--space-xs); }
-    mark { color: var(--color-archival-label-text); background: var(--color-archival-label-bg); text-decoration: underline; text-decoration-color: currentColor; }
-    mark[data-state="accepted"] { color: var(--color-version-navy); background: var(--color-accent-teal); }
-    mark[data-state="rejected"] { color: inherit; background: transparent; text-decoration-style: dotted; }
+    textarea { display: block; resize: vertical; }
+    textarea[readonly], input[readonly] { background: var(--color-bg-subtle); }
+    .retention, .review-tools, .review-row, .summary { display: grid; gap: var(--space-xs); }
+    .retention, .review-row, .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
+    .review-tools { gap: var(--space-sm); }
     .review-list { display: grid; gap: var(--space-sm); padding: 0; list-style: none; }
-    .review-row { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
-    .review-row .actions { grid-column: 1 / -1; }
-    .badge { align-self: start; justify-self: start; padding: 0 var(--space-xs); border-radius: var(--radius-sm); font: var(--text-small); font-weight: 600; }
+    .review-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+    .locate, .mark-link {
+      border-color: transparent;
+      justify-content: start;
+      padding-inline: 0;
+      text-align: start;
+      text-decoration: underline;
+      text-underline-offset: var(--space-xs);
+    }
+    .locate:hover, .mark-link:hover { background: transparent; color: var(--color-text-primary); }
+    .review-row .locate { min-inline-size: min(var(--target), 100%); }
+    .badge { justify-self: start; padding-inline: var(--space-xs); border-radius: var(--radius-sm); font: var(--text-small); font-weight: 600; }
     .accepted { background: var(--color-accent-teal); color: var(--color-version-navy); }
     .neutral { background: var(--color-bg-subtle); }
     .coordinates { font: var(--text-mono); }
-    .summary > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm); }
-    .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
-    .summary h3 { font: var(--text-body); font-weight: 600; }
-    .manual { gap: var(--space-sm); }
+    .selected-mark blockquote { margin: var(--space-xs) 0; white-space: pre-wrap; }
+    .selected-mark mark { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    details.compact summary { min-block-size: var(--target); }
+    .selected-mark { background: var(--color-bg-subtle); padding: var(--space-sm); }
+    .selected-mark .actions { margin-block-start: var(--space-xs); }
+    .summary > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--space-xs) var(--space-sm); }
+    .summary .full-width { grid-column: 1 / -1; }
+    .summary a { justify-self: start; }
+    .summary h3 { align-self: center; }
+    .summary h3, .review-notice { font: var(--text-small); font-weight: 600; }
+    .review-notice { padding: var(--space-sm); }
+    .review-notice p + p { margin-block-start: var(--space-xs); }
     #state { display: grid; gap: var(--space-md); justify-items: start; padding: var(--space-lg); }
     .skeleton { width: 100%; min-height: var(--space-3xl); background: var(--color-bg-subtle); }
     dialog { inline-size: min(calc(100% - var(--space-xl)), calc(var(--space-3xl) * 8)); padding: var(--space-lg); color: inherit; }
@@ -287,15 +310,17 @@
       .jump { display: inline-flex; }
     }
     @media (max-width: 639px) {
-      main { padding: var(--space-md); }
-      .header > div { display: block; }
+      main { padding: var(--space-sm); }
+      .header { padding-inline: var(--space-sm); gap: var(--space-xs); }
+      .header-title { display: block; }
+      .header-actions { gap: var(--space-xs); }
       .dossier { display: block; overflow-wrap: anywhere; }
       .workflow ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .workflow a { padding-inline: var(--space-sm); gap: var(--space-xs); }
-      .ordinal { inline-size: var(--space-lg); block-size: var(--space-lg); }
-      .form-grid, .summary > div { grid-template-columns: minmax(0, 1fr); }
+      .ordinal { inline-size: var(--space-md); block-size: var(--space-lg); }
+      .form-grid { grid-template-columns: minmax(0, 1fr); }
       .summary a { justify-self: start; }
-      .viewer-header, .panel-header, .workflow-actions, #content { padding-inline: var(--space-md); }
+      .viewer-header, .panel-header, .workflow-actions, #content { padding-inline: var(--space-sm); }
       .review-row { grid-template-columns: minmax(0, 1fr); }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -306,11 +331,22 @@
 <body>
   <header class="header">
     <a class="back" href="./DS-004.html" aria-label="Înapoi la cozi de lucru"><span aria-hidden="true">←</span></a>
-    <div>
+    <div class="header-title">
       <h1 id="filename">Editor document</h1>
       <span id="dossier" class="dossier muted"></span>
     </div>
-    <button id="save" class="primary">Salvează ciorna</button>
+    <div class="header-actions">
+      <button id="save" class="primary">Salvează ciorna</button>
+      <button id="theme" aria-label="Mod întunecat" title="Mod întunecat">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path id="moon" d="M20.9 13.2A9 9 0 0 1 10.8 3.1a9 9 0 1 0 10.1 10.1Z"/>
+          <g id="sun" hidden>
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2.1 2.1m9.8 9.8L19 19m0-14-2.1 2.1m-9.8 9.8L5 19"/>
+          </g>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <nav class="entries" aria-label="Exemple din coada de revizuire">
@@ -347,6 +383,7 @@
               <button id="original" aria-pressed="true">Original</button>
               <button id="anonymized" aria-pressed="false">Anonimizat</button>
             </div>
+            <button id="outlines" aria-pressed="false" hidden>Arată marcajele</button>
             <a class="jump" href="#step-title">Sari la spațiul de lucru</a>
           </div>
           <div id="viewport" tabindex="0" role="region" aria-label="Pagină document cu derulare">
@@ -438,25 +475,29 @@
       'Notar public: Notar Demonstrativ.',
     ];
     const mappings = {
-      nume: { index: 0, excerpt: 'Persoană sintetică A', type: 'Nume semnatar', label: 'numele', page: 1, box: [29, 34, 40, 5] },
-      adresa: { index: 1, excerpt: 'Strada Exemplu, nr. XX', type: 'Adresă', label: 'adresa', page: 1, box: [30, 44, 47, 5] },
-      referinta: { index: 2, excerpt: 'REF-DEMO', type: 'Posibil CUI/CIF', label: 'potrivirea de referință', page: 1, box: [45, 54, 24, 5] },
-      email: { index: 4, excerpt: 'contact@example.invalid', type: 'Adresă de e-mail', label: 'adresa de e-mail', page: 2, box: [15, 19, 52, 5] },
-      telefon: { index: 5, excerpt: 'TEL-SINTETIC', type: 'Număr de telefon', label: 'numărul de telefon', page: 2, box: [15, 26, 44, 5] },
-      cadastru: { index: 6, excerpt: 'CAD-DEMO', type: 'Număr cadastral', label: 'numărul cadastral', page: 2, box: [15, 33, 40, 5] },
-      vehicul: { index: 7, excerpt: 'VIN-DEMO', type: 'Identificator vehicul', label: 'identificatorul vehiculului', page: 2, box: [15, 40, 37, 5] },
+      nume: { index: 0, excerpt: 'Persoană sintetică A', type: 'Nume semnatar', page: 1, box: [29, 34, 40, 5] },
+      adresa: { index: 1, excerpt: 'Strada Exemplu, nr. XX', type: 'Adresă', page: 1, box: [30, 44, 47, 5] },
+      referinta: { index: 2, excerpt: 'REF-DEMO', type: 'Posibil CUI/CIF', page: 1, box: [45, 54, 24, 5] },
+      email: { index: 4, excerpt: 'contact@example.invalid', type: 'Adresă de e-mail', page: 2, box: [15, 19, 52, 5] },
+      telefon: { index: 5, excerpt: 'TEL-SINTETIC', type: 'Număr de telefon', page: 2, box: [15, 26, 44, 5] },
+      cadastru: { index: 6, excerpt: 'CAD-DEMO', type: 'Număr cadastral', page: 2, box: [15, 33, 40, 5] },
+      vehicul: { index: 7, excerpt: 'VIN-DEMO', type: 'Identificator vehicul', page: 2, box: [15, 40, 37, 5] },
     };
     const extraPassages = ['contact@example.invalid', 'TEL-SINTETIC', 'CAD-DEMO', 'VIN-DEMO'];
     const signature = { page: 2, box: [13, 51, 26, 9] };
-    const statusLabels = { pending: 'De revizuit', accepted: 'Acceptat', rejected: 'Respins', manual: 'Marcaj manual' };
+    const statusLabels = { pending: 'De revizuit', accepted: 'Anonimizat', rejected: 'Păstrat', manual: 'Marcaj manual' };
     const params = new URLSearchParams(location.search);
     const scenario = params.get('stare');
     const working = new Map();
     let fixtureKey = keyFrom(params);
     let draft;
     let inspection = '';
-    let drawing = false;
+    let drawing;
     let drag;
+    let selectedMark = '';
+    let removedMark;
+    let showOutlines = false;
+    let finalAnonymized = true;
     let failSave = scenario === 'eroare-salvare';
     let approvalTrigger;
 
@@ -473,7 +514,12 @@
         try {
           const snapshot = JSON.parse(localStorage.getItem(storageKey()));
           if (snapshot) {
-            const loaded = { ...snapshot, approved: false };
+            const loaded = {
+              ...snapshot,
+              ...(Array.isArray(snapshot.ocr) ? continuousOCR(snapshot.ocr) : {}),
+              adjustments: snapshot.adjustments ?? {},
+              approved: false,
+            };
             working.set(fixtureKey, loaded);
             return loaded;
           }
@@ -499,8 +545,8 @@
         step: isProcura && resume ? 2 : 0,
         page: 1, zoom: 1, anonymized: false,
         metadata: { ...fixture().metadata }, confirmed: isProcura,
-        source, ocr, detections, reviewedText: detections.nume ? { nume: ocr[0] } : {},
-        rectangles: [],
+        source, ...continuousOCR(ocr), detections, reviewedText: detections.nume ? { nume: ocr[0] } : {},
+        rectangles: [], adjustments: {},
       };
       working.set(fixtureKey, state);
       return state;
@@ -520,9 +566,55 @@
 
     function changeDraft() { draft.approved = false; }
 
+    function continuousOCR(passages) {
+      let start = 0;
+      const ocrRanges = passages.map(text => {
+        const end = start + text.length;
+        const range = [start, end];
+        start = end + 2;
+        return range;
+      });
+      return { ocr: passages.join('\n\n'), ocrRanges };
+    }
+
+    function mappedText(key) {
+      const range = draft.ocrRanges[mappings[key].index];
+      return range ? draft.ocr.slice(...range) : '';
+    }
+
+    function updateOCR(value) {
+      const previous = draft.ocr;
+      if (previous === value) return;
+
+      // Keep fixture passages attached to their text as ordinary textarea edits move it.
+      let start = 0;
+      while (start < Math.min(previous.length, value.length) && previous[start] === value[start]) start++;
+      let oldEnd = previous.length;
+      let newEnd = value.length;
+      while (oldEnd > start && newEnd > start && previous[oldEnd - 1] === value[newEnd - 1]) {
+        oldEnd--;
+        newEnd--;
+      }
+      const delta = newEnd - oldEnd;
+      const inserted = value.slice(start, newEnd);
+      const inserting = start === oldEnd;
+      draft.ocrRanges = draft.ocrRanges.map(([left, right]) => {
+        if (oldEnd < left || (oldEnd === left && (!inserting || inserted.endsWith('\n\n')))) {
+          return [left + delta, right + delta];
+        }
+        if (start > right || (start === right && (!inserting || inserted.startsWith('\n\n')))) {
+          return [left, right];
+        }
+        // A change spanning multiple fixture passages makes each affected passage reviewable again.
+        return [Math.min(left, start), right >= oldEnd ? right + delta : newEnd];
+      });
+      draft.ocr = value;
+      changeDraft();
+      renderSteps();
+    }
+
     function recheck(key) {
-      const index = mappings[key].index;
-      return key in draft.reviewedText && draft.reviewedText[key] !== draft.ocr[index];
+      return key in draft.reviewedText && draft.reviewedText[key] !== mappedText(key);
     }
 
     function staleKeys() { return Object.keys(draft.detections).filter(recheck); }
@@ -531,14 +623,14 @@
     function renderSteps() {
       const states = [
         draft.confirmed ? 'Finalizat' : 'De confirmat',
-        draft.ocr.some((text, index) => text !== draft.source[index]) ? 'Corecturi în ciornă' : 'Text extras',
+        draft.ocr !== draft.source.join('\n\n') ? 'Corecturi în ciornă' : 'Text extras',
         staleKeys().length ? 'De reverificat' : pendingKeys().length ? 'De revizuit' : draft.approved ? 'Finalizat' : 'De aprobat',
         draft.approved ? 'Finalizat' : 'De verificat',
       ];
       $('steps').innerHTML = titles.map((title, index) => `
         <li><a href="#step-title" data-step="${index}" ${draft.step === index ? 'aria-current="step"' : ''}>
           <span class="ordinal" aria-hidden="true">${index + 1}</span>
-          <span><strong>${title}</strong><small ${index === 2 && staleKeys().length ? 'class="warning"' : ''}>${states[index]}</small></span>
+          <span class="step-caption"><strong>${title}</strong><small ${index === 2 && staleKeys().length ? 'class="warning"' : ''}>${states[index]}</small></span>
         </a></li>`).join('');
     }
 
@@ -595,7 +687,7 @@
           rule(65) + line('Text demonstrativ pentru revizuirea actului și a pasajelor provenite din OCR.', 12, 70, 76) +
           line('Încheierea de autentificare și semnăturile figurează pe pagina următoare.', 12, 81, 76);
       }
-      const extra = scenario === 'multe' && fixtureKey === 'procura'
+      const extra = fixtureKey === 'procura' && draft.source.length > passages.length
         ? extraPassages.map((text, index) => line(text, 16, 20 + index * 7, 68)).join('')
         : line('Încheiere de autentificare', 12, 17, 76, 'scan-title') +
           line('Actul sintetic a fost prezentat pentru verificare și autentificare.', 12, 30, 76);
@@ -608,14 +700,31 @@
         line('Exemplu pentru verificarea anonimizării', 12, 90, 76);
     }
 
+    function markFor(key) {
+      const mapping = mappings[key];
+      if (mapping && ['accepted', 'manual'].includes(draft.detections[key])) {
+        return { key, ...mapping, title: mapping.type, box: draft.adjustments[key] ?? mapping.box };
+      }
+      const rectangle = draft.rectangles.find(item => item.key === key);
+      if (!rectangle) return null;
+      return { ...rectangle, title: rectangle.signature ? 'Semnătura semnatarului' : 'Zonă marcată' };
+    }
+
+    function marks() {
+      return [...Object.keys(draft.detections), ...draft.rectangles.map(item => item.key)].map(markFor).filter(Boolean);
+    }
+
     function renderViewer() {
       drag = null;
       const review = draft.step === 2;
-      const anonymized = draft.step === 3 || (review && draft.anonymized);
-      $('preview-label').textContent = review ? 'Previzualizare de lucru' : draft.step === 3 ? 'Previzualizare finală simulată' : 'Original';
-      $('versions').hidden = !review;
-      $('original').setAttribute('aria-pressed', String(!draft.anonymized));
-      $('anonymized').setAttribute('aria-pressed', String(draft.anonymized));
+      const final = draft.step === 3;
+      const anonymized = final ? finalAnonymized : review && draft.anonymized;
+      $('preview-label').textContent = review ? 'Previzualizare de lucru' : final ? 'Previzualizare finală simulată' : 'Original';
+      $('versions').hidden = !review && !final;
+      $('original').setAttribute('aria-pressed', String(!anonymized));
+      $('anonymized').setAttribute('aria-pressed', String(anonymized));
+      $('outlines').hidden = !review || anonymized;
+      $('outlines').setAttribute('aria-pressed', String(showOutlines));
       $('page-number').textContent = `Pagina ${draft.page} din 2`;
       $('zoom-value').textContent = Math.round(draft.zoom * 100) + '%';
       $('previous-page').disabled = draft.page === 1;
@@ -623,20 +732,21 @@
       $('zoom-out').disabled = draft.zoom === 0.6;
       $('zoom-in').disabled = draft.zoom === 1.8;
       $('scan').style.setProperty('--zoom', draft.zoom);
-      $('scan').classList.toggle('drawing', drawing);
-      const overlays = [];
-      if (anonymized) {
-        for (const [key, status] of Object.entries(draft.detections)) {
-          if (status === 'accepted' || status === 'manual') overlays.push({ key, ...mappings[key] });
-        }
-        overlays.push(...draft.rectangles);
+      $('scan').classList.toggle('drawing', Boolean(drawing));
+      if (drawing) $('viewport').setAttribute('aria-describedby', 'drawing-help');
+      else $('viewport').removeAttribute('aria-describedby');
+
+      const overlays = (anonymized || (review && showOutlines) ? marks() : [])
+        .filter(item => item.page === draft.page)
+        .map(item => `<div class="scan-region ${anonymized ? 'coverage' : 'mark-outline'}"
+          ${review ? `data-mark="${item.key}"` : ''}
+          ${anonymized ? `data-coverage="${item.key}" role="img" aria-label="Zonă anonimizată"` : 'aria-hidden="true"'}
+          style="${position(item.box)}"></div>`);
+      const inspected = inspection && (markFor(inspection) ?? mappings[inspection]);
+      if (review && inspected?.page === draft.page) {
+        overlays.push(`<div class="scan-region inspection" aria-hidden="true" style="${position(inspected.box)}"></div>`);
       }
-      $('scan').innerHTML = sourcePage() + overlays.filter(item => item.page === draft.page).map(item =>
-        `<div class="scan-region coverage" data-coverage="${item.key}" role="img" aria-label="Zonă anonimizată" style="${position(item.box)}"></div>`
-      ).join('');
-      if (review && inspection && mappings[inspection].page === draft.page) {
-        $('scan').insertAdjacentHTML('beforeend', `<div class="scan-region inspection" aria-hidden="true" style="${position(mappings[inspection].box)}"></div>`);
-      }
+      $('scan').innerHTML = sourcePage() + overlays.join('');
     }
 
     function classification() {
@@ -697,126 +807,184 @@
     }
 
     function renderOCR() {
-      $('content').innerHTML = draft.ocr.map((text, index) =>
-        `<div><label for="ocr-${index}">Pasaj OCR ${index + 1}</label>
-          <textarea id="ocr-${index}" data-ocr="${index}" rows="3">${html(text)}</textarea></div>`).join('');
+      $('content').innerHTML = `<div>
+        <label for="ocr-text">Text OCR</label>
+        <textarea id="ocr-text" data-ocr rows="12" spellcheck="false"></textarea>
+      </div>`;
+      $('ocr-text').value = draft.ocr;
     }
 
-    function highlighted(text, key, status) {
-      const mapping = mappings[key];
-      if (!mapping || !status) return html(text);
-      const index = text.indexOf(mapping.excerpt);
-      if (index < 0) return `<mark data-state="${status}">${html(text)}</mark>`;
-      const end = index + mapping.excerpt.length;
-      return html(text.slice(0, index)) + `<mark data-state="${status}">${html(text.slice(index, end))}</mark>` + html(text.slice(end));
+    function reviewCounts() {
+      const suggestions = Object.entries(draft.detections).filter(([, status]) => status !== 'manual');
+      const remaining = suggestions.filter(([key, status]) => status === 'pending' || recheck(key)).length;
+      const total = suggestions.length;
+      const reviewed = total - remaining;
+      const text = `${total} ${total === 1 ? 'sugerată' : 'sugerate'} · ${reviewed} ${reviewed === 1 ? 'revizuită' : 'revizuite'} · ${remaining} ${remaining === 1 ? 'rămasă' : 'rămase'}`;
+      return { suggestions, text };
     }
 
     function reviewRow([key, status]) {
       const item = mappings[key];
       const stale = recheck(key);
-      const details = inspection === key
-        ? `<p class="coordinates">TSV · Pagina ${item.page} · stânga ${item.box[0] * 10}, sus ${Math.round(item.box[1] * 12.5)}, lățime ${item.box[2] * 10}, înălțime ${Math.round(item.box[3] * 12.5)} px</p>`
-        : '';
-      const decisions = status === 'manual'
-        ? `${stale ? `<button data-action="confirm-mark" data-key="${key}">Confirmă din nou marcajul: ${item.label}</button>` : ''}
-           <button data-action="remove-passage" data-key="${key}">Elimină marcajul: ${item.label}</button>`
-        : `<button data-action="accept" data-key="${key}" aria-label="${stale ? 'Acceptă din nou' : 'Acceptă ' + item.label}">${stale ? 'Acceptă din nou' : 'Acceptă'}</button>
-           <button data-action="reject" data-key="${key}" aria-label="Respinge ${item.label}">Respinge</button>`;
-      return `<li class="review-row" id="review-${key}" tabindex="-1">
-        <div><strong>${item.type}</strong><p class="muted">${html(item.excerpt)} · Pagina ${item.page}</p>
+      return `<li class="review-row">
+        <div>
+          <button class="locate" data-action="inspect" data-key="${key}" aria-pressed="${inspection === key}">${item.type}</button>
+          <p class="muted">${html(item.excerpt)} · Pagina ${item.page}</p>
           ${stale ? `<p class="muted">Decizie anterioară: ${statusLabels[status]}</p>` : ''}
-          ${details}
         </div>
-        <span class="badge ${stale || status === 'pending' ? 'warning' : status === 'accepted' || status === 'manual' ? 'accepted' : 'neutral'}">
-          ${stale ? 'De reverificat' : statusLabels[status]}
-        </span>
-        <div class="actions">
-          <a class="entry" href="#passage-${item.index}">Pasaj OCR ${item.index + 1}</a>
-          <button data-action="inspect" data-key="${key}" aria-label="Arată ${item.label} în document" aria-pressed="${inspection === key}">În document</button>
-          ${decisions}
+        <div>
+          <span class="badge ${stale || status === 'pending' ? 'warning' : status === 'accepted' ? 'accepted' : 'neutral'}">
+            ${stale ? 'De reverificat' : statusLabels[status]}
+          </span>
+          <div class="actions">
+            <button data-action="accept" data-key="${key}" aria-pressed="${status === 'accepted' && !stale}">Anonimizează</button>
+            <button data-action="reject" data-key="${key}" aria-pressed="${status === 'rejected' && !stale}">Păstrează</button>
+          </div>
         </div>
       </li>`;
     }
 
+    function markCaption(item) {
+      return `${item.title} · Pagina ${item.page}`;
+    }
+
+    function markLocation({ box }) {
+      const x = box[0] + box[2] / 2;
+      const y = box[1] + box[3] / 2;
+      const vertical = y < 100 / 3 ? 'Sus' : y < 200 / 3 ? 'La mijloc' : 'Jos';
+      const horizontal = x < 100 / 3 ? 'stânga' : x < 200 / 3 ? 'centru' : 'dreapta';
+      return `${vertical}, ${horizontal}`;
+    }
+
+    function selectedDetails() {
+      const marked = markFor(selectedMark);
+      const item = marked ?? mappings[inspection];
+      if (!item) return '';
+      const [left, top, width, height] = item.box;
+      const key = marked?.key ?? inspection;
+      const mapped = mappings[key];
+      const passage = mapped ? mappedText(key) : '';
+      const start = mapped ? passage.indexOf(mapped.excerpt) : -1;
+      const end = start + (mapped?.excerpt.length ?? 0);
+      const highlighted = start >= 0
+        ? `${html(passage.slice(0, start))}<mark>${html(passage.slice(start, end))}</mark>${html(passage.slice(end))}`
+        : html(passage);
+      return `<div class="selected-mark">
+        <h3 id="selected-mark" tabindex="-1">${marked ? markCaption(marked) : `${item.type} · Pagina ${item.page}`}</h3>
+        ${passage ? `<blockquote class="muted">${highlighted}</blockquote>` : ''}
+        ${marked ? `<p class="muted">${markLocation(marked)}</p>
+          <div class="actions">
+            <button data-action="adjust" data-key="${marked.key}">Ajustează zona</button>
+            <button data-action="remove-mark" data-key="${marked.key}">Elimină marcajul</button>
+            ${draft.detections[marked.key] === 'manual' && recheck(marked.key)
+              ? `<button data-action="confirm-mark" data-key="${marked.key}">Confirmă din nou marcajul</button>` : ''}
+          </div>` : ''}
+        <details class="compact muted">
+          <summary>Coordonate din exemplu</summary>
+          <p class="coordinates">${mapped ? 'TSV · ' : ''}Pagina ${item.page} · stânga ${Math.round(left * 10)}, sus ${Math.round(top * 12.5)}, lățime ${Math.round(width * 10)}, înălțime ${Math.round(height * 12.5)} px</p>
+        </details>
+      </div>`;
+    }
+
     function renderReview() {
-      const detections = Object.entries(draft.detections);
-      const accepted = detections.filter(([, status]) => status === 'accepted').length;
-      const rejected = detections.filter(([, status]) => status === 'rejected').length;
-      const uncertain = detections.length - accepted - detections.filter(([, status]) => status === 'manual').length;
-      const manual = detections.filter(([, status]) => status === 'manual').length + draft.rectangles.length;
+      const { suggestions, text } = reviewCounts();
+      const manual = marks().filter(item => draft.detections[item.key] !== 'accepted');
       const available = fixtureKey === 'procura'
-        ? Object.entries(mappings).filter(([key, item]) => item.index < draft.ocr.length && !draft.detections[key])
+        ? Object.entries(mappings).filter(([key, item]) => item.index < draft.ocrRanges.length && !draft.detections[key])
         : [];
+      const shortcutsOpen = $('mark-shortcuts')?.open;
       $('content').innerHTML = `
-        <div class="passages">
-          <h3>Text OCR</h3>
-          ${draft.ocr.map((text, index) => {
-            const key = Object.keys(mappings).find(id => mappings[id].index === index);
-            return `<p id="passage-${index}" tabindex="-1">${highlighted(text, key, draft.detections[key])}</p>`;
-          }).join('')}
+        <div class="review-tools">
+          <div class="actions">
+            <button class="primary" data-action="draw" aria-pressed="${Boolean(drawing)}">Marchează zonă</button>
+            ${removedMark ? '<button data-action="undo-mark">Anulează eliminarea</button>' : ''}
+          </div>
+          ${drawing ? '<p id="drawing-help" class="muted">Trasează zona pe document. De la tastatură, mută cursorul cu săgețile și folosește Enter pentru fiecare colț. Apasă Escape pentru a renunța.</p>' : ''}
+          ${selectedDetails()}
         </div>
-        <div>
-          <h3>Potriviri și marcaje</h3>
-          <p class="muted">${uncertain} ${uncertain === 1 ? 'potrivire incertă' : 'potriviri incerte'} · ${pendingKeys().length} de revizuit · ${accepted} ${accepted === 1 ? 'acceptată' : 'acceptate'} · ${rejected} ${rejected === 1 ? 'respinsă' : 'respinse'} · ${manual} ${manual === 1 ? 'marcaj manual' : 'marcaje manuale'}</p>
-        </div>
-        ${detections.length ? `<ul class="review-list">${detections.map(reviewRow).join('')}</ul>`
-          : '<p class="muted">Verifică documentul și adaugă marcaje dacă este necesar.</p>'}
-        <div class="manual">
-          <h3>Marcaje manuale</h3>
-          <p class="muted">Pasajele au zone predefinite. Previzualizarea este o simulare.</p>
+        <div><h3>Sugestii PII</h3><p class="muted">${text}</p></div>
+        ${suggestions.length ? `<ul class="review-list" aria-label="Sugestii PII">${suggestions.map(reviewRow).join('')}</ul>`
+          : '<p class="muted">Nu există sugestii PII. Verifică documentul și marchează zone dacă este necesar.</p>'}
+        ${manual.length ? `<div><h3>Marcaje manuale</h3>
+          <ul class="review-list" aria-label="Marcaje manuale">${manual.map(item => `
+            <li><button class="mark-link" data-action="inspect" data-key="${item.key}">${markCaption(item)} · ${markLocation(item)}</button>
+              ${mappings[item.key] && recheck(item.key) ? '<span class="badge warning">De reverificat</span>' : ''}</li>`).join('')}</ul></div>` : ''}
+        ${fixtureKey === 'procura' ? `<details id="mark-shortcuts" class="compact muted" ${shortcutsOpen ? 'open' : ''}>
+          <summary>Marcaje din textul OCR</summary>
           ${available.length ? `<div><label for="manual-passage">Pasaj pentru marcaj manual</label>
             <select id="manual-passage">
-              ${available.map(([key, item]) => `<option value="${key}">${html(draft.ocr[item.index])}</option>`).join('')}
-            </select>
-          </div>` : ''}
+              ${available.map(([key]) => `<option value="${key}">${html(mappedText(key) || mappings[key].excerpt)}</option>`).join('')}
+            </select></div>` : ''}
           <div class="actions">
             ${available.length ? '<button data-action="mark-passage">Marchează pasajul</button>' : ''}
-            <button data-action="draw" aria-pressed="${drawing}">Desenează un dreptunghi</button>
-            ${fixtureKey === 'procura' ? '<button data-action="signature">Marchează zona semnăturii</button>' : ''}
+            <button data-action="signature">Marchează zona semnăturii</button>
           </div>
-          ${drawing ? '<p>Trasează zona pe pagina afișată. Apasă Escape pentru a renunța.</p>' : ''}
-          ${draft.rectangles.map((item, index) => `
-            <div class="actions">
-              <span>Dreptunghi ${index + 1} · Pagina ${item.page}</span>
-              <button data-action="remove-rectangle" data-key="${item.key}">Elimină dreptunghiul ${index + 1}</button>
-            </div>`).join('')}
-        </div>
-        <details class="muted">
-          <summary>Tipuri de date verificate</summary>
-          <p>Nume și semnătură ale semnatarului, CNP, IBAN, număr de telefon, adresă de e-mail, domiciliu,
-            date din actul de identitate, număr cadastral sau de carte funciară, identificator vehicul, CUI/CIF.</p>
-        </details>`;
+        </details>` : ''}
+        <p class="muted">Sugestiile folosesc zone predefinite. Previzualizarea este o simulare.</p>`;
+    }
+
+    function approvalIssues() {
+      const missing = requiredMetadata.filter(key => !draft.metadata[key].trim());
+      if (!classification()) missing.push('type');
+      const issues = [];
+      if (missing.length) {
+        issues.push(`Confirmă metadatele. Completează ${missing.map(key => labels[key].toLowerCase()).join(', ')}.`);
+      } else if (!draft.confirmed) {
+        issues.push('Confirmă metadatele înainte de aprobare.');
+      }
+      if (staleKeys().length || pendingKeys().length) {
+        issues.push('Revizuiește potrivirile PII rămase înainte de aprobare.');
+      }
+      return issues;
     }
 
     function renderSummary() {
-      const metadata = {
-        ...draft.metadata,
-        date: formatDate(draft.metadata.date),
-        subtype: classification()?.[2],
-      };
-      const details = [...requiredMetadata, 'amount', 'tags', 'type', 'subtype', 'context']
-        .filter(key => metadata[key] || requiredMetadata.includes(key))
-        .map(key => `<p class="muted">${labels[key]}: ${html(metadata[key] || 'De completat')}</p>`).join('');
-      const corrected = draft.ocr.filter((text, index) => text !== draft.source[index]).length;
+      const row = classification();
+      const metadata = draft.metadata;
+      const parts = [
+        metadata.date && formatDate(metadata.date),
+        metadata.number && `Act nr. ${html(metadata.number)}`,
+        metadata.dossier && `Dosar nr. ${html(metadata.dossier)}`,
+        metadata.inventory && `Inventar nr. ${html(metadata.inventory)}`,
+      ].filter(Boolean);
+      const suggestions = [metadata.amount && `Sumă ${html(metadata.amount)}`, metadata.tags && `Etichete ${html(metadata.tags)}`].filter(Boolean);
       const stale = staleKeys();
-      const reviewed = Object.values(draft.detections).filter(status => status === 'accepted' || status === 'rejected').length;
-      const manual = draft.rectangles.length + Object.values(draft.detections).filter(status => status === 'manual').length;
+      const issues = approvalIssues();
+      const { text } = reviewCounts();
+      const manual = marks().filter(item => draft.detections[item.key] !== 'accepted').length;
       $('content').innerHTML = `
         <div class="summary">
-          <div><div><h3>Metadate</h3><p>${draft.confirmed ? 'Confirmate' : 'De confirmat'}</p>${details}</div>
-            <a href="#step-title" data-step="0">Verifică metadatele</a></div>
-          <div><div><h3>Corectare OCR</h3><p>${corrected} pasaje corectate</p></div>
-            <a href="#step-title" data-step="1">Verifică textul OCR</a></div>
-          <div><div><h3>Anonimizare</h3><p>${reviewed} potriviri analizate · ${pendingKeys().length} de revizuit · ${manual} marcaje manuale</p>
-            ${stale.length ? `<p class="warning">De reverificat: ${stale.map(key => mappings[key].type).join(', ')}</p>` : ''}</div>
-            <a href="#step-title" data-step="2" ${stale.length ? `data-review="${stale[0]}"` : ''}>Verifică anonimizarea</a></div>
-          <div><div><h3>Retenție</h3><p>${classification()?.[4] ?? '—'} · ${retention()}</p>
-            <p class="muted">${classification()?.[6] ?? ''}</p></div>
-            <a href="#step-title" data-step="0">Verifică retenția</a></div>
+          <div>
+            <h3>Metadate și retenție</h3>
+            <a href="#step-title" data-step="0">Verifică metadatele</a>
+            <div class="full-width">
+              <p>${draft.confirmed ? 'Metadate confirmate' : 'Metadate de confirmat'}${parts.length ? ' · ' + parts.join(' · ') : ''}</p>
+              ${suggestions.length ? `<p class="muted">${suggestions.join(' · ')}</p>` : ''}
+              <p class="muted">${row?.[4] ?? 'Clasificare de completat'}${row ? ` · ${html(row[1])} · ${html(row[2])} · ${html(row[3])}` : ''}</p>
+              <p>${retention()}</p>
+              <p class="muted">${row?.[6] ?? ''}</p>
+            </div>
+          </div>
+          <div>
+            <h3><label for="final-ocr">Text OCR corectat</label></h3>
+            <a href="#step-title" data-step="1">Verifică textul OCR</a>
+            <textarea id="final-ocr" class="full-width" readonly rows="6"></textarea>
+          </div>
+          <div>
+            <h3>Revizuire PII</h3>
+            <a href="#step-title" data-step="2" ${stale.length ? `data-review="${stale[0]}"` : ''}>Verifică anonimizarea</a>
+            <div class="full-width">
+              <p>${text} · ${manual} ${manual === 1 ? 'marcaj manual' : 'marcaje manuale'}</p>
+              ${stale.length ? `<p class="warning">De reverificat: ${stale.map(key => mappings[key].type).join(', ')}</p>` : ''}
+            </div>
+          </div>
         </div>
-        <div class="actions"><button class="primary" data-action="approve">Aprobă revizuirea</button>
+        ${issues.length ? `<div id="approval-readiness" class="review-notice warning">${issues.map(issue => `<p>${issue}</p>`).join('')}</div>` : ''}
+        <div class="actions">
+          <button class="primary" data-action="approve" ${issues.length ? 'aria-describedby="approval-readiness"' : ''}>Aprobă revizuirea</button>
           ${draft.approved ? '<span>Revizuire aprobată</span>' : ''}
         </div>`;
+      $('final-ocr').value = draft.ocr;
     }
 
     function renderContent() {
@@ -835,9 +1003,12 @@
     }
 
     function goTo(index, reviewKey) {
+      if (index === 3 && draft.step !== 3) finalAnonymized = true;
       draft.step = index;
-      drawing = false;
+      drawing = null;
+      removedMark = null;
       inspection = reviewKey || '';
+      selectedMark = markFor(inspection)?.key ?? '';
       if (reviewKey) draft.page = mappings[reviewKey].page;
       feedback();
       renderStep(true);
@@ -846,8 +1017,12 @@
     function activate(key, resume, focus = false) {
       fixtureKey = key;
       draft = loadDraft(resume);
-      drawing = false;
+      drawing = null;
+      removedMark = null;
+      selectedMark = '';
       inspection = '';
+      showOutlines = false;
+      finalAnonymized = true;
       $('state').hidden = true;
       $('editor').hidden = false;
       $('save').disabled = false;
@@ -904,95 +1079,210 @@
       return requiredMetadata.find(key => !draft.metadata[key].trim()) || (!classification() ? 'type' : null);
     }
 
-    function updateReview(action, key) {
-      if (action === 'inspect') {
-        inspection = inspection === key ? '' : key;
-        draft.page = mappings[key].page;
-      } else if (action === 'remove-passage') {
-        delete draft.detections[key];
-        delete draft.reviewedText[key];
-        if (inspection === key) inspection = '';
-      } else {
-        draft.detections[key] = { accept: 'accepted', reject: 'rejected', 'mark-passage': 'manual', 'confirm-mark': 'manual' }[action];
-        draft.reviewedText[key] = draft.ocr[mappings[key].index];
-        draft.page = mappings[key].page;
-      }
-      if (action !== 'inspect') changeDraft();
-      renderSteps();
-      renderViewer();
-      renderReview();
-      const actionTarget = document.querySelector(`[data-action="${action}"][data-key="${key}"]`);
-      (actionTarget || $('review-' + key) || $('manual-passage') || document.querySelector('[data-action="draw"]')).focus({ preventScroll: true });
-      if (action !== 'inspect') feedback('Revizuire actualizată.');
-    }
-
-    function addRectangle(page, box) {
-      const used = new Set(draft.rectangles.map(item => item.key));
-      let index = 1;
-      while (used.has('manual-' + index)) index++;
-      draft.rectangles.push({ key: 'manual-' + index, page, box });
-      draft.page = page;
+    function renderReviewChange(message) {
       changeDraft();
       renderSteps();
       renderViewer();
       renderReview();
-      feedback('Dreptunghi adăugat.');
+      feedback(message);
     }
 
+    function inspectMark(key, fromViewer = false) {
+      const item = markFor(key);
+      const location = item ?? mappings[key];
+      inspection = key;
+      selectedMark = item?.key ?? '';
+      draft.page = location.page;
+      renderViewer();
+      renderReview();
+
+      if (fromViewer) {
+        $('selected-mark').focus();
+      } else {
+        document.querySelector(`[data-action="inspect"][data-key="${key}"]`).focus({ preventScroll: true });
+        $('scan').querySelector('.inspection').scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        if (window.matchMedia('(max-width: 1023px)').matches) $('viewport').focus({ preventScroll: true });
+      }
+    }
+
+    function updateReview(action, key) {
+      draft.detections[key] = { accept: 'accepted', reject: 'rejected', 'mark-passage': 'manual', 'confirm-mark': 'manual' }[action];
+      draft.reviewedText[key] = mappedText(key);
+      if (action === 'mark-passage') {
+        if (removedMark?.key === key) removedMark = null;
+        draft.page = mappings[key].page;
+        inspection = key;
+        selectedMark = key;
+      } else if (action === 'reject' && selectedMark === key) {
+        selectedMark = '';
+      }
+      renderReviewChange('Revizuire actualizată.');
+      (document.querySelector(`[data-action="${action}"][data-key="${key}"]`) ||
+        document.querySelector(`[data-action="inspect"][data-key="${key}"]`)).focus({ preventScroll: true });
+    }
+
+    function addRectangle(page, box, signature = false) {
+      const used = new Set(draft.rectangles.map(item => item.key));
+      let index = 1;
+      while (used.has('manual-' + index)) index++;
+      const key = 'manual-' + index;
+      draft.rectangles.push({ key, page, box, signature });
+      return key;
+    }
+
+    function removeMark(key) {
+      const status = draft.detections[key];
+      if (status === 'accepted') {
+        selectedMark = '';
+        inspection = '';
+        updateReview('reject', key);
+        return;
+      }
+      removedMark = { key, page: markFor(key).page };
+      if (status === 'manual') {
+        removedMark.text = draft.reviewedText[key];
+        removedMark.box = draft.adjustments[key];
+        delete draft.detections[key];
+        delete draft.reviewedText[key];
+        delete draft.adjustments[key];
+      } else {
+        removedMark.rectangle = draft.rectangles.find(item => item.key === key);
+        draft.rectangles = draft.rectangles.filter(item => item.key !== key);
+      }
+      selectedMark = '';
+      inspection = '';
+      renderReviewChange('Marcaj eliminat.');
+      document.querySelector('[data-action="undo-mark"]').focus({ preventScroll: true });
+    }
+
+    function undoMarkRemoval() {
+      const { key, page, rectangle, text, box } = removedMark;
+      if (rectangle) {
+        // A new mark can reuse an available internal key while undo is still visible.
+        if (markFor(key)) selectedMark = addRectangle(page, rectangle.box, rectangle.signature);
+        else {
+          draft.rectangles.push(rectangle);
+          selectedMark = key;
+        }
+      } else {
+        draft.detections[key] = 'manual';
+        draft.reviewedText[key] = text;
+        if (box) draft.adjustments[key] = box;
+        selectedMark = key;
+      }
+      draft.page = page;
+      inspection = selectedMark;
+      removedMark = null;
+      renderReviewChange('Marcaj restaurat.');
+      $('selected-mark').focus({ preventScroll: true });
+    }
+
+    function startDrawing(key = '') {
+      const item = markFor(key);
+      if (item) draft.page = item.page;
+      const point = item ? item.box.slice(0, 2) : [15, 15];
+      drawing = { key, point, anchor: null };
+      renderViewer();
+      renderReview();
+      showGuide(point);
+      $('viewport').focus();
+    }
+
+    function cancelDrawing() {
+      drawing = null;
+      renderViewer();
+      renderReview();
+      document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+    }
+
+    function finishDrawing(box) {
+      if (box[2] < 1 || box[3] < 1) return;
+      const { key } = drawing;
+      const rectangle = draft.rectangles.find(item => item.key === key);
+      if (rectangle) rectangle.box = box;
+      else if (key) draft.adjustments[key] = box;
+      selectedMark = key || addRectangle(draft.page, box);
+      inspection = selectedMark;
+      drawing = null;
+      renderReviewChange(key ? 'Marcaj ajustat.' : 'Marcaj adăugat.');
+      document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+    }
+
+    const bounded = coordinate => Math.max(0, Math.min(100, coordinate));
     function pointerPoint(event) {
       const frame = $('scan').getBoundingClientRect();
-      const percent = coordinate => Math.max(0, Math.min(100, coordinate));
-      return [percent(100 * (event.clientX - frame.left) / frame.width), percent(100 * (event.clientY - frame.top) / frame.height)];
+      return [bounded(100 * (event.clientX - frame.left) / frame.width), bounded(100 * (event.clientY - frame.top) / frame.height)];
     }
 
-    function dragBox(event) {
-      const [x, y] = pointerPoint(event);
-      return [Math.min(x, drag.x), Math.min(y, drag.y), Math.abs(x - drag.x), Math.abs(y - drag.y)];
+    function boxBetween([a, b], [x, y]) {
+      return [Math.min(x, a), Math.min(y, b), Math.abs(x - a), Math.abs(y - b)];
     }
 
+    function showGuide(point, anchor = null) {
+      if (!$('guide')) {
+        $('scan').insertAdjacentHTML('beforeend', '<div id="guide" class="scan-region drawing-guide" aria-hidden="true"></div>');
+      }
+      const guide = $('guide');
+      guide.classList.toggle('drawing-cursor', !anchor);
+      guide.style.cssText = anchor ? position(boxBetween(anchor, point)) : `left:${point[0]}%;top:${point[1]}%`;
+    }
+
+    $('scan').addEventListener('click', event => {
+      const key = event.target.closest('[data-mark]')?.dataset.mark;
+      if (key && !drawing) inspectMark(key, true);
+    });
     $('scan').addEventListener('pointerdown', event => {
       if (!drawing || event.button !== 0 || drag) return;
-      const [x, y] = pointerPoint(event);
+      const point = pointerPoint(event);
       $('scan').setPointerCapture(event.pointerId);
-      $('scan').insertAdjacentHTML('beforeend', '<div id="guide" class="scan-region drawing-guide" aria-hidden="true"></div>');
-      drag = { x, y, pointer: event.pointerId };
+      drag = { point, pointer: event.pointerId };
+      showGuide(point, point);
     });
     $('scan').addEventListener('pointermove', event => {
-      if (drag?.pointer === event.pointerId) $('guide').style.cssText = position(dragBox(event));
+      if (drag?.pointer === event.pointerId) showGuide(pointerPoint(event), drag.point);
     });
     $('scan').addEventListener('pointerup', event => {
       if (drag?.pointer !== event.pointerId) return;
-      const box = dragBox(event);
+      const box = boxBetween(drag.point, pointerPoint(event));
       drag = null;
-      $('guide').remove();
-      if (box[2] < 1 || box[3] < 1) return;
-      drawing = false;
-      addRectangle(draft.page, box);
-      document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+      showGuide(drawing.point, drawing.anchor);
+      finishDrawing(box);
     });
     $('scan').addEventListener('pointercancel', () => {
       drag = null;
-      $('guide')?.remove();
+      if (drawing) showGuide(drawing.point, drawing.anchor);
+    });
+
+    $('viewport').addEventListener('keydown', event => {
+      if (!drawing || event.target !== $('viewport')) return;
+      const offset = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }[event.key];
+      if (offset) {
+        event.preventDefault();
+        drawing.point = drawing.point.map((value, index) => bounded(value + offset[index]));
+        showGuide(drawing.point, drawing.anchor);
+        $('guide').scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (drawing.anchor) finishDrawing(boxBetween(drawing.anchor, drawing.point));
+        else {
+          drawing.anchor = drawing.point;
+          showGuide(drawing.point, drawing.anchor);
+        }
+      }
     });
     document.addEventListener('keydown', event => {
-      if (event.key !== 'Escape' || !drawing) return;
-      drawing = false;
-      drag = null;
-      renderViewer();
-      renderReview();
-      document.querySelector('[data-action="draw"]').focus();
+      if (event.key === 'Escape' && drawing) cancelDrawing();
     });
 
     function openApproval(button) {
-      if (!draft.confirmed || missingMetadata()) {
-        feedback('', 'Confirmă metadatele înainte de aprobare.');
-      } else if (staleKeys().length || pendingKeys().length) {
-        feedback('', 'Revizuiește potrivirile PII rămase înainte de aprobare.');
-      } else {
-        approvalTrigger = button;
-        $('approval').returnValue = '';
-        $('approval').showModal();
+      const issues = approvalIssues();
+      if (issues.length) {
+        feedback('', issues.join(' '));
+        return;
       }
+      approvalTrigger = button;
+      $('approval').returnValue = '';
+      $('approval').showModal();
     }
 
     $('approval').addEventListener('close', () => {
@@ -1007,11 +1297,7 @@
     $('content').addEventListener('input', event => {
       const control = event.target;
       if (control.matches('input[data-metadata]')) updateMetadata(control);
-      if (control.matches('[data-ocr]')) {
-        draft.ocr[control.dataset.ocr] = control.value;
-        changeDraft();
-        renderSteps();
-      }
+      if (control.matches('[data-ocr]')) updateOCR(control.value);
     });
     $('content').addEventListener('change', event => {
       if (event.target.matches('select[data-metadata]')) updateMetadata(event.target);
@@ -1035,9 +1321,10 @@
           break;
         }
         case 'inspect':
+          inspectMark(key);
+          break;
         case 'accept':
         case 'reject':
-        case 'remove-passage':
         case 'confirm-mark':
           updateReview(action, key);
           break;
@@ -1045,31 +1332,28 @@
           updateReview(action, $('manual-passage').value);
           break;
         case 'draw':
-          drawing = !drawing;
-          renderViewer();
-          renderReview();
-          if (drawing) $('viewport').focus();
-          else document.querySelector('[data-action="draw"]').focus();
+          if (drawing) cancelDrawing();
+          else startDrawing();
           break;
-        case 'signature':
-          if (draft.rectangles.some(item => item.signature)) {
-            draft.page = signature.page;
-            renderViewer();
-          } else {
-            addRectangle(signature.page, signature.box);
-            draft.rectangles.at(-1).signature = true;
-          }
+        case 'adjust':
+          startDrawing(key);
+          break;
+        case 'signature': {
+          const existing = draft.rectangles.find(item => item.signature);
+          selectedMark = existing?.key ?? addRectangle(signature.page, signature.box, true);
+          draft.page = signature.page;
+          inspection = selectedMark;
+          renderReviewChange('Marcaj al semnăturii selectat.');
           document.querySelector('[data-action="signature"]').focus({ preventScroll: true });
           break;
-        case 'remove-rectangle':
-          draft.rectangles = draft.rectangles.filter(item => item.key !== key);
-          changeDraft();
-          renderSteps();
-          renderViewer();
-          renderReview();
-          feedback('Dreptunghi eliminat.');
-          document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+        }
+        case 'remove-mark':
+          removeMark(key);
           break;
+        case 'undo-mark':
+          undoMarkRemoval();
+          break;
+
         case 'approve':
           openApproval(button);
           break;
@@ -1099,15 +1383,35 @@
     $('previous-step').onclick = () => goTo(draft.step - 1);
     $('next-step').onclick = () => goTo(draft.step + 1);
     const selectVersion = anonymized => {
+      if (draft.step === 3) {
+        finalAnonymized = anonymized;
+        renderViewer();
+        return;
+      }
       draft.anonymized = anonymized;
+      drawing = null;
       inspection = '';
+      selectedMark = '';
       renderViewer();
       renderReview();
     };
     $('original').onclick = () => selectVersion(false);
     $('anonymized').onclick = () => selectVersion(true);
+    $('outlines').onclick = () => {
+      showOutlines = !showOutlines;
+      if (!showOutlines) {
+        inspection = '';
+        selectedMark = '';
+      }
+      renderViewer();
+      renderReview();
+    };
     const movePage = offset => {
       draft.page += offset;
+      if (drawing) {
+        drawing = null;
+        renderReview();
+      }
       renderViewer();
       $('viewport').scrollTo(0, 0);
     };
@@ -1116,6 +1420,7 @@
     const zoom = value => {
       draft.zoom = Math.max(0.6, Math.min(1.8, Math.round(value * 10) / 10));
       renderViewer();
+      if (drawing) showGuide(drawing.point, drawing.anchor);
     };
     $('zoom-out').onclick = () => zoom(draft.zoom - 0.1);
     $('zoom-in').onclick = () => zoom(draft.zoom + 0.1);
@@ -1126,6 +1431,27 @@
       if ($('retry-save').hidden) $('save').focus();
     };
     $('retry-load').onclick = () => activate(fixtureKey, params.has('reluare'), true);
+
+    const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    let themeOverridden = false;
+
+    function setTheme(dark) {
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      const label = dark ? 'Mod luminos' : 'Mod întunecat';
+      $('theme').setAttribute('aria-label', label);
+      $('theme').title = label;
+      $('moon').toggleAttribute('hidden', dark);
+      $('sun').toggleAttribute('hidden', !dark);
+    }
+
+    setTheme(preferredTheme.matches);
+    preferredTheme.addEventListener('change', event => {
+      if (!themeOverridden) setTheme(event.matches);
+    });
+    $('theme').onclick = () => {
+      themeOverridden = true;
+      setTheme(document.documentElement.dataset.theme !== 'dark');
+    };
 
     if (['incarcare', 'gol', 'eroare'].includes(scenario)) {
       $('editor').hidden = true;
