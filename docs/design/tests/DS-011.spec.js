@@ -7,7 +7,7 @@ const saved = '?document=Procur%C4%83_exemplu.docx&reluare=1';
 const steps = ['Date document', 'Corectare OCR', 'Anonimizare', 'Verificare finală'];
 const workspace = page => page.getByRole('region', { name: 'Spațiu de lucru' });
 const field = (page, name) => page.getByLabel(name, { exact: true });
-const suggestion = (page, name) => workspace(page).getByRole('listitem').filter({ has: page.getByRole('button', { name, exact: true }) });
+const suggestion = (page, name) => workspace(page).getByRole('listitem').filter({ has: page.getByText(name, { exact: true }) });
 const mark = (page, id) => page.locator('[data-coverage="' + id + '"]');
 
 async function expectCovered(page, text, id) {
@@ -48,7 +48,7 @@ test('opens both queue entries and requires explicit approval even for zero unce
   await workspace(page).getByRole('button', { name: 'Înapoi', exact: true }).click();
   await confirmMetadata(page);
   await step(page, 2);
-  await expect(workspace(page)).toContainText('0 sugerate');
+  await expect(workspace(page)).toContainText('Total: 0 marcaje');
   await step(page, 3);
   const approve = page.getByRole('button', { name: 'Aprobă revizuirea' });
   await approve.click();
@@ -63,8 +63,8 @@ test('opens both queue entries and requires explicit approval even for zero unce
   await page.getByRole('link', { name: 'Continuă revizuirea' }).click();
   await expect(page).toHaveURL(/reluare=1/);
   await expect(workspace(page).getByRole('heading', { name: steps[2] })).toBeVisible();
-  await expect(workspace(page)).toContainText('Anonimizat');
-  await expect(workspace(page)).toContainText('De revizuit');
+  await expect(workspace(page)).toContainText('Automate: 2');
+  await expect(workspace(page)).toContainText('Verifică anonimizările aplicate.');
 });
 
 test('keeps working state across fixtures, retries a failed save, and rechecks a mapped correction', async ({ page }) => {
@@ -82,8 +82,7 @@ test('keeps working state across fixtures, retries a failed save, and rechecks a
   await expect(workspace(page)).toContainText('De reverificat');
   await expect(workspace(page).getByText(/Revizuiește potrivirile/)).toBeVisible();
   await workspace(page).getByRole('link', { name: 'Verifică anonimizarea' }).click();
-  await expect(workspace(page)).toContainText('Decizie anterioară: Anonimizat');
-  await suggestion(page, 'Nume semnatar').getByRole('button', { name: 'Anonimizează' }).click();
+  await page.getByRole('button', { name: 'Confirmă din nou marcajul' }).click();
   await expect(workspace(page)).not.toContainText('De reverificat');
   await step(page, 0);
   await field(page, 'Numărul actului').fill('78');
@@ -123,15 +122,14 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expect(page.getByRole('button', { name: 'Arată marcajele', exact: true })).toHaveCount(0);
   await anonymized.click();
   await expect(mark(page, 'nume')).toBeVisible();
-  await page.getByRole('button', { name: 'Nume semnatar', exact: true }).click();
+  await suggestion(page, 'Nume semnatar').getByRole('button', { name: /Vezi/ }).click();
   await expect(scan.locator('.inspection')).toBeVisible();
   await expect(workspace(page).getByText(/TSV · Pagina/)).toBeHidden();
   const reference = suggestion(page, 'Posibil CUI/CIF');
-  await reference.getByRole('button', { name: 'Anonimizează' }).click();
   await expect(mark(page, 'referinta')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await scan.locator('[data-mark="referinta"]').click();
   await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
-  await expect(reference).toContainText('Păstrat');
+  await expect(reference).toHaveCount(0);
   await expect(mark(page, 'referinta')).toHaveCount(0);
   await page.getByText('Marcaje din textul OCR', { exact: true }).click();
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
@@ -173,7 +171,7 @@ test('renders draft and final coverage in scan coordinates while preserving the 
     await page.mouse.move(x + frame.width * width, y + frame.height * height, { steps: 4 });
     await page.mouse.up();
   };
-  await page.getByRole('button', { name: 'Marchează zonă', exact: true }).click();
+  await page.getByRole('region', { name: 'Vizualizare document' }).getByRole('button', { name: 'Marchează o zonă', exact: true }).click();
   await draw([0.13, 0.51, 0.26, 0.09]);
   const manual = mark(page, 'manual-1');
   await expect(manual).toBeVisible();
@@ -190,7 +188,7 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expect(manual).toBeVisible();
   await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
   await expect(manual).toHaveCount(0);
-  const tool = page.getByRole('button', { name: 'Marchează zonă', exact: true });
+  const tool = workspace(page).getByRole('button', { name: 'Marchează o zonă', exact: true });
   await tool.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#viewport')).toBeFocused();
@@ -355,7 +353,7 @@ test('covers review widths, accessibility states and captures each step', async 
     };
     const style = selector => getComputedStyle(document.querySelector(selector));
     const surface = style('#workspace').backgroundColor;
-    const badge = style('.badge.warning');
+    const badge = style('.review-row .badge');
     const selection = style('#anonymized');
     return {
       secondary: ratio(style('#step-intro').color, surface),
@@ -371,7 +369,7 @@ test('covers review widths, accessibility states and captures each step', async 
   await toggle.blur();
   await page.evaluate(() => scrollTo(0, 0));
   await capture(isMobile ? 'anonimizat' : 'DS-011.' + colorScheme);
-  await suggestion(page, 'Posibil CUI/CIF').getByRole('button', { name: 'Păstrează' }).click();
+  await suggestion(page, 'Posibil CUI/CIF').getByRole('button', { name: /Elimină anonimizarea/ }).click();
   await page.getByText('Marcaje din textul OCR', { exact: true }).click();
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
@@ -393,8 +391,8 @@ test('covers review widths, accessibility states and captures each step', async 
     ['gol', 'Nu există un document selectat.'],
     ['eroare', 'Nu am putut încărca documentul.'],
     ['lung', 'Dosar_sintetic_documente'],
-    ['una', '1 rămasă'],
-    ['multe', '5 rămase'],
+    ['una', 'Automate: 1'],
+    ['multe', 'Automate: 6'],
   ]) {
     await page.goto(mock + saved + '&stare=' + state);
     await expect(page.getByText(feedback).first()).toBeVisible();
@@ -408,7 +406,7 @@ test('covers review widths, accessibility states and captures each step', async 
       expect((await field(page, 'Text OCR').inputValue()).length).toBeGreaterThan(400);
       await capture('ocr-lung');
     }
-    if (state === 'una') await expect(workspace(page).getByRole('list', { name: 'Sugestii PII' }).getByRole('listitem')).toHaveCount(1);
+    if (state === 'una') await expect(workspace(page).getByRole('list', { name: 'Anonimizări aplicate' }).getByRole('listitem')).toHaveCount(1);
     if (state === 'eroare') {
       await page.getByRole('button', { name: 'Reîncearcă încărcarea' }).click();
       await expect(workspace(page).getByRole('heading', { name: steps[2] })).toBeVisible();
@@ -448,12 +446,12 @@ test('switches the header theme through all steps without replacing unsaved edit
 
   await step(page, 2);
   const reference = suggestion(page, 'Posibil CUI/CIF');
-  await reference.getByRole('button', { name: 'Păstrează' }).click();
+  await reference.getByRole('button', { name: /Elimină anonimizarea/ }).click();
   await page.getByRole('button', { name: 'Pagina următoare' }).click();
   await page.getByRole('button', { name: 'Mărește' }).click();
   await theme.click();
   await expect(html).toHaveAttribute('data-theme', other);
-  await expect(reference).toContainText('Păstrat');
+  await expect(reference).toHaveCount(0);
   await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
   await expect(page.getByText('110%', { exact: true })).toBeVisible();
 
