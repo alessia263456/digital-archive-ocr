@@ -7,6 +7,7 @@ const saved = '?document=Procur%C4%83_exemplu.docx&reluare=1';
 const steps = ['Date document', 'Corectare OCR', 'Anonimizare', 'Verificare finală'];
 const workspace = page => page.getByRole('region', { name: 'Spațiu de lucru' });
 const field = (page, name) => page.getByLabel(name, { exact: true });
+const suggestion = (page, name) => workspace(page).getByRole('listitem').filter({ has: page.getByRole('button', { name, exact: true }) });
 const mark = (page, id) => page.locator('[data-coverage="' + id + '"]');
 
 async function expectCovered(page, text, id) {
@@ -47,7 +48,7 @@ test('opens both queue entries and requires explicit approval even for zero unce
   await workspace(page).getByRole('button', { name: 'Înapoi', exact: true }).click();
   await confirmMetadata(page);
   await step(page, 2);
-  await expect(workspace(page)).toContainText('0 potriviri incerte');
+  await expect(workspace(page)).toContainText('0 sugerate');
   await step(page, 3);
   const approve = page.getByRole('button', { name: 'Aprobă revizuirea' });
   await approve.click();
@@ -62,19 +63,27 @@ test('opens both queue entries and requires explicit approval even for zero unce
   await page.getByRole('link', { name: 'Continuă revizuirea' }).click();
   await expect(page).toHaveURL(/reluare=1/);
   await expect(workspace(page).getByRole('heading', { name: steps[2] })).toBeVisible();
-  await expect(workspace(page)).toContainText('Acceptat');
+  await expect(workspace(page)).toContainText('Anonimizat');
   await expect(workspace(page)).toContainText('De revizuit');
 });
 
 test('keeps working state across fixtures, retries a failed save, and rechecks a mapped correction', async ({ page }) => {
   await page.goto(mock + saved + '&stare=eroare-salvare');
   await step(page, 1);
-  await field(page, 'Pasaj OCR 1').fill('Semnatar: Persoană sintetică revizuită.');
+  const ocr = field(page, 'Text OCR');
+  await expect(ocr).toHaveCount(1);
+  const corrected = (await ocr.inputValue()).replace('Persoană sintetică A.', 'Persoană sintetică revizuită.\nObservație sintetică.');
+  await ocr.fill(corrected);
   await step(page, 3);
+  const reviewText = field(page, 'Text OCR corectat');
+  await expect(reviewText).toHaveValue(corrected);
+  await expect(reviewText).toHaveAttribute('readonly', '');
+  await expect(reviewText).toBeEnabled();
   await expect(workspace(page)).toContainText('De reverificat');
+  await expect(workspace(page).getByText(/Revizuiește potrivirile/)).toBeVisible();
   await workspace(page).getByRole('link', { name: 'Verifică anonimizarea' }).click();
-  await expect(workspace(page)).toContainText('Decizie anterioară: Acceptat');
-  await page.getByRole('button', { name: 'Acceptă din nou' }).click();
+  await expect(workspace(page)).toContainText('Decizie anterioară: Anonimizat');
+  await suggestion(page, 'Nume semnatar').getByRole('button', { name: 'Anonimizează' }).click();
   await expect(workspace(page)).not.toContainText('De reverificat');
   await step(page, 0);
   await field(page, 'Numărul actului').fill('78');
@@ -88,7 +97,7 @@ test('keeps working state across fixtures, retries a failed save, and rechecks a
   await page.getByRole('button', { name: 'Reîncearcă salvarea' }).click();
   await expect(page.getByRole('status')).toContainText('Ciornă salvată');
   await page.reload();
-  await expect(field(page, 'Pasaj OCR 1')).toHaveValue('Semnatar: Persoană sintetică revizuită.');
+  await expect(ocr).toHaveValue(corrected);
   await step(page, 0);
   await expect(field(page, 'Numărul actului')).toHaveValue('78');
 });
@@ -109,16 +118,25 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   const originalPixels = await sourcePixels();
   await anonymized.click();
   await expect(mark(page, 'nume')).toBeVisible();
-  await page.getByRole('button', { name: 'Arată numele în document' }).click();
-  await expect(workspace(page)).toContainText('TSV');
-  await page.getByRole('button', { name: 'Acceptă potrivirea de referință' }).click();
+  await page.getByRole('button', { name: 'Nume semnatar', exact: true }).click();
+  await expect(scan.locator('.inspection')).toBeVisible();
+  await expect(workspace(page).getByText(/TSV · Pagina/)).toBeHidden();
+  const reference = suggestion(page, 'Posibil CUI/CIF');
+  await reference.getByRole('button', { name: 'Anonimizează' }).click();
   await expect(mark(page, 'referinta')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  await page.getByRole('button', { name: 'Respinge potrivirea de referință' }).click();
+  await scan.locator('[data-mark="referinta"]').click();
+  await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
+  await expect(reference).toContainText('Păstrat');
   await expect(mark(page, 'referinta')).toHaveCount(0);
+  await page.getByText('Marcaje din textul OCR', { exact: true }).click();
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await expect(mark(page, 'adresa')).toBeVisible();
   await original.click();
+  const outlines = page.getByRole('button', { name: 'Arată marcajele', exact: true });
+  await outlines.click();
+  await expect(scan.locator('[data-mark="nume"]')).toBeVisible();
+  await outlines.click();
   expect((await sourcePixels()).equals(originalPixels), 'Original after toggling').toBe(true);
   await step(page, 0);
   await expect(original).toBeHidden();
@@ -141,21 +159,41 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await page.getByRole('button', { name: 'Micșorează' }).click();
   await page.getByRole('button', { name: 'Pagina următoare' }).click();
 
-  const canvas = await scan.boundingBox();
-  const viewport = await page.locator('#viewport').boundingBox();
-  await page.getByRole('button', { name: 'Desenează un dreptunghi' }).click();
-  await scan.scrollIntoViewIfNeeded();
-  const visibleScan = await scan.boundingBox();
-  const x = visibleScan.x + canvas.width * 0.13;
-  const y = visibleScan.y + canvas.height * 0.51;
-  expect(x).toBeLessThan(viewport.x + viewport.width);
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move(x + canvas.width * 0.26, y + canvas.height * 0.09, { steps: 4 });
-  await page.mouse.up();
-  await expect(mark(page, 'manual-1')).toBeVisible();
-  await page.getByRole('button', { name: 'Elimină dreptunghiul 1' }).click();
-  await expect(mark(page, 'manual-1')).toHaveCount(0);
+  const draw = async ([left, top, width, height]) => {
+    await scan.scrollIntoViewIfNeeded();
+    const frame = await scan.boundingBox();
+    const x = frame.x + frame.width * left;
+    const y = frame.y + frame.height * top;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + frame.width * width, y + frame.height * height, { steps: 4 });
+    await page.mouse.up();
+  };
+  await page.getByRole('button', { name: 'Marchează zonă', exact: true }).click();
+  await draw([0.13, 0.51, 0.26, 0.09]);
+  const manual = mark(page, 'manual-1');
+  await expect(manual).toBeVisible();
+  const originalWidth = (await manual.boundingBox()).width;
+  await scan.locator('[data-mark="manual-1"]').click();
+  await expect(workspace(page)).toContainText('Zonă marcată · Pagina 2');
+  await workspace(page).getByRole('button', { name: 'Ajustează zona', exact: true }).click();
+  await draw([0.13, 0.51, 0.30, 0.09]);
+  expect((await manual.boundingBox()).width).toBeGreaterThan(originalWidth);
+  await scan.locator('[data-mark="manual-1"]').click();
+  await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
+  await expect(manual).toHaveCount(0);
+  const tool = page.getByRole('button', { name: 'Marchează zonă', exact: true });
+  await tool.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#viewport')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(manual).toBeVisible();
+  await scan.locator('[data-mark="manual-1"]').click();
+  await workspace(page).getByRole('button', { name: 'Elimină marcajul', exact: true }).click();
+  await page.getByText('Marcaje din textul OCR', { exact: true }).click();
   await page.getByRole('button', { name: 'Marchează zona semnăturii' }).focus();
   await page.keyboard.press('Enter');
   await expect(mark(page, 'manual-1')).toBeVisible();
@@ -165,7 +203,13 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expect(mark(page, 'manual-1')).toHaveCount(0);
 
   await step(page, 3);
-  await expect(anonymized).toBeHidden();
+  await expect(anonymized).toHaveAttribute('aria-pressed', 'true');
+  await expect(mark(page, 'manual-1')).toBeVisible();
+  await original.click();
+  await expect(original).toHaveAttribute('aria-pressed', 'true');
+  await expect(mark(page, 'manual-1')).toHaveCount(0);
+  await expect(scan).toContainText('Semnătură A');
+  await anonymized.click();
   await expect(mark(page, 'manual-1')).toBeVisible();
   await expect(scan).toContainText('Notar public');
   await page.getByRole('button', { name: 'Pagina anterioară' }).click();
@@ -257,7 +301,8 @@ test('covers review widths, accessibility states and captures each step', async 
   await toggle.blur();
   await page.evaluate(() => scrollTo(0, 0));
   await capture(isMobile ? 'anonimizat' : 'DS-011.' + colorScheme);
-  await page.getByRole('button', { name: 'Respinge potrivirea de referință' }).click();
+  await suggestion(page, 'Posibil CUI/CIF').getByRole('button', { name: 'Păstrează' }).click();
+  await page.getByText('Marcaje din textul OCR', { exact: true }).click();
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await page.getByRole('button', { name: 'Marchează zona semnăturii' }).click();
@@ -265,6 +310,9 @@ test('covers review widths, accessibility states and captures each step', async 
   await capture('verificare-finala');
   await page.getByRole('button', { name: 'Pagina anterioară' }).click();
   await capture('verificare-finala-pagina-1');
+  await page.getByRole('button', { name: 'Original', exact: true }).click();
+  await capture('verificare-finala-original');
+  await toggle.click();
   await page.getByRole('button', { name: 'Aprobă revizuirea' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await capture('confirmare');
@@ -274,8 +322,8 @@ test('covers review widths, accessibility states and captures each step', async 
     ['gol', 'Nu există un document selectat.'],
     ['eroare', 'Nu am putut încărca documentul.'],
     ['lung', 'Dosar_sintetic_documente'],
-    ['una', '1 de revizuit'],
-    ['multe', '5 de revizuit'],
+    ['una', '1 rămasă'],
+    ['multe', '5 rămase'],
   ]) {
     await page.goto(mock + saved + '&stare=' + state);
     await expect(page.getByText(feedback).first()).toBeVisible();
@@ -286,10 +334,10 @@ test('covers review widths, accessibility states and captures each step', async 
       await expect(page.locator('#full-name-value')).toHaveText(/Dosar_sintetic_documente.*Procură_exemplu.docx/);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
       await step(page, 1);
-      expect((await field(page, 'Pasaj OCR 3').inputValue()).length).toBeGreaterThan(400);
+      expect((await field(page, 'Text OCR').inputValue()).length).toBeGreaterThan(400);
       await capture('ocr-lung');
     }
-    if (state === 'una') await expect(workspace(page).getByRole('listitem')).toHaveCount(1);
+    if (state === 'una') await expect(workspace(page).getByRole('list', { name: 'Sugestii PII' }).getByRole('listitem')).toHaveCount(1);
     if (state === 'eroare') {
       await page.getByRole('button', { name: 'Reîncearcă încărcarea' }).click();
       await expect(workspace(page).getByRole('heading', { name: steps[2] })).toBeVisible();
@@ -303,4 +351,60 @@ test('covers review widths, accessibility states and captures each step', async 
     const panel = await workspace(page).boundingBox();
     expect(panel.y > viewer.y).toBe(stacked);
   }
+});
+
+test('switches the header theme through all steps without replacing unsaved editing state', async ({ page, colorScheme }) => {
+  await page.goto(mock + saved);
+  const theme = page.getByRole('banner').getByRole('button', { name: /Mod (luminos|întunecat)/ });
+  const html = page.locator('html');
+  const other = colorScheme === 'dark' ? 'light' : 'dark';
+  await expect(html).toHaveAttribute('data-theme', colorScheme);
+  await step(page, 0);
+  await field(page, 'Numărul actului').fill('83');
+  await theme.click();
+  await expect(html).toHaveAttribute('data-theme', other);
+  await expect(field(page, 'Numărul actului')).toHaveValue('83');
+
+  await step(page, 1);
+  const ocr = field(page, 'Text OCR');
+  const corrected = (await ocr.inputValue()) + '\n\nNotă sintetică adăugată.\nAl doilea rând.';
+  await ocr.fill(corrected);
+  await theme.focus();
+  await page.keyboard.press('Enter');
+  await expect(theme).toBeFocused();
+  await expect(html).toHaveAttribute('data-theme', colorScheme);
+  await expect(ocr).toHaveValue(corrected);
+
+  await step(page, 2);
+  const reference = suggestion(page, 'Posibil CUI/CIF');
+  await reference.getByRole('button', { name: 'Păstrează' }).click();
+  await page.getByRole('button', { name: 'Pagina următoare' }).click();
+  await page.getByRole('button', { name: 'Mărește' }).click();
+  await theme.click();
+  await expect(html).toHaveAttribute('data-theme', other);
+  await expect(reference).toContainText('Păstrat');
+  await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
+  await expect(page.getByText('110%', { exact: true })).toBeVisible();
+
+  await step(page, 3);
+  await page.getByRole('button', { name: 'Original', exact: true }).click();
+  await theme.click();
+  await expect(html).toHaveAttribute('data-theme', colorScheme);
+  await expect(page.getByRole('button', { name: 'Original', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(field(page, 'Text OCR corectat')).toHaveValue(corrected);
+  await expect(workspace(page).getByText(/Confirmă metadatele/)).toBeVisible();
+});
+
+test('resumes an existing draft with separately saved OCR passages', async ({ page }) => {
+  await page.goto(mock + saved);
+  await page.evaluate(() => {
+    const passages = ['Pasaj sintetic unu.', 'Pasaj sintetic doi.\nRândul următor.', 'Pasaj sintetic trei.'];
+    localStorage.setItem('DS-011:Procură_exemplu.docx', JSON.stringify({
+      step: 1, page: 1, zoom: 1, anonymized: false,
+      metadata: { date: '2026-11-18', number: '77', dossier: '31/2026', inventory: '31/2026', amount: '', tags: '', expiry: '', type: 'Procură', subtype: 'procura-ia1', context: 'Act de sine stătător' },
+      confirmed: true, source: passages, ocr: passages, detections: {}, reviewedText: {}, rectangles: [],
+    }));
+  });
+  await page.reload();
+  await expect(field(page, 'Text OCR')).toHaveValue('Pasaj sintetic unu.\n\nPasaj sintetic doi.\nRândul următor.\n\nPasaj sintetic trei.');
 });
