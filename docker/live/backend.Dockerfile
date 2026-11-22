@@ -13,7 +13,6 @@ COPY bootstrap/ bootstrap/
 COPY config/ config/
 COPY database/migrations/ database/migrations/
 COPY public/ public/
-COPY resources/ resources/
 COPY routes/ routes/
 RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
     && chown -R www-data:www-data storage bootstrap/cache
