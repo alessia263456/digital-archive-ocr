@@ -1,6 +1,6 @@
 # Plan — P22-10b · Design DS-004 (Human Review & Quarantine Queue)
 
-**Status** — Owner authorized mock execution with the adjustments below. Screen approval is pending visual review. Planned from clean `main` at `d41f747`.
+**Status** — The owner approved the revised DS-004 mock on 2026-11-22. Planned from clean `main` at `d41f747`.
 
 ## Size
 

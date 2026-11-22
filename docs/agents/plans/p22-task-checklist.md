@@ -80,7 +80,7 @@ Check off a task after verification. Record approval time, verification time, ev
 - [ ] P22-11 · Private object storage and Signed URLs
 - [ ] P22-56b · Deploy the live skeleton
 - [ ] P22-10a · Design DS-003
-- [ ] P22-10b · Design DS-004
+- [x] P22-10b · Design DS-004
 - [ ] P22-10c · Design DS-011
 
 ## Day 4 · Run batches without blocking the worker

@@ -31,7 +31,7 @@ designs:
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"
     kind: screen
-    status: draft
+    status: approved
     design_ref: mocks/DS-004.html
     roles: [admin, arhivar]
     decisions: [D-019, D-032, D-038, D-022, D-026]
