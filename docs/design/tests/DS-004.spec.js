@@ -42,6 +42,33 @@ test('shows the approved OCR attempt count and confirms the permanent failure st
   await expect(quarantine.getByRole('status')).toHaveText('Documentul a fost trimis din nou la procesare.');
 });
 
+test('labels queue tabs with their document counts and moves focus and selection together', async ({ page }) => {
+  await page.goto(mock);
+  const tabs = page.getByRole('tablist', { name: 'Cozi de lucru' });
+  const review = tabs.getByRole('tab', { name: 'Revizuire (2)', exact: true });
+  const quarantine = tabs.getByRole('tab', { name: 'Carantină (1)', exact: true });
+  await expect(review).toHaveAttribute('aria-selected', 'true');
+  await expect(quarantine).toHaveAttribute('tabindex', '-1');
+  await review.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(quarantine).toBeFocused();
+  await expect(quarantine).toHaveAttribute('aria-selected', 'true');
+  await expect(quarantine).toHaveCSS('outline-style', 'solid');
+  const panel = page.getByRole('tabpanel', { name: 'Carantină (1)', exact: true });
+  await expect(panel).toBeVisible();
+  const panelSurface = await panel.evaluate(element => getComputedStyle(element).backgroundColor);
+  await expect(quarantine).toHaveCSS('background-color', panelSurface);
+  await expect(review).not.toHaveCSS('background-color', panelSurface);
+  await page.keyboard.press('Home');
+  await expect(review).toBeFocused();
+  await expect(review).toHaveAttribute('aria-selected', 'true');
+  await expect(panel).toBeHidden();
+
+  await page.goto(mock + '?stare=gol');
+  await expect(tabs.getByRole('tab', { name: 'Revizuire (0)', exact: true })).toBeVisible();
+  await expect(tabs.getByRole('tab', { name: 'Carantină (0)', exact: true })).toBeVisible();
+});
+
 test('checks the header and captures both queues at the review widths', async ({ page, isMobile, colorScheme }, info) => {
   await page.setViewportSize(isMobile ? { width: 320, height: 800 } : { width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

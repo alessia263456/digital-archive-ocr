@@ -121,7 +121,7 @@
       white-space: nowrap;
     }
 
-    .mock-ribbon, .tabs, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .mock-ribbon, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
     .mock-ribbon {
       justify-content: space-between;
       padding: var(--space-xs) var(--space-md);
@@ -153,13 +153,40 @@
     .button:hover, select:hover { background: var(--color-bg-subtle); }
     .button:active { text-decoration: underline; }
     .button:disabled { color: var(--color-text-secondary); border-style: dashed; cursor: default; }
-    .button[aria-selected="true"], .primary, .primary:hover {
+    .primary, .primary:hover {
       background: var(--color-accent-teal);
       color: var(--color-version-navy);
     }
-    .button[aria-selected="true"]:hover, .primary:hover {
+    .primary:hover {
       border-color: var(--color-version-navy);
       text-decoration: underline;
+    }
+    .tabs { display: flex; }
+    .tabs::after {
+      content: '';
+      flex: auto;
+      border-bottom: thin solid var(--color-border);
+    }
+    .tab {
+      min-block-size: calc(var(--space-xl) + var(--space-sm) + var(--space-xs));
+      padding: var(--space-sm) var(--space-md);
+      border: thin solid var(--color-border);
+      border-start-start-radius: var(--radius-md);
+      border-start-end-radius: var(--radius-md);
+      background: var(--color-bg-subtle);
+      color: var(--color-text-secondary);
+      font: var(--text-small);
+      font-weight: 600;
+      cursor: pointer;
+      transition: color var(--duration-fast);
+    }
+    .tab + .tab { border-inline-start: 0; }
+    .tab:hover { color: var(--color-text-primary); text-decoration: underline; }
+    .tab:focus-visible { outline-offset: calc(-1 * var(--space-xs)); }
+    .tab[aria-selected="true"] {
+      background: var(--color-bg-surface);
+      border-block-end-color: var(--color-bg-surface);
+      color: var(--color-text-primary);
     }
     .panel, .destination, dialog {
       background: var(--color-bg-surface);
@@ -167,7 +194,11 @@
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-card);
     }
-    .panel { margin-block-start: var(--space-md); }
+    .panel {
+      border-block-start: 0;
+      border-start-start-radius: 0;
+      border-start-end-radius: 0;
+    }
     .panel > h2 { padding: var(--space-md); border-bottom: thin solid var(--color-border); }
     h2 { font: var(--text-h3); }
     .rows { display: grid; gap: var(--space-sm); padding: var(--space-md); }
@@ -261,8 +292,8 @@
   <main class="wrap">
     <div id="queues">
       <div class="tabs" role="tablist" aria-label="Cozi de lucru">
-        <button class="button" id="review-tab" type="button" role="tab" aria-controls="review" aria-selected="true">Revizuire</button>
-        <button class="button" id="quarantine-tab" type="button" role="tab" aria-controls="quarantine" aria-selected="false" tabindex="-1">Carantină</button>
+        <button class="tab" id="review-tab" type="button" role="tab" aria-controls="review" aria-selected="true">Revizuire<span data-count></span></button>
+        <button class="tab" id="quarantine-tab" type="button" role="tab" aria-controls="quarantine" aria-selected="false" tabindex="-1">Carantină<span data-count></span></button>
       </div>
 
       <section class="panel" id="review" role="tabpanel" aria-labelledby="review-tab" tabindex="0">
@@ -389,7 +420,7 @@
       });
     }
 
-    for (const panel of panels) {
+    for (const [index, panel] of panels.entries()) {
       const rows = panel.querySelector('.rows');
       if (state === 'gol') {
         rows.hidden = true;
@@ -400,6 +431,7 @@
         const template = byId(state === 'incarcare' ? 'loading' : 'load-error');
         rows.after(template.content.cloneNode(true));
         panel.querySelector('[data-reload]')?.addEventListener('click', () => setScenario(''));
+        continue;
       }
       if (state === 'lung') {
         const row = document.createElement('li');
@@ -410,6 +442,8 @@
         row.append(name);
         rows.append(row);
       }
+      const count = state === 'gol' ? 0 : rows.children.length;
+      tabs[index].querySelector('[data-count]').textContent = ` (${count})`;
     }
 
     const drafts = {
