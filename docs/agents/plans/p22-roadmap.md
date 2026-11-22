@@ -10,7 +10,15 @@ Budget **45–90 minutes per day of your active time** for task approvals and re
 
 **Calendar reserve:** Protect 14 hours across the integration and acceptance milestones below. This is schedule capacity for failures, fixes and retests.
 
-The baseline is a clean, up-to-date `main` with no runnable Application scaffold. Part 1 Archive Foundations has design approval and awaits separate authorization. DS-002 is approved. DS-009 has a draft mock and screenshots. Ten Screen designs still require approval. The interview is recorded. The 30-template inventory and five live acceptance searches are pending.
+## Progress through 2026-11-22
+
+Day 1 and Day 2 tasks are complete. The local Laravel, PostgreSQL, Romanian OCR and React scaffolds are verified. The live milestone reached so far is the authenticated HTTPS placeholder (P22-56a). The live skeleton configuration and rollback were rehearsed under P22-54a.
+
+On Day 3, P22-08 and P22-09a/b verified persisted Romanian OCR text and Bounding Boxes, permanent pixel Redaction and removal of covered PDF text. The owner approved DS-003 and DS-004, completing P22-10a/b. DS-002 was already approved, bringing the total to **3 of 12 approved Screens**. DS-009 has a draft mock. Screen implementation remains scheduled.
+
+The first 10 Document Corpus entries are inventoried. The remaining inventory (P22-49b) and five live acceptance searches are pending. The remaining Day 3 tasks are private object storage and Signed URLs (P22-11), live skeleton deployment (P22-56b, after P22-11 and explicit deployment authorization), and the DS-011 Editor mock (P22-10c). Day 4 still includes the corrupt-then-valid queue proof used by the forecast checkpoint.
+
+See the [task checklist](p22-task-checklist.md) for task-level evidence and the [Screen registry](../../design/registry.yaml) for current approvals.
 
 Sources: [P22](../../brief.md), [repository instructions](../../../AGENTS.md), [vocabulary](../../../CONTEXT.md), [architecture](../ARCHITECTURE.md), [decisions](../DECISIONS.md), [archive workflows](../decisions/archive-workflows.md), [Part 1](part-1-archive-foundations.md), [design guardrails](../../design/DESIGN.md), [Screen registry](../../design/registry.yaml), [interview](../../../INTERVIEW.md), [corpus](../../../CORPUS.md), and [AI interaction journal](../../../AI_LOG.md).
 
@@ -49,7 +57,7 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 | P22-02 · Laravel, PostgreSQL and PHPUnit scaffold | 01 | 90m | Scaffold Laravel under backend/. Add Laravel and PostgreSQL services to compose.yaml, PHPUnit database configuration and a migration smoke test. | Laravel boots against containerized PostgreSQL. **P/I:** Health check, fresh migration and PHPUnit smoke pass. |
 | P22-04 · Corpus, live access and submission logistics | — | 60m | Coordination. Record the live target, corpus handoff, acceptance appointments and submission instructions. | Confirm template handoff, acceptance and rerun slots with the Secretar Notarial, live target and access, and course submission instructions. **Check:** Record owners, dates and blockers. |
 | P22-56a · Deploy authenticated “Hello World” | 04 (host access), deployment authorization | 60m | Deploy a placeholder at the intended live URL behind temporary hosting-layer authentication. Run alongside the local setup as approvals allow. Retry on Day 2 if host access or DNS is pending. | I: HTTPS works, an unauthenticated browser is challenged, an authorized browser sees the placeholder, and a second deployment succeeds. |
-| P22-05 · Confirm the Screen approval route | Q-013 | 45m | Record how the owner reviews each Screen before implementation. | Verify that the [review queue](p22-task-checklist.md#day-1--start-the-stack-and-take-delivery-of-the-corpus) accounts for all 12 registered Screens, with 11 awaiting approval and one approved. |
+| P22-05 · Confirm the Screen approval route | Q-013 | 45m | Record how the owner reviews each Screen before implementation. | Verify that the [review queue](p22-task-checklist.md#day-1--start-the-stack-and-take-delivery-of-the-corpus) accounts for all 12 registered Screens and reflects the current registry status. |
 | P22-49a · Inventory first corpus batch | 04, template handoff | 60m | List the first templates in CORPUS.md. Identify representative formats, quality, handwriting and PII. | Check synthetic values and choose fixtures for 06–09. |
 
 ## Day 2 · Scaffold React and prepare document input
