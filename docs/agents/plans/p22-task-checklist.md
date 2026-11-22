@@ -1,6 +1,6 @@
 # P22 · Task checklist
 
-**Status:** Revised draft. Roadmap approval is pending and all tasks await individual approval.
+**Status:** Revised draft. Roadmap approval is pending. Each remaining task requires individual approval.
 
 See the [14-day roadmap](p22-roadmap.md) for scope, dependencies, verification and daily outcomes.
 
@@ -30,10 +30,8 @@ Check off a task after verification. Record approval time, verification time, ev
   - Verified 2026-11-20 at 18:06 EET after the owner added Allow-HTTP (310) and Allow-HTTPS (320). External HTTP returned 308 to HTTPS. Let’s Encrypt issued a trusted certificate. Anonymous requests on two paths and invalid credentials returned 401 with a Basic challenge. Chromium rendered exactly “Hello World” with valid credentials (200). Recreating only Caddy retained its TLS volume and certificate fingerprint. The same external checks passed after redeployment.
 - [x] P22-05 · Confirm the Screen approval route
   - The owner reviews each repository mock or its screenshots in chat and explicitly approves that Screen in chat before implementation. [Q-013](../OPEN-QUESTIONS.md#q-013--where-and-how-will-the-remaining-screen-designs-be-approved)
-  - Of the 12 [registered Screens](../../design/registry.yaml), DS-002 (Document viewer) is approved. The following 11 await approval.
+  - Of the 12 [registered Screens](../../design/registry.yaml), DS-002, DS-003 and DS-004 are approved. The following nine await approval.
     - DS-001 · Document list / Search results
-    - DS-003 · Upload
-    - DS-004 · Human Review & Quarantine Queue
     - DS-005 · Retention & Destruction list
     - DS-006 · Admin panel
     - DS-007 · Dashboard
@@ -79,8 +77,10 @@ Check off a task after verification. Record approval time, verification time, ev
   - Approved 2026-11-21 and verified by 16:23 EET. Verified extractable target words on both pages of TEST-003 before Redaction. Its derivative had black pixels at both targets and yielded only whitespace to pdftotext. The rotated synthetic PDF passed all four pixel-edge checks. Full worker PHPUnit passed (37 tests, 175 assertions), along with Romanian OCR smoke, Compose validation, React build, four Playwright checks and ledger lint. [Approved plan](p22-08-09-ocr-persistence-and-permanent-redaction.md)
 - [ ] P22-11 · Private object storage and Signed URLs
 - [ ] P22-56b · Deploy the live skeleton
-- [ ] P22-10a · Design DS-003
+- [x] P22-10a · Design DS-003
+  - The owner approved the intake mock, including its processing and draft handoffs. [Plan](p22-10a-design-ds-003.md) · approval commit `d41f747`.
 - [x] P22-10b · Design DS-004
+  - The owner approved the review and quarantine mock with counted tabs on 2026-11-22. All 20 Playwright checks passed across desktop and mobile in both themes. [Plan](p22-10b-design-ds-004.md) · approval commit `5672dc0`.
 - [ ] P22-10c · Design DS-011
 
 ## Day 4 · Run batches without blocking the worker
