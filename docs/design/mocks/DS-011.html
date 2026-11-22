@@ -246,7 +246,32 @@
       box-shadow: 0 0 0 var(--space-xs) var(--scan-paper);
     }
     .mark-outline { outline-style: dashed; }
-    .inspection { outline-offset: var(--radius-sm); }
+    .inspection { outline-color: var(--color-focus-ring); outline-offset: var(--radius-sm); }
+    .viewer-canvas { position: relative; }
+    .mark-action, .mark-action:hover {
+      background: var(--color-version-navy);
+      color: var(--scan-paper);
+      border-color: var(--color-text-secondary);
+    }
+    .mark-action { gap: var(--space-xs); }
+    .mark-action:hover { text-decoration: underline; }
+    #viewer-mark-tool {
+      position: absolute;
+      inset-inline-start: var(--space-md);
+      inset-block-end: var(--space-md);
+      inline-size: var(--space-2xl);
+      block-size: var(--space-2xl);
+      border-radius: 50%;
+      box-shadow: var(--shadow-card);
+    }
+    #viewer-mark-tool span {
+      inline-size: var(--space-lg);
+      block-size: var(--space-lg);
+      border: var(--radius-sm) dashed currentColor;
+    }
+    .mark-counts { padding: var(--space-sm); font-weight: 600; }
+    .review-row strong { margin-inline-start: var(--space-xs); }
+    .review-row button[data-action="remove-mark"] { min-inline-size: var(--target); }
     .drawing-guide { outline-style: dashed; }
     .drawing-cursor { inline-size: var(--space-sm); block-size: var(--space-sm); transform: translate(-50%, -50%); }
     .scan-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
@@ -281,21 +306,10 @@
     @container (min-width: 640px) {
       .identification-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-md); }
     }
-    .review-tools, .review-row, .summary { display: grid; gap: var(--space-xs); }
+    .review-row, .summary { display: grid; gap: var(--space-xs); }
     .review-row, .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
-    .review-tools { gap: var(--space-sm); }
     .review-list { display: grid; gap: var(--space-sm); padding: 0; list-style: none; }
     .review-row { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-    .locate, .mark-link {
-      border-color: transparent;
-      justify-content: start;
-      padding-inline: 0;
-      text-align: start;
-      text-decoration: underline;
-      text-underline-offset: var(--space-xs);
-    }
-    .locate:hover, .mark-link:hover { background: transparent; color: var(--color-text-primary); }
-    .review-row .locate { min-inline-size: min(var(--target), 100%); }
     .badge { justify-self: start; padding-inline: var(--space-xs); border-radius: var(--radius-sm); font: var(--text-small); font-weight: 600; }
     .accepted { background: var(--color-accent-teal); color: var(--color-version-navy); }
     .neutral { background: var(--color-bg-subtle); }
@@ -396,8 +410,11 @@
             </div>
             <a class="jump" href="#step-title">Sari la spațiul de lucru</a>
           </div>
+          <div class="viewer-canvas">
           <div id="viewport" tabindex="0" role="region" aria-label="Pagină document cu derulare">
             <div id="scan" role="group" aria-label="Pagină sintetică"></div>
+          </div>
+            <button id="viewer-mark-tool" class="mark-action" aria-label="Marchează o zonă" title="Marchează o zonă" aria-pressed="false" hidden><span aria-hidden="true"></span></button>
           </div>
           <div class="controls">
             <div class="actions" role="group" aria-label="Paginare">
@@ -495,7 +512,6 @@
     };
     const extraPassages = ['contact@example.invalid', 'TEL-SINTETIC', 'CAD-DEMO', 'VIN-DEMO'];
     const signature = { page: 2, box: [13, 51, 26, 9] };
-    const statusLabels = { pending: 'De revizuit', accepted: 'Anonimizat', rejected: 'Păstrat', manual: 'Marcaj manual' };
     const params = new URLSearchParams(location.search);
     const scenario = params.get('stare');
     const working = new Map();
@@ -517,6 +533,14 @@
     function fixture() { return fixtures[fixtureKey]; }
     function storageKey() { return 'DS-011:' + fixture().name; }
 
+    function applyAutomaticMarks(state, passages = state.source) {
+      for (const [key, status] of Object.entries(state.detections)) {
+        if (status !== 'pending') continue;
+        state.detections[key] = 'accepted';
+        state.reviewedText[key] = passages[mappings[key].index];
+      }
+    }
+
     function loadDraft(resume) {
       if (working.has(fixtureKey)) return working.get(fixtureKey);
       if (resume) {
@@ -529,6 +553,7 @@
               adjustments: snapshot.adjustments ?? {},
               approved: false,
             };
+            applyAutomaticMarks(loaded);
             working.set(fixtureKey, loaded);
             return loaded;
           }
@@ -557,6 +582,7 @@
         source, ...continuousOCR(ocr), detections, reviewedText: detections.nume ? { nume: ocr[0] } : {},
         rectangles: [], adjustments: {},
       };
+      applyAutomaticMarks(state, ocr);
       working.set(fixtureKey, state);
       return state;
     }
@@ -626,7 +652,9 @@
       return key in draft.reviewedText && draft.reviewedText[key] !== mappedText(key);
     }
 
-    function staleKeys() { return Object.keys(draft.detections).filter(recheck); }
+    function staleKeys() {
+      return Object.keys(draft.detections).filter(key => draft.detections[key] !== 'rejected' && recheck(key));
+    }
     function pendingKeys() { return Object.keys(draft.detections).filter(key => draft.detections[key] === 'pending'); }
 
     function renderSteps() {
@@ -730,6 +758,8 @@
       const anonymized = final ? finalAnonymized : review && draft.anonymized;
       $('preview-label').textContent = review ? 'Previzualizare de lucru' : final ? 'Previzualizare finală simulată' : 'Original';
       $('versions').hidden = !review && !final;
+      $('viewer-mark-tool').hidden = !review;
+      $('viewer-mark-tool').setAttribute('aria-pressed', String(Boolean(drawing)));
       $('original').setAttribute('aria-pressed', String(!anonymized));
       $('anonymized').setAttribute('aria-pressed', String(anonymized));
       $('page-number').textContent = `Pagina ${draft.page} din 2`;
@@ -834,32 +864,16 @@
       $('ocr-text').value = draft.ocr;
     }
 
-    function reviewCounts() {
-      const suggestions = Object.entries(draft.detections).filter(([, status]) => status !== 'manual');
-      const remaining = suggestions.filter(([key, status]) => status === 'pending' || recheck(key)).length;
-      const total = suggestions.length;
-      const reviewed = total - remaining;
-      const text = `${total} ${total === 1 ? 'sugerată' : 'sugerate'} · ${reviewed} ${reviewed === 1 ? 'revizuită' : 'revizuite'} · ${remaining} ${remaining === 1 ? 'rămasă' : 'rămase'}`;
-      return { suggestions, text };
-    }
-
-    function reviewRow([key, status]) {
-      const item = mappings[key];
-      const stale = recheck(key);
+    function appliedRow(item) {
+      const automatic = draft.detections[item.key] === 'accepted';
       return `<li class="review-row">
-        <div>
-          <button class="locate" data-action="inspect" data-key="${key}" aria-pressed="${inspection === key}">${item.type}</button>
-          <p class="muted">${html(item.excerpt)} · Pagina ${item.page}</p>
-          ${stale ? `<p class="muted">Decizie anterioară: ${statusLabels[status]}</p>` : ''}
+        <div><span class="badge ${automatic ? 'neutral' : 'accepted'}">${automatic ? 'Automat' : 'Manual'}</span>
+          <strong>${item.title}</strong>
+          <p class="muted">${item.excerpt ? html(item.excerpt) + ' · ' : ''}Pagina ${item.page}</p>
         </div>
-        <div>
-          <span class="badge ${stale || status === 'pending' ? 'warning' : status === 'accepted' ? 'accepted' : 'neutral'}">
-            ${stale ? 'De reverificat' : statusLabels[status]}
-          </span>
-          <div class="actions">
-            <button data-action="accept" data-key="${key}" aria-pressed="${status === 'accepted' && !stale}">Anonimizează</button>
-            <button data-action="reject" data-key="${key}" aria-pressed="${status === 'rejected' && !stale}">Păstrează</button>
-          </div>
+        <div class="actions">
+          <button data-action="inspect" data-key="${item.key}" aria-label="Vezi ${markCaption(item)}" aria-pressed="${inspection === item.key}">Vezi</button>
+          <button data-action="remove-mark" data-key="${item.key}" aria-label="Elimină anonimizarea: ${markCaption(item)}">×</button>
         </div>
       </li>`;
     }
@@ -896,7 +910,7 @@
           <div class="actions">
             <button data-action="adjust" data-key="${marked.key}">Ajustează zona</button>
             <button data-action="remove-mark" data-key="${marked.key}">Elimină marcajul</button>
-            ${draft.detections[marked.key] === 'manual' && recheck(marked.key)
+            ${mappings[marked.key] && recheck(marked.key)
               ? `<button data-action="confirm-mark" data-key="${marked.key}">Confirmă din nou marcajul</button>` : ''}
           </div>` : ''}
         <details class="compact muted">
@@ -907,28 +921,22 @@
     }
 
     function renderReview() {
-      const { suggestions, text } = reviewCounts();
-      const manual = marks().filter(item => draft.detections[item.key] !== 'accepted');
+      const applied = marks();
+      const automatic = applied.filter(item => draft.detections[item.key] === 'accepted').length;
       const available = fixtureKey === 'procura'
         ? Object.entries(mappings).filter(([key, item]) => item.index < draft.ocrRanges.length && !draft.detections[key])
         : [];
       const shortcutsOpen = $('mark-shortcuts')?.open;
       $('content').innerHTML = `
-        <div class="review-tools">
-          <div class="actions">
-            <button class="primary" data-action="draw" aria-pressed="${Boolean(drawing)}">Marchează zonă</button>
-            ${removedMark ? '<button data-action="undo-mark">Anulează eliminarea</button>' : ''}
-          </div>
-          ${drawing ? '<p id="drawing-help" class="muted">Trasează zona pe document. De la tastatură, mută cursorul cu săgețile și folosește Enter pentru fiecare colț. Apasă Escape pentru a renunța.</p>' : ''}
-          ${selectedDetails()}
-        </div>
-        <div><h3>Sugestii PII</h3><p class="muted">${text}</p></div>
-        ${suggestions.length ? `<ul class="review-list" aria-label="Sugestii PII">${suggestions.map(reviewRow).join('')}</ul>`
-          : '<p class="muted">Nu există sugestii PII. Verifică documentul și marchează zone dacă este necesar.</p>'}
-        ${manual.length ? `<div><h3>Marcaje manuale</h3>
-          <ul class="review-list" aria-label="Marcaje manuale">${manual.map(item => `
-            <li><button class="mark-link" data-action="inspect" data-key="${item.key}">${markCaption(item)} · ${markLocation(item)}</button>
-              ${mappings[item.key] && recheck(item.key) ? '<span class="badge warning">De reverificat</span>' : ''}</li>`).join('')}</ul></div>` : ''}
+        <p class="review-notice neutral"><strong>Verifică anonimizările aplicate.</strong> Toate zonele detectate automat sunt deja marcate. Poți elimina o anonimizare cu × sau poți adăuga una nouă.</p>
+        <h3>Anonimizări aplicate</h3>
+        <p class="mark-counts neutral">Total: ${applied.length} marcaje · Automate: ${automatic} · Manuale: ${applied.length - automatic}</p>
+        ${applied.length ? `<ul class="review-list" aria-label="Anonimizări aplicate">${applied.map(appliedRow).join('')}</ul>`
+          : '<p class="muted">Nu există zone marcate.</p>'}
+        <button class="mark-action" data-action="draw" aria-pressed="${Boolean(drawing)}"><span aria-hidden="true">+</span> Marchează o zonă</button>
+        ${removedMark ? '<div><button data-action="undo-mark">Anulează eliminarea</button></div>' : ''}
+        ${drawing ? '<p id="drawing-help" class="muted">Trasează zona pe document. De la tastatură, mută cursorul cu săgețile și folosește Enter pentru fiecare colț. Apasă Escape pentru a renunța.</p>' : ''}
+        ${selectedDetails()}
         ${fixtureKey === 'procura' ? `<details id="mark-shortcuts" class="compact muted" ${shortcutsOpen ? 'open' : ''}>
           <summary>Marcaje din textul OCR</summary>
           ${available.length ? `<div><label for="manual-passage">Pasaj pentru marcaj manual</label>
@@ -970,7 +978,7 @@
       const suggestions = [metadata.amount && `Sumă ${html(metadata.amount)}`, metadata.tags && `Etichete ${html(metadata.tags)}`].filter(Boolean);
       const stale = staleKeys();
       const issues = approvalIssues();
-      const { text } = reviewCounts();
+      const applied = marks();
       const manual = marks().filter(item => draft.detections[item.key] !== 'accepted').length;
       $('content').innerHTML = `
         <div class="summary">
@@ -994,7 +1002,7 @@
             <h3>Revizuire PII</h3>
             <a href="#step-title" data-step="2" ${stale.length ? `data-review="${stale[0]}"` : ''}>Verifică anonimizarea</a>
             <div class="full-width">
-              <p>${text} · ${manual} ${manual === 1 ? 'marcaj manual' : 'marcaje manuale'}</p>
+              <p>${applied.length} aplicate · ${manual} ${manual === 1 ? 'marcaj manual' : 'marcaje manuale'}</p>
               ${stale.length ? `<p class="warning">De reverificat: ${stale.map(key => mappings[key].type).join(', ')}</p>` : ''}
             </div>
           </div>
@@ -1125,15 +1133,13 @@
     }
 
     function updateReview(action, key) {
-      draft.detections[key] = { accept: 'accepted', reject: 'rejected', 'mark-passage': 'manual', 'confirm-mark': 'manual' }[action];
+      draft.detections[key] = { 'mark-passage': 'manual', 'confirm-mark': draft.detections[key] }[action];
       draft.reviewedText[key] = mappedText(key);
       if (action === 'mark-passage') {
         if (removedMark?.key === key) removedMark = null;
         draft.page = mappings[key].page;
         inspection = key;
         selectedMark = key;
-      } else if (action === 'reject' && selectedMark === key) {
-        selectedMark = '';
       }
       renderReviewChange('Revizuire actualizată.');
       (document.querySelector(`[data-action="${action}"][data-key="${key}"]`) ||
@@ -1151,17 +1157,12 @@
 
     function removeMark(key) {
       const status = draft.detections[key];
-      if (status === 'accepted') {
-        selectedMark = '';
-        inspection = '';
-        updateReview('reject', key);
-        return;
-      }
-      removedMark = { key, page: markFor(key).page };
-      if (status === 'manual') {
+      removedMark = { key, page: markFor(key).page, status };
+      if (status === 'accepted' || status === 'manual') {
         removedMark.text = draft.reviewedText[key];
         removedMark.box = draft.adjustments[key];
-        delete draft.detections[key];
+        if (status === 'accepted') draft.detections[key] = 'rejected';
+        else delete draft.detections[key];
         delete draft.reviewedText[key];
         delete draft.adjustments[key];
       } else {
@@ -1175,7 +1176,7 @@
     }
 
     function undoMarkRemoval() {
-      const { key, page, rectangle, text, box } = removedMark;
+      const { key, page, rectangle, text, box, status } = removedMark;
       if (rectangle) {
         // A new mark can reuse an available internal key while undo is still visible.
         if (markFor(key)) selectedMark = addRectangle(page, rectangle.box, rectangle.signature);
@@ -1184,7 +1185,7 @@
           selectedMark = key;
         }
       } else {
-        draft.detections[key] = 'manual';
+        draft.detections[key] = status;
         draft.reviewedText[key] = text;
         if (box) draft.adjustments[key] = box;
         selectedMark = key;
@@ -1321,6 +1322,13 @@
     $('content').addEventListener('change', event => {
       if (event.target.matches('select[data-metadata]')) updateMetadata(event.target);
     });
+    function toggleMarkTool() {
+      if (drawing) cancelDrawing();
+      else startDrawing();
+    }
+
+    $('viewer-mark-tool').onclick = toggleMarkTool;
+
     $('content').addEventListener('click', event => {
       const button = event.target.closest('[data-action]');
       if (!button) return;
@@ -1342,8 +1350,6 @@
         case 'inspect':
           inspectMark(key);
           break;
-        case 'accept':
-        case 'reject':
         case 'confirm-mark':
           updateReview(action, key);
           break;
@@ -1351,8 +1357,7 @@
           updateReview(action, $('manual-passage').value);
           break;
         case 'draw':
-          if (drawing) cancelDrawing();
-          else startDrawing();
+          toggleMarkTool();
           break;
         case 'adjust':
           startDrawing(key);

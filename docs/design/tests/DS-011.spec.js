@@ -208,6 +208,12 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
   await expect(scan.locator('.mark-outline[data-mark="manual-1"]')).toBeVisible();
   await expect(mark(page, 'manual-1')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Pagina anterioară' }).click();
+  await suggestion(page, 'Semnătura semnatarului').getByRole('button', { name: /Vezi/ }).click();
+  await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
+  const selectedOutline = await scan.locator('.inspection').evaluate(element => getComputedStyle(element).outlineColor);
+  const regularOutline = await scan.locator('.mark-outline').evaluate(element => getComputedStyle(element).outlineColor);
+  expect(selectedOutline).not.toBe(regularOutline);
 
   await step(page, 3);
   await expect(anonymized).toHaveAttribute('aria-pressed', 'true');
