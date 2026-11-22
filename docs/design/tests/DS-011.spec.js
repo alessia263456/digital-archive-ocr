@@ -112,10 +112,15 @@ test('renders draft and final coverage in scan coordinates while preserving the 
     // Capture the scan at the same pixel origin even when the viewer toolbar changes height.
     return scan.screenshot({
       scale: 'css',
-      style: `#scan { position: fixed; inset: 0 auto auto 0; width: ${width}px; margin: 0; z-index: 1; }`,
+      style: `#scan { position: fixed; inset: 0 auto auto 0; width: ${width}px; margin: 0; z-index: 1; }
+        #scan .mark-outline { visibility: hidden; }`,
     });
   };
   const originalPixels = await sourcePixels();
+  const versions = page.getByRole('group', { name: 'Versiunea documentului' });
+  await expect(versions.getByRole('button')).toHaveText(['Original', 'Anonimizat']);
+  await expect(scan.locator('.mark-outline[data-mark="nume"]')).toBeVisible({ timeout: 1500 });
+  await expect(page.getByRole('button', { name: 'Arată marcajele', exact: true })).toHaveCount(0);
   await anonymized.click();
   await expect(mark(page, 'nume')).toBeVisible();
   await page.getByRole('button', { name: 'Nume semnatar', exact: true }).click();
@@ -133,10 +138,9 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await expect(mark(page, 'adresa')).toBeVisible();
   await original.click();
-  const outlines = page.getByRole('button', { name: 'Arată marcajele', exact: true });
-  await outlines.click();
-  await expect(scan.locator('[data-mark="nume"]')).toBeVisible();
-  await outlines.click();
+  await expect(scan.locator('.mark-outline[data-mark="nume"]')).toBeVisible();
+  await expect(scan.locator('.mark-outline[data-mark="adresa"]')).toBeVisible();
+  await expect(mark(page, 'adresa')).toHaveCount(0);
   expect((await sourcePixels()).equals(originalPixels), 'Original after toggling').toBe(true);
   await step(page, 0);
   await expect(original).toBeHidden();
@@ -204,6 +208,7 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expectCovered(page, 'Semnătură A', 'manual-1');
   await original.click();
   await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
+  await expect(scan.locator('.mark-outline[data-mark="manual-1"]')).toBeVisible();
   await expect(mark(page, 'manual-1')).toHaveCount(0);
 
   await step(page, 3);
@@ -211,6 +216,7 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await expect(mark(page, 'manual-1')).toBeVisible();
   await original.click();
   await expect(original).toHaveAttribute('aria-pressed', 'true');
+  await expect(scan.locator('.mark-outline')).toHaveCount(0);
   await expect(mark(page, 'manual-1')).toHaveCount(0);
   await expect(scan).toContainText('Semnătură A');
   await anonymized.click();
