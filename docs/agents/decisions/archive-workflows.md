@@ -146,3 +146,12 @@
 - **Evidence:** Q-017, Q-018, Q-019 and owner confirmation in chat
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-20
+
+## D-040 · Multi-image duplicate detection and OCR similarity warnings
+- **Status:** approved
+- **Date:** 2026-11-22
+- **Rule:** This decision supplements D-025. Preserve existing PDF/DOCX exact SHA-256 blocking and the Document Version restrictions in D-025, D-037, and D-038. For documents assembled from images, hash each original image with SHA-256 and compute a deterministic document-level SHA-256 from the ordered sequence of image digests using a documented, unambiguous encoding. Block an identical ordered sequence. If the sequences differ but contain the same image digests with the same multiplicities, show a non-blocking possible-duplicate warning. An individual matching page does not block an otherwise different document. Enforce all exact-match blocks on the backend, including saves as a new Document Version. Check OCR similarity after asynchronous text extraction completes. When the separately approved similarity criterion is met, display a distinct possible-duplicate warning in the upload or processing workflow when available and retain it for DS-011 review. This warning never automatically blocks saving or finalization. Preserve the existing DS-011 warning based on matching act number and confirmed Act Date and its save choices under D-025.
+- **Why:** Define exact identity for ordered image documents and distinguish advisory OCR similarity from exact blocking and the existing metadata warning.
+- **Evidence:** Q-020 and owner approval in chat. The OCR similarity criterion remains open in Q-021. Q-011 records the earlier decision on the act-number and Act Date warning.
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-22

@@ -30,6 +30,7 @@
 - D-037 · Physical Dossiers, Document Versions, and metadata changes
 - D-038 · Upload review, metadata, and Document Versions
 - D-039 · Official Notarial Nomenclature revisions
+- D-040 · Multi-image duplicate detection and OCR similarity warnings
 
 ---
 
