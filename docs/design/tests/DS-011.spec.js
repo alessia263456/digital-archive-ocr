@@ -9,6 +9,20 @@ const workspace = page => page.getByRole('region', { name: 'Spațiu de lucru' })
 const field = (page, name) => page.getByLabel(name, { exact: true });
 const mark = (page, id) => page.locator('[data-coverage="' + id + '"]');
 
+async function expectCovered(page, text, id) {
+  const ink = await page.locator('#scan').getByText(text, { exact: true }).evaluate(line => {
+    const range = document.createRange();
+    range.selectNodeContents(line);
+    const { x, y, width, height } = range.getBoundingClientRect();
+    return { x, y, width, height };
+  });
+  const box = await mark(page, id).boundingBox();
+  expect(box.x).toBeLessThanOrEqual(ink.x);
+  expect(box.y).toBeLessThanOrEqual(ink.y);
+  expect(box.x + box.width).toBeGreaterThanOrEqual(ink.x + ink.width);
+  expect(box.y + box.height).toBeGreaterThanOrEqual(ink.y + ink.height);
+}
+
 async function step(page, index) {
   const link = page.getByRole('navigation', { name: 'Pașii revizuirii' }).getByRole('link', { name: new RegExp(steps[index]) });
   await link.click();
@@ -84,24 +98,34 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   const scan = page.locator('#scan');
   const original = page.getByRole('button', { name: 'Original', exact: true });
   const anonymized = page.getByRole('button', { name: 'Anonimizat', exact: true });
-  const originalPixels = await scan.screenshot();
+  const sourcePixels = async () => {
+    const { width } = await scan.boundingBox();
+    // Capture the scan at the same pixel origin even when the viewer toolbar changes height.
+    return scan.screenshot({
+      scale: 'css',
+      style: `#scan { position: fixed; inset: 0 auto auto 0; width: ${width}px; margin: 0; z-index: 1; }`,
+    });
+  };
+  const originalPixels = await sourcePixels();
   await anonymized.click();
   await expect(mark(page, 'nume')).toBeVisible();
   await page.getByRole('button', { name: 'Arată numele în document' }).click();
   await expect(workspace(page)).toContainText('TSV');
+  await page.getByRole('button', { name: 'Acceptă potrivirea de referință' }).click();
+  await expect(mark(page, 'referinta')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.getByRole('button', { name: 'Respinge potrivirea de referință' }).click();
   await expect(mark(page, 'referinta')).toHaveCount(0);
   await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
   await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await expect(mark(page, 'adresa')).toBeVisible();
   await original.click();
-  expect(await scan.screenshot()).toEqual(originalPixels);
+  expect((await sourcePixels()).equals(originalPixels), 'Original after toggling').toBe(true);
   await step(page, 0);
   await expect(original).toBeHidden();
-  expect(await scan.screenshot()).toEqual(originalPixels);
+  expect((await sourcePixels()).equals(originalPixels), 'Original in Date document').toBe(true);
   await step(page, 1);
   await expect(anonymized).toBeHidden();
-  expect(await scan.screenshot()).toEqual(originalPixels);
+  expect((await sourcePixels()).equals(originalPixels), 'Original in Corectare OCR').toBe(true);
   await step(page, 2);
   await anonymized.click();
   const region = async () => mark(page, 'nume').evaluate(overlay => {
@@ -112,6 +136,8 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   const left = await region();
   await page.getByRole('button', { name: 'Mărește' }).click();
   expect(await region()).toBe(left);
+  await expectCovered(page, 'Persoană sintetică A', 'nume');
+  await expectCovered(page, 'Strada Exemplu, nr. XX', 'adresa');
   await page.getByRole('button', { name: 'Micșorează' }).click();
   await page.getByRole('button', { name: 'Pagina următoare' }).click();
 
@@ -133,6 +159,7 @@ test('renders draft and final coverage in scan coordinates while preserving the 
   await page.getByRole('button', { name: 'Marchează zona semnăturii' }).focus();
   await page.keyboard.press('Enter');
   await expect(mark(page, 'manual-1')).toBeVisible();
+  await expectCovered(page, 'Semnătură A', 'manual-1');
   await original.click();
   await expect(page.getByText('Pagina 2 din 2')).toBeVisible();
   await expect(mark(page, 'manual-1')).toHaveCount(0);
@@ -200,13 +227,44 @@ test('covers review widths, accessibility states and captures each step', async 
     await expect(page.getByRole('link', { name: 'Sari la spațiul de lucru' })).toBeVisible();
   }
   await page.keyboard.press('Enter');
+  const contrast = await page.evaluate(() => {
+    const luminance = color => {
+      const channels = color.match(/\d+/g).slice(0, 3).map(value => {
+        const channel = Number(value) / 255;
+        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const ratio = (color, background) => {
+      const pair = [luminance(color), luminance(background)].sort((a, b) => b - a);
+      return (pair[0] + 0.05) / (pair[1] + 0.05);
+    };
+    const style = selector => getComputedStyle(document.querySelector(selector));
+    const surface = style('#workspace').backgroundColor;
+    const badge = style('.badge.warning');
+    const selection = style('#anonymized');
+    return {
+      secondary: ratio(style('#step-intro').color, surface),
+      warning: ratio(badge.color, badge.backgroundColor),
+      selection: ratio(selection.color, selection.backgroundColor),
+      focus: ratio(style('#anonymized').outlineColor, surface),
+    };
+  });
+  expect(contrast.secondary).toBeGreaterThanOrEqual(4.5);
+  expect(contrast.warning).toBeGreaterThanOrEqual(4.5);
+  expect(contrast.selection).toBeGreaterThanOrEqual(4.5);
+  expect(contrast.focus).toBeGreaterThanOrEqual(3);
   await toggle.blur();
   await page.evaluate(() => scrollTo(0, 0));
   await capture(isMobile ? 'anonimizat' : 'DS-011.' + colorScheme);
   await page.getByRole('button', { name: 'Respinge potrivirea de referință' }).click();
+  await field(page, 'Pasaj pentru marcaj manual').selectOption('adresa');
+  await page.getByRole('button', { name: 'Marchează pasajul' }).click();
   await page.getByRole('button', { name: 'Marchează zona semnăturii' }).click();
   await step(page, 3);
   await capture('verificare-finala');
+  await page.getByRole('button', { name: 'Pagina anterioară' }).click();
+  await capture('verificare-finala-pagina-1');
   await page.getByRole('button', { name: 'Aprobă revizuirea' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await capture('confirmare');
@@ -222,6 +280,16 @@ test('covers review widths, accessibility states and captures each step', async 
     await page.goto(mock + saved + '&stare=' + state);
     await expect(page.getByText(feedback).first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+    await capture('stare-' + state);
+    if (state === 'lung') {
+      await page.getByText('Numele complet al documentului', { exact: true }).click();
+      await expect(page.locator('#full-name-value')).toHaveText(/Dosar_sintetic_documente.*Procură_exemplu.docx/);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+      await step(page, 1);
+      expect((await field(page, 'Pasaj OCR 3').inputValue()).length).toBeGreaterThan(400);
+      await capture('ocr-lung');
+    }
+    if (state === 'una') await expect(workspace(page).getByRole('listitem')).toHaveCount(1);
     if (state === 'eroare') {
       await page.getByRole('button', { name: 'Reîncearcă încărcarea' }).click();
       await expect(workspace(page).getByRole('heading', { name: steps[2] })).toBeVisible();

@@ -93,6 +93,7 @@ designs:
     roles: [admin, arhivar]
     decisions: [D-004, D-032, D-038, D-022, D-035]
     description: "Corectare OCR, revizuire PII obligatorie, marcaje manuale și generare PDF anonimizat. Confirmarea metadatelor obligatorii și a datei aplicabile de retenție dacă este cunoscută. Data de retenție poate rămâne în așteptare. Indicativ derivat din clasificarea editabilă."
+    design_ref: mocks/DS-011.html
 
   - id: DS-012
     name: "Nomenclator arhivistic (Notarial Nomenclature)"

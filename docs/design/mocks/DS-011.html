@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editor document · Arhivă digitală</title>
+  <style>
+    /* latin-ext */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin-ext.woff2) format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    /* latin */
+    @font-face {
+      font-family: 'Public Sans';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(./fonts/public-sans-latin.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* Design Tokens from ../DESIGN.md. */
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5;
+      --color-bg-surface: #FFFFFF;
+      --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C;
+      --color-text-secondary: #556070;
+      --color-border: #E5E0D8;
+      --color-accent-mid: #4683CF;
+      --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
+      --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A;
+      --color-archival-label-border: #DEC09F;
+      --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-heading: var(--font-body);
+      --text-body: 400 16px/24px var(--font-body);
+      --text-h2: 600 24px/32px var(--font-heading);
+      --text-mono: 400 13px/20px var(--font-mono);
+      --font-mono: 'Fira Code', monospace;
+      --text-h3: 600 18px/26px var(--font-heading);
+      --text-small: 400 14px/20px var(--font-body);
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --color-bg-primary: #1E293B;
+        --color-bg-surface: #283548;
+        --color-bg-subtle: #16202E;
+        --color-text-primary: #F8FAFC;
+        --color-text-secondary: #94A3B8;
+        --color-border: #334155;
+        --color-accent-mid: #60A5FA;
+        --color-archival-label-bg: #3A302A;
+        --color-archival-label-text: #E7B587;
+        --color-archival-label-border: #69503A;
+        --color-focus-ring: #46CFC3;
+      }
+    }
+
+    :root { --touch: calc(var(--space-xl) + var(--space-sm) + var(--space-xs)); }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    h1, h2, h3, p, ol, ul, dl, dd, fieldset { margin: 0; }
+    h2 { font: var(--text-h2); }
+    h3 { font: var(--text-h3); }
+    a { color: inherit; text-underline-offset: var(--space-xs); }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    button, input, select, textarea { color: inherit; font: inherit; }
+    button, .jump, .workflow a, .entry, .summary a {
+      min-block-size: var(--touch);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button, .back {
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-text-secondary);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-md);
+      font: var(--text-small);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--duration-fast);
+    }
+    button:hover, .back:hover, .workflow a:hover { background: var(--color-bg-subtle); }
+    button:disabled { color: var(--color-text-secondary); border-style: dashed; cursor: default; }
+    .primary, .primary:hover { background: var(--color-accent-teal); color: var(--color-version-navy); }
+    .primary:hover { text-decoration: underline; }
+    .header {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--space-sm);
+      min-block-size: calc(var(--space-2xl) + var(--space-xs) + var(--radius-sm));
+      padding: var(--space-xs) var(--space-md);
+      background: var(--color-bg-surface);
+      border-block-end: thin solid var(--color-border);
+    }
+    .header > div { display: flex; align-items: baseline; gap: var(--space-md); min-inline-size: 0; }
+    .header h1 { font: var(--text-body); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .back { display: grid; place-items: center; inline-size: var(--touch); block-size: var(--touch); padding: 0; text-decoration: none; }
+    .dossier { flex: none; }
+    .muted { color: var(--color-text-secondary); font: var(--text-small); }
+    .entries {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      column-gap: var(--space-md);
+      padding-inline: var(--space-md);
+      border-block-end: thin solid var(--color-border);
+      background: var(--color-bg-subtle);
+      font: var(--text-small);
+    }
+    .entries p { margin-inline-end: auto; }
+    .entry, .summary a, .jump { font-weight: 600; }
+    .entry[aria-current] { text-decoration: none; }
+    details summary { cursor: pointer; padding-block: var(--space-sm); min-block-size: var(--touch); }
+    #full-name { flex-basis: 100%; overflow-wrap: anywhere; }
+    #full-name p { padding-block-end: var(--space-sm); }
+    #feedback { padding-inline: var(--space-md); font: var(--text-small); }
+    #feedback > :not(:empty) { padding-block: var(--space-sm); }
+    .warning { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    main { padding: var(--space-lg) var(--space-xl) var(--space-xl); }
+    .workflow ol {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      list-style: none;
+      padding: 0;
+      gap: var(--space-sm);
+      margin-block-end: var(--space-lg);
+    }
+    .workflow a {
+      inline-size: 100%;
+      justify-content: start;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg-surface);
+      text-decoration: none;
+      font: var(--text-small);
+    }
+    .workflow strong, .workflow small { display: block; font: inherit; overflow-wrap: anywhere; }
+    .workflow strong { font-weight: 600; }
+    .workflow small { color: var(--color-text-secondary); }
+    .workflow a[aria-current] { border-color: var(--color-text-secondary); box-shadow: inset 0 calc(-1 * var(--space-xs)) var(--color-accent-teal); }
+    .ordinal {
+      display: grid;
+      place-items: center;
+      flex: none;
+      inline-size: var(--space-xl);
+      block-size: var(--space-xl);
+      background: var(--color-bg-subtle);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+    }
+    [aria-current] .ordinal { color: var(--color-version-navy); background: var(--color-accent-teal); }
+    .layout { display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr); align-items: start; gap: var(--space-lg); }
+    .card, dialog {
+      min-inline-size: 0;
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    .viewer-header, .panel-header, .workflow-actions { padding: var(--space-md) var(--space-lg); }
+    .viewer-header, .workflow-actions, .actions, .controls, .segmented { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+    .viewer-header, .workflow-actions { justify-content: space-between; }
+    .panel-header { border-block-end: thin solid var(--color-border); }
+    .panel-header p { margin-block-start: var(--space-xs); }
+    .segmented { gap: 0; }
+    .segmented button:first-child { border-start-end-radius: 0; border-end-end-radius: 0; }
+    .segmented button:last-child { border-start-start-radius: 0; border-end-start-radius: 0; border-inline-start: 0; }
+    .segmented [aria-pressed="true"] { background: var(--color-version-navy); color: var(--scan-paper); }
+    .segmented #anonymized[aria-pressed="true"] { background: var(--color-accent-teal); color: var(--color-version-navy); }
+    .controls { justify-content: center; padding: var(--space-sm); font: var(--text-small); }
+    .controls button { min-inline-size: var(--touch); padding-inline: var(--space-xs); }
+    .jump { display: none; }
+    #viewport {
+      background: var(--color-bg-subtle);
+      padding: var(--space-md);
+      overflow: auto;
+      max-block-size: calc(var(--space-3xl) * 10);
+      border-block: thin solid var(--color-border);
+    }
+
+    /* The paper and opaque ink are part of the synthetic Document Scan. */
+    :root { --scan-paper: #FFFFFF; --scan-ink: var(--color-version-navy); }
+    #scan {
+      position: relative;
+      width: calc(min(100%, var(--space-3xl) * 7) * var(--zoom, 1));
+      aspect-ratio: 4 / 5;
+      margin-inline: auto;
+      container-type: inline-size;
+      background: var(--scan-paper);
+      color: var(--scan-ink);
+      box-shadow: var(--shadow-card);
+      user-select: none;
+    }
+    #scan.drawing { cursor: crosshair; touch-action: none; }
+    .scan-line {
+      position: absolute;
+      margin: 0;
+      font: var(--text-small);
+      line-height: 1.35;
+      font-size: 3.1cqi;
+    }
+    .scan-kicker { text-transform: uppercase; letter-spacing: .08em; }
+    .scan-title { font-size: 5.3cqi; font-weight: 700; }
+    .scan-rule { position: absolute; border-block-start: thin solid currentColor; }
+    .signature { font-style: italic; font-size: 4cqi; }
+    .scan-region { position: absolute; pointer-events: none; }
+    .coverage { background: black; }
+    .inspection { outline: var(--radius-sm) dashed var(--color-focus-ring); outline-offset: var(--radius-sm); }
+    .drawing-guide { border: var(--radius-sm) dashed var(--color-focus-ring); }
+    .scan-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
+    #workspace { overflow-wrap: anywhere; }
+    #content { display: grid; gap: var(--space-md); padding: var(--space-lg); }
+    .workflow-actions { border-block-start: thin solid var(--color-border); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+    .form-grid h3, .wide { grid-column: 1 / -1; }
+    label { display: grid; min-inline-size: 0; gap: var(--space-xs); font: var(--text-small); font-weight: 600; }
+    label[for] { margin-block-end: var(--space-xs); }
+    input, select, textarea {
+      inline-size: 100%;
+      min-inline-size: 0;
+      min-block-size: var(--touch);
+      background: var(--color-bg-surface);
+      border: thin solid var(--color-text-secondary);
+      border-radius: var(--radius-sm);
+      padding: var(--space-sm);
+      font: var(--text-body);
+    }
+    textarea { resize: vertical; }
+    input[readonly] { background: var(--color-bg-subtle); }
+    .retention, .passages, .manual, .review-row, .summary {
+      display: grid;
+      gap: var(--space-xs);
+      padding: var(--space-md);
+      border: thin solid var(--color-border);
+      border-radius: var(--radius-sm);
+    }
+    .passages { background: var(--color-bg-subtle); gap: var(--space-xs); }
+    mark { color: var(--color-archival-label-text); background: var(--color-archival-label-bg); text-decoration: underline; text-decoration-color: currentColor; }
+    mark[data-state="accepted"] { color: var(--color-version-navy); background: var(--color-accent-teal); }
+    mark[data-state="rejected"] { color: inherit; background: transparent; text-decoration-style: dotted; }
+    .review-list { display: grid; gap: var(--space-sm); padding: 0; list-style: none; }
+    .review-row { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+    .review-row .actions { grid-column: 1 / -1; }
+    .badge { align-self: start; justify-self: start; padding: 0 var(--space-xs); border-radius: var(--radius-sm); font: var(--text-small); font-weight: 600; }
+    .accepted { background: var(--color-accent-teal); color: var(--color-version-navy); }
+    .neutral { background: var(--color-bg-subtle); }
+    .coordinates { font: var(--text-mono); }
+    .summary > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm); }
+    .summary > div + div { border-block-start: thin solid var(--color-border); padding-block-start: var(--space-sm); }
+    .summary h3 { font: var(--text-body); font-weight: 600; }
+    .manual { gap: var(--space-sm); }
+    #state { display: grid; gap: var(--space-md); justify-items: start; padding: var(--space-lg); }
+    .skeleton { width: 100%; min-height: var(--space-3xl); background: var(--color-bg-subtle); }
+    dialog { inline-size: min(calc(100% - var(--space-xl)), calc(var(--space-3xl) * 8)); padding: var(--space-lg); color: inherit; }
+    dialog p { margin-block: var(--space-sm) var(--space-md); }
+    dialog::backdrop { background: color-mix(in srgb, var(--color-version-navy) 60%, transparent); }
+    @media (max-width: 1023px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .jump { display: inline-flex; }
+    }
+    @media (max-width: 639px) {
+      main { padding: var(--space-md); }
+      .header > div { display: block; }
+      .dossier { display: block; overflow-wrap: anywhere; }
+      .workflow ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workflow a { padding-inline: var(--space-sm); gap: var(--space-xs); }
+      .ordinal { inline-size: var(--space-lg); block-size: var(--space-lg); }
+      .form-grid, .summary > div { grid-template-columns: minmax(0, 1fr); }
+      .summary a { justify-self: start; }
+      .viewer-header, .panel-header, .workflow-actions, #content { padding-inline: var(--space-md); }
+      .review-row { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="back" href="./DS-004.html" aria-label="Înapoi la cozi de lucru"><span aria-hidden="true">←</span></a>
+    <div>
+      <h1 id="filename">Editor document</h1>
+      <span id="dossier" class="dossier muted"></span>
+    </div>
+    <button id="save" class="primary">Salvează ciorna</button>
+  </header>
+
+  <nav class="entries" aria-label="Exemple din coada de revizuire">
+    <p>Simulare cu documente sintetice</p>
+    <a class="entry" data-fixture="contract" href="?document=Contract_exemplu.pdf">Începe revizuirea</a>
+    <a class="entry" data-fixture="procura" href="?document=Procur%C4%83_exemplu.docx&amp;reluare=1">Continuă revizuirea</a>
+    <details id="full-name" hidden>
+      <summary>Numele complet al documentului</summary>
+      <p id="full-name-value"></p>
+    </details>
+  </nav>
+  <div id="feedback">
+    <div id="status" role="status"></div>
+    <div id="error" class="warning" role="alert"></div>
+    <button id="retry-save" hidden>Reîncearcă salvarea</button>
+  </div>
+
+  <main>
+    <section id="state" class="card" aria-label="Încărcarea documentului" hidden>
+      <p id="state-copy" role="status"></p>
+      <div id="skeleton" class="skeleton" aria-hidden="true" hidden></div>
+      <button id="retry-load" hidden>Reîncearcă încărcarea</button>
+    </section>
+    <div id="editor">
+      <nav class="workflow" aria-label="Pașii revizuirii"><ol id="steps"></ol></nav>
+      <div class="layout">
+        <section id="viewer" class="card" aria-labelledby="viewer-title">
+          <div class="viewer-header">
+            <div>
+              <h2 id="viewer-title" tabindex="-1">Vizualizare document</h2>
+              <p id="preview-label" class="muted"></p>
+            </div>
+            <div id="versions" class="segmented" role="group" aria-label="Versiunea documentului">
+              <button id="original" aria-pressed="true">Original</button>
+              <button id="anonymized" aria-pressed="false">Anonimizat</button>
+            </div>
+            <a class="jump" href="#step-title">Sari la spațiul de lucru</a>
+          </div>
+          <div id="viewport" tabindex="0" role="region" aria-label="Pagină document cu derulare">
+            <div id="scan" role="group" aria-label="Pagină sintetică"></div>
+          </div>
+          <div class="controls">
+            <div class="actions" role="group" aria-label="Paginare">
+              <button id="previous-page" aria-label="Pagina anterioară">←</button>
+              <span id="page-number" aria-live="polite"></span>
+              <button id="next-page" aria-label="Pagina următoare">→</button>
+            </div>
+            <div class="actions" role="group" aria-label="Zoom">
+              <button id="zoom-out" aria-label="Micșorează">−</button>
+              <span id="zoom-value"></span>
+              <button id="zoom-in" aria-label="Mărește">+</button>
+              <button id="fit">Potrivește</button>
+            </div>
+          </div>
+          <div class="scan-footer muted"><span>Document sintetic</span><span id="scan-format"></span></div>
+        </section>
+
+        <section id="workspace" class="card" aria-label="Spațiu de lucru">
+          <div class="panel-header">
+            <h2 id="step-title" tabindex="-1"></h2>
+            <p id="step-intro" class="muted"></p>
+            <a class="jump" href="#viewer-title">Sari la vizualizarea documentului</a>
+          </div>
+          <div id="content"></div>
+          <div class="workflow-actions">
+            <button id="previous-step">Înapoi</button>
+            <button id="next-step" class="primary">Continuă</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="approval" aria-labelledby="approval-title">
+    <h2 id="approval-title">Aprobi revizuirea?</h2>
+    <p>Confirmi metadatele și rezultatul anonimizării pentru acest document sintetic.</p>
+    <form method="dialog" class="actions">
+      <button value="cancel" autofocus>Renunță</button>
+      <button value="approve" class="primary">Confirmă aprobarea</button>
+    </form>
+  </dialog>
+  <script>
+    const $ = id => document.getElementById(id);
+    const titles = ['Date document', 'Corectare OCR', 'Anonimizare', 'Verificare finală'];
+    const intros = [
+      'Verifică datele actului și confirmă clasificarea arhivistică.',
+      'Corectează pasajele folosind documentul original.',
+      'Verifică potrivirile PII în text și în document.',
+      'Verifică datele, corecturile și previzualizarea înainte de aprobare.',
+    ];
+    const labels = {
+      date: 'Data actului', number: 'Numărul actului', dossier: 'Numărul dosarului fizic',
+      inventory: 'Numărul de inventar', amount: 'Sumă', tags: 'Etichete', expiry: 'Data expirării contractului',
+      type: 'Tip document', subtype: 'Subtip', context: 'Context arhivare',
+    };
+    const requiredMetadata = ['date', 'number', 'dossier', 'inventory'];
+    const fixtures = {
+      contract: {
+        name: 'Contract_exemplu.pdf', title: 'Contract de comodat', format: 'PDF',
+        metadata: { date: '', number: '41', dossier: '29/2026', inventory: '29/2026', amount: '1200', tags: 'comodat', expiry: '2031-11-20', type: 'Contract', subtype: 'contract-ia20', context: 'Act de sine stătător' },
+      },
+      procura: {
+        name: 'Procură_exemplu.docx', title: 'Procură specială', format: 'DOCX · PDF derivat',
+        metadata: { date: '2026-11-18', number: '76', dossier: '31/2026', inventory: '31/2026', amount: '', tags: 'reprezentare', expiry: '', type: 'Procură', subtype: 'procura-ia1', context: 'Act de sine stătător' },
+      },
+    };
+    const classifications = [
+      ['contract-ia20', 'Contract', 'Comodat / locațiune / închiriere / arendă / împrumut / antecontract', 'Act de sine stătător', 'IA 20', '10 ani C.S.', 'De la împlinirea termenului prevăzut în contract'],
+      ['contract-ia1', 'Contract', 'Vânzare-cumpărare / schimb / donație / întreținere / rentă viageră', 'Act de sine stătător', 'IA 1', 'P', 'Nu se aplică (Permanent)'],
+      ['procura-ia1', 'Procură', 'Dispoziție bunuri (vânzare, cumpărare, donație, ipotecă, partaj)', 'Act de sine stătător', 'IA 1', 'P', 'Nu se aplică (Permanent)'],
+      ['procura-ia20', 'Procură', 'Contracte patrimoniale (închiriere, comodat, arendă, împrumut)', 'Act de sine stătător', 'IA 20', '10 ani C.S.', 'De la împlinirea termenului prevăzut în contract'],
+      ['succesiune-ia3', 'Testament / Succesiune', 'Testament / Codicil / Declarație succesorală', 'Act de sine stătător', 'IA 3', 'P', 'Nu se aplică (Permanent)'],
+      ['succesiune-ia6', 'Testament / Succesiune', 'Certificat de moștenitor / Încheiere finală', 'Mapa permanentă', 'IA 6', 'P', 'Nu se aplică (Permanent)'],
+    ];
+    const passages = [
+      'Semnatar: Persoană sintetică A.',
+      'Domiciliu: Strada Exemplu, nr. XX.',
+      'Referință internă: REF-DEMO.',
+      'Notar public: Notar Demonstrativ.',
+    ];
+    const contractPassages = [
+      'Contract de comodat nr. 41.',
+      'Termen contractual: 20.11.2031.',
+      'Sumă menționată în act: 1200.',
+      'Notar public: Notar Demonstrativ.',
+    ];
+    const mappings = {
+      nume: { index: 0, excerpt: 'Persoană sintetică A', type: 'Nume semnatar', label: 'numele', page: 1, box: [29, 34, 40, 5] },
+      adresa: { index: 1, excerpt: 'Strada Exemplu, nr. XX', type: 'Adresă', label: 'adresa', page: 1, box: [30, 44, 47, 5] },
+      referinta: { index: 2, excerpt: 'REF-DEMO', type: 'Posibil CUI/CIF', label: 'potrivirea de referință', page: 1, box: [45, 54, 24, 5] },
+      email: { index: 4, excerpt: 'contact@example.invalid', type: 'Adresă de e-mail', label: 'adresa de e-mail', page: 2, box: [15, 19, 52, 5] },
+      telefon: { index: 5, excerpt: 'TEL-SINTETIC', type: 'Număr de telefon', label: 'numărul de telefon', page: 2, box: [15, 26, 44, 5] },
+      cadastru: { index: 6, excerpt: 'CAD-DEMO', type: 'Număr cadastral', label: 'numărul cadastral', page: 2, box: [15, 33, 40, 5] },
+      vehicul: { index: 7, excerpt: 'VIN-DEMO', type: 'Identificator vehicul', label: 'identificatorul vehiculului', page: 2, box: [15, 40, 37, 5] },
+    };
+    const extraPassages = ['contact@example.invalid', 'TEL-SINTETIC', 'CAD-DEMO', 'VIN-DEMO'];
+    const signature = { page: 2, box: [13, 51, 26, 9] };
+    const statusLabels = { pending: 'De revizuit', accepted: 'Acceptat', rejected: 'Respins', manual: 'Marcaj manual' };
+    const params = new URLSearchParams(location.search);
+    const scenario = params.get('stare');
+    const working = new Map();
+    let fixtureKey = keyFrom(params);
+    let draft;
+    let inspection = '';
+    let drawing = false;
+    let drag;
+    let failSave = scenario === 'eroare-salvare';
+    let approvalTrigger;
+
+    function keyFrom(query) {
+      return query.get('document') === fixtures.procura.name ? 'procura' : 'contract';
+    }
+
+    function fixture() { return fixtures[fixtureKey]; }
+    function storageKey() { return 'DS-011:' + fixture().name; }
+
+    function loadDraft(resume) {
+      if (working.has(fixtureKey)) return working.get(fixtureKey);
+      if (resume) {
+        try {
+          const snapshot = JSON.parse(localStorage.getItem(storageKey()));
+          if (snapshot) {
+            const loaded = { ...snapshot, approved: false };
+            working.set(fixtureKey, loaded);
+            return loaded;
+          }
+        } catch {
+          // The built-in draft remains available when browser storage is unavailable.
+        }
+      }
+      const isProcura = fixtureKey === 'procura';
+      const detections = {};
+      if (isProcura) {
+        if (scenario === 'una') detections.adresa = 'pending';
+        else Object.assign(detections, { nume: 'accepted', referinta: 'pending' });
+        if (scenario === 'multe') {
+          for (const key of ['email', 'telefon', 'cadastru', 'vehicul']) detections[key] = 'pending';
+        }
+      }
+      const source = isProcura
+        ? passages.concat(scenario === 'multe' ? extraPassages : [])
+        : contractPassages;
+      const ocr = [...source];
+      if (scenario === 'lung') ocr[2] += ' '.concat('Text sintetic pentru verificarea pasajului extins. '.repeat(16));
+      const state = {
+        step: isProcura && resume ? 2 : 0,
+        page: 1, zoom: 1, anonymized: false,
+        metadata: { ...fixture().metadata }, confirmed: isProcura,
+        source, ocr, detections, reviewedText: detections.nume ? { nume: ocr[0] } : {},
+        rectangles: [],
+      };
+      working.set(fixtureKey, state);
+      return state;
+    }
+
+    function html(value) {
+      const element = document.createElement('span');
+      element.textContent = value ?? '';
+      return element.innerHTML.replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    function feedback(message = '', error = '') {
+      $('status').textContent = message;
+      $('error').textContent = error;
+      $('retry-save').hidden = true;
+    }
+
+    function changeDraft() { draft.approved = false; }
+
+    function recheck(key) {
+      const index = mappings[key].index;
+      return key in draft.reviewedText && draft.reviewedText[key] !== draft.ocr[index];
+    }
+
+    function staleKeys() { return Object.keys(draft.detections).filter(recheck); }
+    function pendingKeys() { return Object.keys(draft.detections).filter(key => draft.detections[key] === 'pending'); }
+
+    function renderSteps() {
+      const states = [
+        draft.confirmed ? 'Finalizat' : 'De confirmat',
+        draft.ocr.some((text, index) => text !== draft.source[index]) ? 'Corecturi în ciornă' : 'Text extras',
+        staleKeys().length ? 'De reverificat' : pendingKeys().length ? 'De revizuit' : draft.approved ? 'Finalizat' : 'De aprobat',
+        draft.approved ? 'Finalizat' : 'De verificat',
+      ];
+      $('steps').innerHTML = titles.map((title, index) => `
+        <li><a href="#step-title" data-step="${index}" ${draft.step === index ? 'aria-current="step"' : ''}>
+          <span class="ordinal" aria-hidden="true">${index + 1}</span>
+          <span><strong>${title}</strong><small ${index === 2 && staleKeys().length ? 'class="warning"' : ''}>${states[index]}</small></span>
+        </a></li>`).join('');
+    }
+
+    function renderHeader() {
+      const filename = scenario === 'lung'
+        ? 'Dosar_sintetic_' + 'documente_justificative_'.repeat(8) + fixture().name
+        : fixture().name;
+      $('filename').textContent = filename;
+      $('filename').title = filename;
+      $('full-name-value').textContent = filename;
+      $('full-name').open = false;
+      $('dossier').textContent = draft.metadata.dossier ? 'Dosar nr. ' + draft.metadata.dossier : '';
+      $('scan-format').textContent = fixture().format;
+      updateNameDisclosure();
+      for (const entry of document.querySelectorAll('[data-fixture]')) {
+        if (entry.dataset.fixture === fixtureKey) entry.setAttribute('aria-current', 'true');
+        else entry.removeAttribute('aria-current');
+      }
+    }
+
+    function updateNameDisclosure() {
+      const name = $('filename');
+      $('full-name').hidden = !draft || name.scrollWidth <= name.clientWidth;
+    }
+
+    new ResizeObserver(updateNameDisclosure).observe($('filename'));
+    document.fonts.ready.then(updateNameDisclosure);
+
+    function position([left, top, width, height]) {
+      return `left:${left}%;top:${top}%;width:${width}%;height:${height}%`;
+    }
+
+    function line(text, left, top, width, className = '') {
+      return `<p class="scan-line ${className}" style="left:${left}%;top:${top}%;width:${width}%">${text}</p>`;
+    }
+
+    function rule(top) {
+      return `<div class="scan-rule" style="left:12%;top:${top}%;width:76%"></div>`;
+    }
+
+    function sourcePage() {
+      const heading = line('Cabinet individual notarial · model', 12, 8, 76, 'scan-kicker');
+      if (draft.page === 1) {
+        const actDetails = fixtureKey === 'contract' ? 'Nr. 41 · Termen contractual: 20.11.2031' : 'Nr. 76 · 18.11.2026';
+        const body = fixtureKey === 'contract'
+          ? line('Obiect: folosința temporară a bunurilor descrise în act.', 12, 35, 76) +
+            line('Sumă menționată în act: 1200.', 12, 45, 76) +
+            line('Clauzele se aplică pe durata contractuală.', 12, 55, 76)
+          : line('Semnatar:', 12, 35, 17) + line('Persoană sintetică A', 30, 35, 57) +
+            line('Domiciliu:', 12, 45, 18) + line('Strada Exemplu, nr. XX', 31, 45, 57) +
+            line('Referință internă:', 12, 55, 33) + line('REF-DEMO', 46, 55, 41);
+        return heading + line(fixture().title, 12, 14, 76, 'scan-title') +
+          line(actDetails, 12, 23, 76) + rule(29) + body +
+          rule(65) + line('Text demonstrativ pentru revizuirea actului și a pasajelor provenite din OCR.', 12, 70, 76) +
+          line('Încheierea de autentificare și semnăturile figurează pe pagina următoare.', 12, 81, 76);
+      }
+      const extra = scenario === 'multe' && fixtureKey === 'procura'
+        ? extraPassages.map((text, index) => line(text, 16, 20 + index * 7, 68)).join('')
+        : line('Încheiere de autentificare', 12, 17, 76, 'scan-title') +
+          line('Actul sintetic a fost prezentat pentru verificare și autentificare.', 12, 30, 76);
+      const party = fixtureKey === 'procura'
+        ? line('Semnatar', 12, 62, 35) + line('Semnătură A', 14, 54, 35, 'signature')
+        : '';
+      return heading + extra + rule(46) + party +
+        line('Notar public', 55, 62, 35) + line('Notar Demonstrativ', 55, 67, 35) +
+        line('Semnătură notar', 55, 74, 35, 'signature') + rule(85) +
+        line('Exemplu pentru verificarea anonimizării', 12, 90, 76);
+    }
+
+    function renderViewer() {
+      drag = null;
+      const review = draft.step === 2;
+      const anonymized = draft.step === 3 || (review && draft.anonymized);
+      $('preview-label').textContent = review ? 'Previzualizare de lucru' : draft.step === 3 ? 'Previzualizare finală simulată' : 'Original';
+      $('versions').hidden = !review;
+      $('original').setAttribute('aria-pressed', String(!draft.anonymized));
+      $('anonymized').setAttribute('aria-pressed', String(draft.anonymized));
+      $('page-number').textContent = `Pagina ${draft.page} din 2`;
+      $('zoom-value').textContent = Math.round(draft.zoom * 100) + '%';
+      $('previous-page').disabled = draft.page === 1;
+      $('next-page').disabled = draft.page === 2;
+      $('zoom-out').disabled = draft.zoom === 0.6;
+      $('zoom-in').disabled = draft.zoom === 1.8;
+      $('scan').style.setProperty('--zoom', draft.zoom);
+      $('scan').classList.toggle('drawing', drawing);
+      const overlays = [];
+      if (anonymized) {
+        for (const [key, status] of Object.entries(draft.detections)) {
+          if (status === 'accepted' || status === 'manual') overlays.push({ key, ...mappings[key] });
+        }
+        overlays.push(...draft.rectangles);
+      }
+      $('scan').innerHTML = sourcePage() + overlays.filter(item => item.page === draft.page).map(item =>
+        `<div class="scan-region coverage" data-coverage="${item.key}" role="img" aria-label="Zonă anonimizată" style="${position(item.box)}"></div>`
+      ).join('');
+      if (review && inspection && mappings[inspection].page === draft.page) {
+        $('scan').insertAdjacentHTML('beforeend', `<div class="scan-region inspection" aria-hidden="true" style="${position(mappings[inspection].box)}"></div>`);
+      }
+    }
+
+    function classification() {
+      const { type, subtype, context } = draft.metadata;
+      return classifications.find(([id, group, , storage]) => id === subtype && group === type && storage === context);
+    }
+
+    function formatDate(value) {
+      return value.split('-').reverse().join('.');
+    }
+
+    function retention() {
+      const row = classification();
+      if (!row) return 'Clasificare de completat';
+      if (row[5] === 'P') return 'Păstrare permanentă · Fără termen de distrugere';
+      if (!draft.metadata.expiry) return 'Dată de retenție în așteptare';
+      return `${row[5]} · Expirarea contractului: ${formatDate(draft.metadata.expiry)}`;
+    }
+
+    function field(key, type = 'text') {
+      return `<label>${labels[key]}<input data-metadata="${key}" type="${type}" value="${html(draft.metadata[key])}"></label>`;
+    }
+
+    function select(key, choices) {
+      const options = choices.map(([value, caption]) =>
+        `<option value="${html(value)}" ${draft.metadata[key] === value ? 'selected' : ''}>${html(caption)}</option>`).join('');
+      return `<div><label for="metadata-${key}">${labels[key]}</label>
+        <select id="metadata-${key}" data-metadata="${key}">${options}</select></div>`;
+    }
+
+    function renderMetadata() {
+      const rows = classifications.filter(([, type]) => type === draft.metadata.type);
+      const choices = values => [...new Set(values)].map(value => [value, value]);
+      const row = classification();
+      const suggestions = ['amount', 'tags'].filter(key => draft.metadata[key] || fixture().metadata[key]);
+      $('content').innerHTML = `
+        <div class="form-grid">
+          <h3>Identificarea actului</h3>
+          ${field('date', 'date')}${field('number')}${field('dossier')}${field('inventory')}
+          <h3>Sugestii OCR</h3>
+          ${suggestions.map(key => field(key)).join('')}
+          <h3>Clasificare arhivistică</h3>
+          ${select('type', choices(classifications.map(item => item[1])))}
+          ${select('subtype', rows.map(([id, , subtype]) => [id, subtype]))}
+          ${select('context', choices(rows.map(item => item[3])))}
+          <label>Indicativ arhivistic<input readonly value="${row?.[4] ?? ''}"></label>
+        </div>
+        <div class="retention">
+          <h3>Retenție</h3>
+          <p class="muted">${row?.[6] ?? 'Alege clasificarea aplicabilă.'}</p>
+          ${row?.[5] !== 'P' ? field('expiry', 'date') : ''}
+          <p id="retention-status">${retention()}</p>
+        </div>
+        <div class="actions">
+          <button data-action="metadata">Confirmă metadatele</button>
+          <span id="metadata-status" class="muted">${draft.confirmed ? 'Metadate confirmate' : 'De confirmat'}</span>
+        </div>`;
+    }
+
+    function renderOCR() {
+      $('content').innerHTML = draft.ocr.map((text, index) =>
+        `<div><label for="ocr-${index}">Pasaj OCR ${index + 1}</label>
+          <textarea id="ocr-${index}" data-ocr="${index}" rows="3">${html(text)}</textarea></div>`).join('');
+    }
+
+    function highlighted(text, key, status) {
+      const mapping = mappings[key];
+      if (!mapping || !status) return html(text);
+      const index = text.indexOf(mapping.excerpt);
+      if (index < 0) return `<mark data-state="${status}">${html(text)}</mark>`;
+      const end = index + mapping.excerpt.length;
+      return html(text.slice(0, index)) + `<mark data-state="${status}">${html(text.slice(index, end))}</mark>` + html(text.slice(end));
+    }
+
+    function reviewRow([key, status]) {
+      const item = mappings[key];
+      const stale = recheck(key);
+      const details = inspection === key
+        ? `<p class="coordinates">TSV · Pagina ${item.page} · stânga ${item.box[0] * 10}, sus ${Math.round(item.box[1] * 12.5)}, lățime ${item.box[2] * 10}, înălțime ${Math.round(item.box[3] * 12.5)} px</p>`
+        : '';
+      const decisions = status === 'manual'
+        ? `${stale ? `<button data-action="confirm-mark" data-key="${key}">Confirmă din nou marcajul: ${item.label}</button>` : ''}
+           <button data-action="remove-passage" data-key="${key}">Elimină marcajul: ${item.label}</button>`
+        : `<button data-action="accept" data-key="${key}" aria-label="${stale ? 'Acceptă din nou' : 'Acceptă ' + item.label}">${stale ? 'Acceptă din nou' : 'Acceptă'}</button>
+           <button data-action="reject" data-key="${key}" aria-label="Respinge ${item.label}">Respinge</button>`;
+      return `<li class="review-row" id="review-${key}" tabindex="-1">
+        <div><strong>${item.type}</strong><p class="muted">${html(item.excerpt)} · Pagina ${item.page}</p>
+          ${stale ? `<p class="muted">Decizie anterioară: ${statusLabels[status]}</p>` : ''}
+          ${details}
+        </div>
+        <span class="badge ${stale || status === 'pending' ? 'warning' : status === 'accepted' || status === 'manual' ? 'accepted' : 'neutral'}">
+          ${stale ? 'De reverificat' : statusLabels[status]}
+        </span>
+        <div class="actions">
+          <a class="entry" href="#passage-${item.index}">Pasaj OCR ${item.index + 1}</a>
+          <button data-action="inspect" data-key="${key}" aria-label="Arată ${item.label} în document" aria-pressed="${inspection === key}">În document</button>
+          ${decisions}
+        </div>
+      </li>`;
+    }
+
+    function renderReview() {
+      const detections = Object.entries(draft.detections);
+      const accepted = detections.filter(([, status]) => status === 'accepted').length;
+      const rejected = detections.filter(([, status]) => status === 'rejected').length;
+      const uncertain = detections.length - accepted - detections.filter(([, status]) => status === 'manual').length;
+      const manual = detections.filter(([, status]) => status === 'manual').length + draft.rectangles.length;
+      const available = fixtureKey === 'procura'
+        ? Object.entries(mappings).filter(([key, item]) => item.index < draft.ocr.length && !draft.detections[key])
+        : [];
+      $('content').innerHTML = `
+        <div class="passages">
+          <h3>Text OCR</h3>
+          ${draft.ocr.map((text, index) => {
+            const key = Object.keys(mappings).find(id => mappings[id].index === index);
+            return `<p id="passage-${index}" tabindex="-1">${highlighted(text, key, draft.detections[key])}</p>`;
+          }).join('')}
+        </div>
+        <div>
+          <h3>Potriviri și marcaje</h3>
+          <p class="muted">${uncertain} ${uncertain === 1 ? 'potrivire incertă' : 'potriviri incerte'} · ${pendingKeys().length} de revizuit · ${accepted} ${accepted === 1 ? 'acceptată' : 'acceptate'} · ${rejected} ${rejected === 1 ? 'respinsă' : 'respinse'} · ${manual} ${manual === 1 ? 'marcaj manual' : 'marcaje manuale'}</p>
+        </div>
+        ${detections.length ? `<ul class="review-list">${detections.map(reviewRow).join('')}</ul>`
+          : '<p class="muted">Verifică documentul și adaugă marcaje dacă este necesar.</p>'}
+        <div class="manual">
+          <h3>Marcaje manuale</h3>
+          <p class="muted">Pasajele au zone predefinite. Previzualizarea este o simulare.</p>
+          ${available.length ? `<div><label for="manual-passage">Pasaj pentru marcaj manual</label>
+            <select id="manual-passage">
+              ${available.map(([key, item]) => `<option value="${key}">${html(draft.ocr[item.index])}</option>`).join('')}
+            </select>
+          </div>` : ''}
+          <div class="actions">
+            ${available.length ? '<button data-action="mark-passage">Marchează pasajul</button>' : ''}
+            <button data-action="draw" aria-pressed="${drawing}">Desenează un dreptunghi</button>
+            ${fixtureKey === 'procura' ? '<button data-action="signature">Marchează zona semnăturii</button>' : ''}
+          </div>
+          ${drawing ? '<p>Trasează zona pe pagina afișată. Apasă Escape pentru a renunța.</p>' : ''}
+          ${draft.rectangles.map((item, index) => `
+            <div class="actions">
+              <span>Dreptunghi ${index + 1} · Pagina ${item.page}</span>
+              <button data-action="remove-rectangle" data-key="${item.key}">Elimină dreptunghiul ${index + 1}</button>
+            </div>`).join('')}
+        </div>
+        <details class="muted">
+          <summary>Tipuri de date verificate</summary>
+          <p>Nume și semnătură ale semnatarului, CNP, IBAN, număr de telefon, adresă de e-mail, domiciliu,
+            date din actul de identitate, număr cadastral sau de carte funciară, identificator vehicul, CUI/CIF.</p>
+        </details>`;
+    }
+
+    function renderSummary() {
+      const metadata = {
+        ...draft.metadata,
+        date: formatDate(draft.metadata.date),
+        subtype: classification()?.[2],
+      };
+      const details = [...requiredMetadata, 'amount', 'tags', 'type', 'subtype', 'context']
+        .filter(key => metadata[key] || requiredMetadata.includes(key))
+        .map(key => `<p class="muted">${labels[key]}: ${html(metadata[key] || 'De completat')}</p>`).join('');
+      const corrected = draft.ocr.filter((text, index) => text !== draft.source[index]).length;
+      const stale = staleKeys();
+      const reviewed = Object.values(draft.detections).filter(status => status === 'accepted' || status === 'rejected').length;
+      const manual = draft.rectangles.length + Object.values(draft.detections).filter(status => status === 'manual').length;
+      $('content').innerHTML = `
+        <div class="summary">
+          <div><div><h3>Metadate</h3><p>${draft.confirmed ? 'Confirmate' : 'De confirmat'}</p>${details}</div>
+            <a href="#step-title" data-step="0">Verifică metadatele</a></div>
+          <div><div><h3>Corectare OCR</h3><p>${corrected} pasaje corectate</p></div>
+            <a href="#step-title" data-step="1">Verifică textul OCR</a></div>
+          <div><div><h3>Anonimizare</h3><p>${reviewed} potriviri analizate · ${pendingKeys().length} de revizuit · ${manual} marcaje manuale</p>
+            ${stale.length ? `<p class="warning">De reverificat: ${stale.map(key => mappings[key].type).join(', ')}</p>` : ''}</div>
+            <a href="#step-title" data-step="2" ${stale.length ? `data-review="${stale[0]}"` : ''}>Verifică anonimizarea</a></div>
+          <div><div><h3>Retenție</h3><p>${classification()?.[4] ?? '—'} · ${retention()}</p>
+            <p class="muted">${classification()?.[6] ?? ''}</p></div>
+            <a href="#step-title" data-step="0">Verifică retenția</a></div>
+        </div>
+        <div class="actions"><button class="primary" data-action="approve">Aprobă revizuirea</button>
+          ${draft.approved ? '<span>Revizuire aprobată</span>' : ''}
+        </div>`;
+    }
+
+    function renderContent() {
+      [renderMetadata, renderOCR, renderReview, renderSummary][draft.step]();
+    }
+
+    function renderStep(focus = false) {
+      renderSteps();
+      renderViewer();
+      $('step-title').textContent = titles[draft.step];
+      $('step-intro').textContent = intros[draft.step];
+      $('previous-step').hidden = draft.step === 0;
+      $('next-step').hidden = draft.step === 3;
+      renderContent();
+      if (focus) $('step-title').focus();
+    }
+
+    function goTo(index, reviewKey) {
+      draft.step = index;
+      drawing = false;
+      inspection = reviewKey || '';
+      if (reviewKey) draft.page = mappings[reviewKey].page;
+      feedback();
+      renderStep(true);
+    }
+
+    function activate(key, resume, focus = false) {
+      fixtureKey = key;
+      draft = loadDraft(resume);
+      drawing = false;
+      inspection = '';
+      $('state').hidden = true;
+      $('editor').hidden = false;
+      $('save').disabled = false;
+      feedback();
+      renderHeader();
+      renderStep(focus);
+    }
+
+    function saveDraft() {
+      try {
+        if (failSave) {
+          failSave = false;
+          throw new Error('simulated storage error');
+        }
+        const { approved, ...snapshot } = draft;
+        localStorage.setItem(storageKey(), JSON.stringify(snapshot));
+        const current = new URL(location.href);
+        current.searchParams.set('document', fixture().name);
+        current.searchParams.set('reluare', '1');
+        history.replaceState(null, '', current);
+        feedback('Ciornă salvată.');
+      } catch {
+        feedback('', 'Nu am putut salva ciorna. Modificările sunt încă disponibile aici.');
+        $('retry-save').hidden = false;
+      }
+    }
+
+    function updateMetadata(control) {
+      const key = control.dataset.metadata;
+      if (draft.metadata[key] === control.value) return;
+      draft.metadata[key] = control.value;
+      draft.confirmed = false;
+      changeDraft();
+      feedback();
+      const isClassification = ['type', 'subtype', 'context'].includes(key);
+      if (isClassification) {
+        const rows = classifications.filter(([, type]) => type === draft.metadata.type);
+        const row = (key === 'context'
+          ? rows.find(([, , , context]) => context === control.value)
+          : rows.find(([id]) => id === draft.metadata.subtype)) ?? rows[0];
+        draft.metadata.subtype = row[0];
+        draft.metadata.context = row[3];
+        renderMetadata();
+        document.querySelector(`[data-metadata="${key}"]`).focus();
+      } else {
+        $('metadata-status').textContent = 'De confirmat';
+        $('retention-status').textContent = retention();
+      }
+      renderHeader();
+      renderSteps();
+    }
+
+    function missingMetadata() {
+      return requiredMetadata.find(key => !draft.metadata[key].trim()) || (!classification() ? 'type' : null);
+    }
+
+    function updateReview(action, key) {
+      if (action === 'inspect') {
+        inspection = inspection === key ? '' : key;
+        draft.page = mappings[key].page;
+      } else if (action === 'remove-passage') {
+        delete draft.detections[key];
+        delete draft.reviewedText[key];
+        if (inspection === key) inspection = '';
+      } else {
+        draft.detections[key] = { accept: 'accepted', reject: 'rejected', 'mark-passage': 'manual', 'confirm-mark': 'manual' }[action];
+        draft.reviewedText[key] = draft.ocr[mappings[key].index];
+        draft.page = mappings[key].page;
+      }
+      if (action !== 'inspect') changeDraft();
+      renderSteps();
+      renderViewer();
+      renderReview();
+      const actionTarget = document.querySelector(`[data-action="${action}"][data-key="${key}"]`);
+      (actionTarget || $('review-' + key) || $('manual-passage') || document.querySelector('[data-action="draw"]')).focus({ preventScroll: true });
+      if (action !== 'inspect') feedback('Revizuire actualizată.');
+    }
+
+    function addRectangle(page, box) {
+      const used = new Set(draft.rectangles.map(item => item.key));
+      let index = 1;
+      while (used.has('manual-' + index)) index++;
+      draft.rectangles.push({ key: 'manual-' + index, page, box });
+      draft.page = page;
+      changeDraft();
+      renderSteps();
+      renderViewer();
+      renderReview();
+      feedback('Dreptunghi adăugat.');
+    }
+
+    function pointerPoint(event) {
+      const frame = $('scan').getBoundingClientRect();
+      const percent = coordinate => Math.max(0, Math.min(100, coordinate));
+      return [percent(100 * (event.clientX - frame.left) / frame.width), percent(100 * (event.clientY - frame.top) / frame.height)];
+    }
+
+    function dragBox(event) {
+      const [x, y] = pointerPoint(event);
+      return [Math.min(x, drag.x), Math.min(y, drag.y), Math.abs(x - drag.x), Math.abs(y - drag.y)];
+    }
+
+    $('scan').addEventListener('pointerdown', event => {
+      if (!drawing || event.button !== 0 || drag) return;
+      const [x, y] = pointerPoint(event);
+      $('scan').setPointerCapture(event.pointerId);
+      $('scan').insertAdjacentHTML('beforeend', '<div id="guide" class="scan-region drawing-guide" aria-hidden="true"></div>');
+      drag = { x, y, pointer: event.pointerId };
+    });
+    $('scan').addEventListener('pointermove', event => {
+      if (drag?.pointer === event.pointerId) $('guide').style.cssText = position(dragBox(event));
+    });
+    $('scan').addEventListener('pointerup', event => {
+      if (drag?.pointer !== event.pointerId) return;
+      const box = dragBox(event);
+      drag = null;
+      $('guide').remove();
+      if (box[2] < 1 || box[3] < 1) return;
+      drawing = false;
+      addRectangle(draft.page, box);
+      document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+    });
+    $('scan').addEventListener('pointercancel', () => {
+      drag = null;
+      $('guide')?.remove();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || !drawing) return;
+      drawing = false;
+      drag = null;
+      renderViewer();
+      renderReview();
+      document.querySelector('[data-action="draw"]').focus();
+    });
+
+    function openApproval(button) {
+      if (!draft.confirmed || missingMetadata()) {
+        feedback('', 'Confirmă metadatele înainte de aprobare.');
+      } else if (staleKeys().length || pendingKeys().length) {
+        feedback('', 'Revizuiește potrivirile PII rămase înainte de aprobare.');
+      } else {
+        approvalTrigger = button;
+        $('approval').returnValue = '';
+        $('approval').showModal();
+      }
+    }
+
+    $('approval').addEventListener('close', () => {
+      if ($('approval').returnValue === 'approve') {
+        draft.approved = true;
+        renderSteps();
+        feedback('Revizuire aprobată în simulare.');
+      }
+      approvalTrigger.focus();
+    });
+
+    $('content').addEventListener('input', event => {
+      const control = event.target;
+      if (control.matches('input[data-metadata]')) updateMetadata(control);
+      if (control.matches('[data-ocr]')) {
+        draft.ocr[control.dataset.ocr] = control.value;
+        changeDraft();
+        renderSteps();
+      }
+    });
+    $('content').addEventListener('change', event => {
+      if (event.target.matches('select[data-metadata]')) updateMetadata(event.target);
+    });
+    $('content').addEventListener('click', event => {
+      const button = event.target.closest('[data-action]');
+      if (!button) return;
+      const { action, key } = button.dataset;
+      switch (action) {
+        case 'metadata': {
+          const missing = missingMetadata();
+          if (missing) {
+            feedback('', 'Completează data actului, numerele obligatorii și clasificarea.');
+            $('content').querySelector(`[data-metadata="${missing}"]`).focus();
+            return;
+          }
+          draft.confirmed = true;
+          $('metadata-status').textContent = 'Metadate confirmate';
+          renderSteps();
+          feedback('Metadate confirmate.');
+          break;
+        }
+        case 'inspect':
+        case 'accept':
+        case 'reject':
+        case 'remove-passage':
+        case 'confirm-mark':
+          updateReview(action, key);
+          break;
+        case 'mark-passage':
+          updateReview(action, $('manual-passage').value);
+          break;
+        case 'draw':
+          drawing = !drawing;
+          renderViewer();
+          renderReview();
+          if (drawing) $('viewport').focus();
+          else document.querySelector('[data-action="draw"]').focus();
+          break;
+        case 'signature':
+          if (draft.rectangles.some(item => item.signature)) {
+            draft.page = signature.page;
+            renderViewer();
+          } else {
+            addRectangle(signature.page, signature.box);
+            draft.rectangles.at(-1).signature = true;
+          }
+          document.querySelector('[data-action="signature"]').focus({ preventScroll: true });
+          break;
+        case 'remove-rectangle':
+          draft.rectangles = draft.rectangles.filter(item => item.key !== key);
+          changeDraft();
+          renderSteps();
+          renderViewer();
+          renderReview();
+          feedback('Dreptunghi eliminat.');
+          document.querySelector('[data-action="draw"]').focus({ preventScroll: true });
+          break;
+        case 'approve':
+          openApproval(button);
+          break;
+      }
+    });
+
+    document.addEventListener('click', event => {
+      const step = event.target.closest('[data-step]');
+      const entry = event.target.closest('[data-fixture]');
+      if (step) {
+        event.preventDefault();
+        goTo(Number(step.dataset.step), step.dataset.review);
+      }
+      if (entry && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+        event.preventDefault();
+        const target = new URL(entry.href);
+        if (scenario === 'eroare-salvare') target.searchParams.set('stare', scenario);
+        history.pushState(null, '', target);
+        activate(entry.dataset.fixture, target.searchParams.has('reluare'), true);
+      }
+    });
+    window.addEventListener('popstate', () => {
+      const query = new URLSearchParams(location.search);
+      activate(keyFrom(query), query.has('reluare'), true);
+    });
+
+    $('previous-step').onclick = () => goTo(draft.step - 1);
+    $('next-step').onclick = () => goTo(draft.step + 1);
+    const selectVersion = anonymized => {
+      draft.anonymized = anonymized;
+      inspection = '';
+      renderViewer();
+      renderReview();
+    };
+    $('original').onclick = () => selectVersion(false);
+    $('anonymized').onclick = () => selectVersion(true);
+    const movePage = offset => {
+      draft.page += offset;
+      renderViewer();
+      $('viewport').scrollTo(0, 0);
+    };
+    $('previous-page').onclick = () => movePage(-1);
+    $('next-page').onclick = () => movePage(1);
+    const zoom = value => {
+      draft.zoom = Math.max(0.6, Math.min(1.8, Math.round(value * 10) / 10));
+      renderViewer();
+    };
+    $('zoom-out').onclick = () => zoom(draft.zoom - 0.1);
+    $('zoom-in').onclick = () => zoom(draft.zoom + 0.1);
+    $('fit').onclick = () => zoom(1);
+    $('save').onclick = saveDraft;
+    $('retry-save').onclick = () => {
+      saveDraft();
+      if ($('retry-save').hidden) $('save').focus();
+    };
+    $('retry-load').onclick = () => activate(fixtureKey, params.has('reluare'), true);
+
+    if (['incarcare', 'gol', 'eroare'].includes(scenario)) {
+      $('editor').hidden = true;
+      $('save').disabled = true;
+      $('state').hidden = false;
+      $('state-copy').textContent = {
+        incarcare: 'Se încarcă documentul…',
+        gol: 'Nu există un document selectat. Alege un document din coada de revizuire.',
+        eroare: 'Nu am putut încărca documentul.',
+      }[scenario];
+      $('skeleton').hidden = scenario !== 'incarcare';
+      $('retry-load').hidden = scenario !== 'eroare';
+      if (scenario === 'incarcare') {
+        window.setTimeout(() => {
+          if (!$('state').hidden) activate(fixtureKey, params.has('reluare'));
+        }, 1200);
+      }
+    } else {
+      activate(fixtureKey, params.has('reluare'));
+    }
+  </script>
+</body>
+</html>
