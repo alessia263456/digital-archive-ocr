@@ -9,4 +9,3 @@ Route::get('/', function () {
 
 Route::get('/api/documents/deliver/{token}', DocumentDeliveryController::class)
     ->name('documents.deliver');
-
