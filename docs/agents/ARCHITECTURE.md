@@ -56,8 +56,14 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 |---|---|---|---|
 | `DB_*` | Compose environment | Laravel Backend | PostgreSQL connection parameters |
 | `APP_KEY` | Compose environment | Laravel Backend | Encryption key |
+| `DOCUMENTS_DISK` | Private deployment environment | Laravel Backend | Set to `r2` for the live private document disk |
+| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Private deployment environment | Laravel Backend | Rotated R2 credentials; never store in tracked files |
+| `R2_BUCKET`, `R2_ENDPOINT` | Private deployment environment | Laravel Backend | Private EU-jurisdiction bucket and its S3-compatible endpoint |
+| `R2_DEFAULT_REGION`, `R2_USE_PATH_STYLE_ENDPOINT` | Private deployment environment | Laravel Backend | Defaults: `auto` and `false` |
 | `VITE_*` | `frontend/.env` | React Frontend | API URL and frontend environment |
 <!-- names only, never values -->
+
+The live Compose model requires the R2 key, secret, bucket, and endpoint and passes them only to the backend. The endpoint must use the EU-jurisdiction R2 hostname. Live object round-trip verification remains pending P22-56b.
 
 ## Build, deploy, runtime
 Compose runs the local Laravel service `backend` against PostgreSQL after its readiness check passes. The `pgdata` volume holds the development database `archive` and the dedicated PHPUnit database `archive_test`. On the first start PostgreSQL creates both databases. Laravel exposes its boot health route at `/up` on loopback port 8000. Rebuild after source changes. Compose also defines the one-shot `ocr-worker` service. Build it with `docker compose build ocr-worker` and verify Romanian OCR with `docker compose run --rm ocr-worker`. The default command checks Tesseract TSV against a synthetic fixture. After migration, run `php artisan ocr:extract <source>` inside the worker with a privately mounted source. The returned UUID selects ordered rows in `ocr_pages` with the source digest, page dimensions, text, raw TSV and word records. `RedactedPdf::create` accepts page-indexed pixel boxes and publishes a fresh image-only PDF from GD-processed pages using img2pdf. Laravel queue integration is pending. See [D-001](DECISIONS.md#D-001) and [AGENTS.md](../../AGENTS.md) sections 2 and 5.
