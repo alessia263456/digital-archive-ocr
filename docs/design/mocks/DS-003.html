@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Încărcare documente · Arhivă digitală</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap">
+  <style>
+    /* Design Tokens from ../DESIGN.md */
+    :root {
+      color-scheme: light;
+      --bg: #FAF8F5;
+      --surface: #FFFFFF;
+      --subtle: #F2EFE9;
+      --text: #072D5C;
+      --muted: #556070;
+      --border: #E5E0D8;
+      --focus: #4683CF;
+      --action-bg: #072D5C;
+      --action-text: #FFFFFF;
+      --notice-bg: #F9F1E9;
+      --notice-text: #79502A;
+      --font: "Public Sans", system-ui, sans-serif;
+      --h1: 700 32px/40px var(--font);
+      --h2: 600 24px/32px var(--font);
+      --h3: 600 18px/26px var(--font);
+      --body: 400 16px/24px var(--font);
+      --small: 400 14px/20px var(--font);
+      --xs: 4px;
+      --sm: 8px;
+      --md: 16px;
+      --lg: 24px;
+      --xl: 32px;
+      --2xl: 48px;
+      --3xl: 64px;
+      --radius: 4px;
+      --focus-width: 2px;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .05);
+      --fast: 150ms ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #1E293B;
+        --surface: #283548;
+        --subtle: #16202E;
+        --text: #F8FAFC;
+        --muted: #94A3B8;
+        --border: #334155;
+        --focus: #46CFC3;
+        --action-bg: #60A5FA;
+        --action-text: #16202E;
+        --notice-bg: #3A302A;
+        --notice-text: #E7B587;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; color: var(--text); background: var(--bg); font: var(--body); }
+    :focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: var(--focus-width); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font: var(--h1); }
+    h2 { font: var(--h2); }
+    h3 { font: var(--h3); }
+    ul, ol { margin: 0; padding: 0; list-style: none; }
+    button, a { color: inherit; font: inherit; }
+    button, a.action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sm);
+      min-block-size: calc(var(--xl) + var(--sm) + var(--xs));
+      padding: var(--sm) var(--md);
+      border: thin solid var(--muted);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+      transition: background var(--fast);
+    }
+    a.action { text-decoration: none; }
+    a.inline {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: calc(var(--xl) + var(--sm) + var(--xs));
+      font: var(--small);
+      font-weight: 600;
+      text-underline-offset: var(--xs);
+    }
+    button:not(:disabled):hover, a.action:hover { background: var(--subtle); }
+    button:not(:disabled):active, a.action:active { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
+    button:disabled { opacity: .55; cursor: default; }
+    .primary, .primary:not(:disabled):hover { background: var(--action-bg); color: var(--action-text); border-color: var(--action-bg); }
+    .primary:not(:disabled):hover { box-shadow: inset 0 0 0 var(--focus-width) currentColor; }
+    svg { inline-size: var(--lg); block-size: var(--lg); fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .wrap { width: min(100%, calc(var(--3xl) * 17)); margin-inline: auto; padding-inline: var(--md); }
+    .masthead { border-bottom: thin solid var(--border); background: var(--surface); }
+    .masthead .wrap { min-block-size: var(--3xl); display: flex; gap: var(--sm); align-items: center; font-weight: 700; }
+    main.wrap { display: grid; gap: var(--lg); padding-block: var(--xl) var(--3xl); }
+    .card { min-inline-size: 0; background: var(--surface); border: thin solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .workspace { padding: var(--lg); display: grid; gap: var(--md); }
+    .modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sm); }
+    .mode { text-align: start; justify-content: flex-start; min-block-size: var(--3xl); }
+    .mode[aria-pressed=true] { background: var(--subtle); border-color: var(--text); box-shadow: inset 0 calc(-1 * var(--xs)) var(--text); }
+    .drop {
+      display: grid;
+      gap: var(--sm);
+      justify-items: center;
+      text-align: center;
+      border: thin dashed var(--muted);
+      border-radius: var(--radius);
+      padding: var(--xl) var(--md);
+      background: var(--bg);
+      transition: background var(--fast);
+    }
+    .drop[data-over] { background: var(--subtle); outline: var(--focus-width) solid var(--focus); }
+    .drop > svg { inline-size: var(--xl); block-size: var(--xl); }
+    .muted { color: var(--muted); font: var(--small); }
+    .organizer { display: grid; gap: var(--sm); }
+    .assembly { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sm); }
+    .lower { display: grid; align-items: start; gap: var(--md); }
+    .section-head { padding: var(--md); border-bottom: thin solid var(--border); }
+    .section-head p { margin-top: var(--xs); }
+    .rows > li {
+      min-inline-size: 0;
+      display: grid;
+      gap: var(--xs);
+      padding: var(--sm) var(--md);
+      border-bottom: thin solid var(--border);
+    }
+    .rows > li:last-child { border-bottom: 0; }
+    .filename { overflow-wrap: anywhere; font-weight: 600; }
+    .empty, .section-foot { padding: var(--md); }
+    .section-foot { padding-block: var(--xs); border-top: thin solid var(--border); }
+    .state {
+      justify-self: start;
+      padding: var(--xs) var(--sm);
+      background: var(--subtle);
+      border-radius: var(--focus-width);
+      font: var(--small);
+      font-weight: 600;
+    }
+    .notice, .state[data-warning] { background: var(--notice-bg); color: var(--notice-text); }
+    .notice { padding: var(--sm) var(--md); border-radius: var(--radius); }
+    progress { inline-size: 100%; accent-color: var(--action-bg); }
+    #drafts > li { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--sm); }
+    #drafts .filename { grid-column: 1 / -1; }
+    .rows a, .rows button { justify-self: start; }
+    .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--3xl) * 3)), 1fr)); gap: var(--sm); }
+    .page {
+      min-inline-size: 0;
+      display: grid;
+      align-content: start;
+      gap: var(--sm);
+      padding: var(--sm);
+      background: var(--bg);
+      border: thin solid var(--border);
+      border-radius: var(--radius);
+    }
+    .page[data-over] { outline: var(--focus-width) solid var(--focus); }
+    .thumbnail {
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: var(--subtle);
+      min-block-size: calc(var(--3xl) + var(--md));
+      cursor: grab;
+    }
+    .thumbnail svg { inline-size: var(--xl); block-size: var(--xl); }
+    .thumbnail img { max-inline-size: 100%; block-size: calc(var(--3xl) + var(--md)); object-fit: contain; }
+    .thumbnail .sample { inline-size: var(--2xl); block-size: var(--3xl); color: var(--text); }
+    .number { position: absolute; inset: var(--xs) auto auto var(--xs); cursor: inherit; }
+    .controls { display: flex; flex-wrap: wrap; gap: var(--xs); }
+    .controls button { padding: var(--xs); min-inline-size: calc(var(--xl) + var(--sm) + var(--xs)); }
+    .visually-hidden {
+      position: absolute;
+      inline-size: var(--xs);
+      block-size: var(--xs);
+      clip-path: inset(50%);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    @media (max-width: 639px) {
+      .workspace { padding: var(--md); }
+      .mode { padding-inline: var(--sm); font-size: inherit; }
+      .mode svg { inline-size: var(--md); block-size: var(--md); }
+      #drafts > li { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 640px) {
+      .wrap { padding-inline: var(--lg); }
+      .lower { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg hidden xmlns="http://www.w3.org/2000/svg">
+    <symbol id="archive" viewBox="0 0 24 24"><path d="M3 7h18v4H3zm2 4v9h14v-9M9 15h6M5 7l2-3h10l2 3"/></symbol>
+    <symbol id="document" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6m-6 4h6"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><path d="M3 4h18v16H3zM3 17l6-6 4 4 3-3 5 5M16 8h.01"/></symbol>
+    <symbol id="sample" viewBox="0 0 48 64">
+      <path d="M2 1h44v62H2z" fill="var(--surface)" stroke="var(--muted)"/>
+      <path d="M17 12h14M9 22h30M9 27h30M9 32h22M9 40h30M9 45h30M9 50h16" stroke="var(--muted)"/>
+    </symbol>
+    <symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
+    <symbol id="up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="remove" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  </svg>
+  <header class="masthead">
+    <div class="wrap"><svg aria-hidden="true"><use href="#archive"/></svg>Arhivă digitală</div>
+  </header>
+  <main class="wrap" id="upload-screen">
+    <h1>Încărcare documente</h1>
+    <section class="card workspace" aria-labelledby="workspace-title">
+      <h2 id="workspace-title">Adaugă documente</h2>
+      <div class="modes" role="group" aria-label="Metodă de încărcare">
+        <button class="mode" type="button" data-mode="documents" aria-pressed="true"><svg aria-hidden="true"><use href="#document"/></svg>PDF / DOCX</button>
+        <button class="mode" type="button" data-mode="images" aria-pressed="false"><svg aria-hidden="true"><use href="#image"/></svg>Imagini (JPG / PNG)</button>
+      </div>
+      <div id="dropzone" class="drop" data-testid="dropzone">
+        <svg aria-hidden="true"><use href="#upload"/></svg>
+        <h3 id="drop-title">Trage aici fișierele PDF sau DOCX</h3>
+        <p id="drop-description" class="muted">Fiecare fișier se încarcă și se procesează separat.</p>
+        <button type="button" id="choose" class="primary" aria-describedby="drop-description">Alege fișiere</button>
+        <input type="file" id="files" accept=".pdf,.docx" multiple hidden>
+      </div>
+      <div class="organizer" id="organizer" hidden>
+        <div class="assembly"><h3>Ordinea paginilor</h3><span id="page-count" class="muted"></span></div>
+        <p class="muted">Trage o pagină sau folosește săgețile pentru a-i schimba poziția.</p>
+        <ol id="pages" class="pages" aria-label="Ordinea paginilor"></ol>
+        <p class="muted" id="no-pages">Adaugă imagini pentru a stabili ordinea paginilor.</p>
+        <button type="button" id="undo" hidden>Anulează eliminarea paginii</button>
+        <div class="notice" id="image-duplicate" role="alert" hidden></div>
+        <button type="button" class="primary" id="save" disabled>Salvează și procesează</button>
+      </div>
+      <p id="announcement" class="visually-hidden" role="status"></p>
+      <ul id="transfers" class="rows" aria-label="Validare și transfer" hidden></ul>
+    </section>
+    <div class="lower">
+      <section class="card" aria-labelledby="processing-title">
+        <header class="section-head"><h2 id="processing-title">În procesare</h2></header>
+        <p class="empty muted" id="no-processing">Nu ai documente în procesare.</p>
+        <ul id="processing" class="rows" hidden></ul>
+      </section>
+      <section class="card" aria-labelledby="drafts-title">
+        <header class="section-head">
+          <h2 id="drafts-title">Ciorne recente</h2>
+          <p class="muted">Documente private, pregătite pentru revizuire.</p>
+        </header>
+        <p class="empty muted" id="no-drafts">Documentele pregătite pentru revizuire vor apărea aici.</p>
+        <ul id="drafts" class="rows" hidden></ul>
+        <footer class="section-foot"><a class="inline" href="?ecran=DS-004">Deschide coada de revizuire</a></footer>
+      </section>
+    </div>
+  </main>
+  <main class="wrap" id="destination" hidden>
+    <a class="inline" href="./DS-003.html">Înapoi la încărcare</a>
+    <div>
+      <h1 id="destination-title"></h1>
+      <p class="muted" id="destination-file"></p>
+    </div>
+    <p class="notice" id="destination-warning" hidden></p>
+  </main>
+
+  <template id="page-template">
+    <li class="page">
+      <div class="thumbnail" draggable="true">
+        <span class="number state"></span>
+        <svg aria-hidden="true"><use href="#image"/></svg>
+        <img alt="" draggable="false" hidden>
+      </div>
+      <span class="filename"></span>
+      <div class="controls">
+        <button type="button" data-action="up"><svg aria-hidden="true"><use href="#up"/></svg></button>
+        <button type="button" data-action="down"><svg aria-hidden="true"><use href="#down"/></svg></button>
+        <button type="button" data-action="remove"><svg aria-hidden="true"><use href="#remove"/></svg></button>
+      </div>
+    </li>
+  </template>
+  <script>
+    const byId = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const dropzone = byId('dropzone');
+    const choose = byId('choose');
+    const input = byId('files');
+    const save = byId('save');
+    const transfers = [];
+    const processing = [];
+    const drafts = [];
+    const pages = [];
+    const exactPages = ['pagina-1.jpg', 'pagina-2.png', 'pagina-1.jpg'];
+    const similarity = 'Posibil duplicat după OCR. Compară documentele în timpul revizuirii.';
+    const existing = '?ecran=DS-002&document=exemplu-existent';
+    const modes = document.querySelectorAll('[data-mode]');
+    let mode = 'documents';
+    let sequence = 0;
+    let draggedPage;
+    let lastRemoval;
+
+    const statusText = {
+      transferring: 'Transfer în curs',
+      transferFailed: 'Transfer eșuat',
+      invalid: 'Format neacceptat',
+      duplicate: 'Duplicat exact',
+      queued: 'În așteptare',
+      ocr: 'OCR în curs',
+      extracted: 'OCR finalizat',
+      failed: 'OCR eșuat',
+      quarantined: 'În carantină',
+      ready: 'Nerevizuită',
+      started: 'Revizuire începută',
+    };
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      node.className = className;
+      node.textContent = text;
+      return node;
+    }
+
+    function link(text, href) {
+      const node = element('a', 'inline', text);
+      node.href = href;
+      return node;
+    }
+
+    function filename(name) {
+      const node = element('span', 'filename', name);
+      node.title = name;
+      return node;
+    }
+
+    function announce(text) {
+      byId('announcement').textContent = text;
+    }
+
+    function entry(name, status, extra = {}) {
+      return { id: ++sequence, name, status, ...extra };
+    }
+
+    function reviewLink(item) {
+      const url = new URLSearchParams({ ecran: 'DS-011', document: item.id });
+      if (item.warning) url.set('ocr', '1');
+      if (item.status === 'started') url.set('reluare', '1');
+      return link(item.status === 'started' ? 'Continuă revizuirea' : 'Începe revizuirea', '?' + url);
+    }
+
+    function row(item) {
+      const node = document.createElement('li');
+      const badge = element('span', 'state', statusText[item.status]);
+      badge.toggleAttribute('data-warning', ['invalid', 'duplicate', 'transferFailed', 'failed', 'quarantined'].includes(item.status));
+      node.append(filename(item.name), badge);
+      if (item.docx && item.status !== 'transferring' && item.status !== 'transferFailed') {
+        node.append(element('span', 'muted', 'Original DOCX păstrat'), element('span', 'muted', 'PDF derivat pentru vizualizare și anonimizare'));
+      }
+      if (item.docx && item.status === 'transferring') {
+        node.append(element('span', 'muted', 'Se păstrează originalul DOCX și se generează un PDF.'));
+      }
+      if (item.detail) node.append(element('p', 'muted', item.detail));
+      if (item.status === 'transferring') {
+        const progress = document.createElement('progress');
+        progress.value = item.progress ?? 36;
+        progress.max = 100;
+        progress.setAttribute('aria-label', 'Transfer pentru ' + item.name);
+        node.append(progress);
+      }
+      if (item.status === 'duplicate') node.append(link('Vezi documentul existent', existing));
+      if (item.status === 'transferFailed') {
+        const retry = element('button', '', 'Reîncearcă transferul');
+        retry.addEventListener('click', () => startTransfer(item, true));
+        node.append(retry);
+      }
+      if (item.status === 'quarantined') node.append(link('Deschide coada de carantină', '?ecran=DS-004&carantina=1'));
+      if (item.warning && item.status === 'extracted') node.append(element('p', 'notice', similarity));
+      if (item.status === 'ready' || item.status === 'started') node.append(reviewLink(item));
+      return node;
+    }
+
+    function renderList(id, items) {
+      const list = byId(id);
+      const previous = new Map(Array.from(list.children, node => [Number(node.dataset.entry), node]));
+      items.forEach((item, index) => {
+        const snapshot = JSON.stringify(item);
+        const old = previous.get(item.id);
+        const node = old?.dataset.snapshot === snapshot ? old : row(item);
+        if (node !== old) {
+          node.dataset.entry = item.id;
+          node.dataset.snapshot = snapshot;
+          if (old) old.replaceWith(node);
+        }
+        if (list.children[index] !== node) list.insertBefore(node, list.children[index] ?? null);
+        previous.delete(item.id);
+      });
+      for (const stale of previous.values()) stale.remove();
+      list.hidden = items.length === 0;
+      const empty = byId('no-' + id);
+      if (empty) empty.hidden = items.length > 0;
+    }
+
+    function renderLists() {
+      renderList('transfers', transfers.filter(item => item.mode === mode));
+      renderList('processing', processing);
+      renderList('drafts', drafts.slice(0, 5));
+    }
+
+    function moveEntry(item, from, to, status) {
+      from.splice(from.indexOf(item), 1);
+      item.status = status;
+      item.detail = status === 'queued' && item.docx ? 'Se pregătește PDF-ul derivat.' : '';
+      to.unshift(item);
+      renderLists();
+    }
+
+    function completeOcr(item) {
+      if (item.outcome === 'quarantine') {
+        item.status = 'quarantined';
+        item.detail = 'OCR a eșuat la prima încercare și la toate cele trei reîncercări.';
+      } else if (item.outcome === 'ocrFailed') {
+        item.status = 'failed';
+        item.detail = 'OCR nu a putut citi documentul. Reîncercarea automată este programată.';
+      } else {
+        item.status = 'extracted';
+        item.warning = item.outcome === 'similar';
+        item.detail = 'Se pregătește ciorna privată pentru revizuire.';
+        setTimeout(() => {
+          moveEntry(item, processing, drafts, 'ready');
+          announce(item.name + ' este disponibil în Ciorne recente.');
+        }, 5000);
+      }
+      if (item.status === 'failed') {
+        setTimeout(() => {
+          item.status = 'ocr';
+          item.detail = 'Reîncercare automată în curs.';
+          renderLists();
+          setTimeout(() => {
+            item.outcome = 'success';
+            completeOcr(item);
+          }, 3500);
+        }, 4000);
+      }
+      renderLists();
+    }
+
+    function startTransfer(item, retry = false) {
+      item.status = 'transferring';
+      item.detail = '';
+      item.progress = 36;
+      renderLists();
+      if (retry) choose.focus();
+      setTimeout(() => {
+        item.progress = 72;
+        renderLists();
+      }, 350);
+      setTimeout(() => {
+        if (item.outcome === 'transferFailed' && !retry) {
+          item.status = 'transferFailed';
+          item.detail = 'Transferul a fost întrerupt. Reîncearcă pentru a continua încărcarea.';
+          renderLists();
+          return;
+        }
+        moveEntry(item, transfers, processing, 'queued');
+        setTimeout(() => {
+          item.status = 'ocr';
+          item.detail = 'Se extrage textul din document.';
+          renderLists();
+          setTimeout(() => completeOcr(item), item.outcome === 'active' ? 8000 : 4000);
+        }, 1500);
+      }, 900);
+    }
+
+    function showImageDuplicate() {
+      const names = pages.map(page => page.name);
+      const sameOrder = JSON.stringify(names) === JSON.stringify(exactPages);
+      const samePages = JSON.stringify(names.toSorted()) === JSON.stringify(exactPages.toSorted());
+      const notice = byId('image-duplicate');
+      notice.hidden = !samePages;
+      notice.replaceChildren();
+      if (sameOrder) {
+        notice.append('Duplicat exact. Aceeași succesiune de pagini există deja în arhivă. ', link('Vezi documentul existent', existing));
+      } else if (samePages) {
+        notice.textContent = 'Posibil duplicat. Aceleași pagini, în altă ordine. Poți continua.';
+      }
+      save.disabled = !pages.length || sameOrder;
+    }
+
+    function renderPages() {
+      const list = byId('pages');
+      list.replaceChildren();
+      pages.forEach((page, index) => {
+        const node = byId('page-template').content.firstElementChild.cloneNode(true);
+        node.dataset.page = page.id;
+        node.querySelector('.number').textContent = index + 1;
+        node.querySelector('.filename').replaceWith(filename(page.name));
+        const image = node.querySelector('img');
+        const icon = node.querySelector('.thumbnail > svg');
+        if (page.sample) {
+          icon.classList.add('sample');
+          icon.querySelector('use').setAttribute('href', '#sample');
+        }
+        if (page.preview) {
+          image.addEventListener('load', () => {
+            image.hidden = false;
+            icon.setAttribute('hidden', '');
+          });
+          image.src = page.preview;
+        }
+        const up = node.querySelector('[data-action=up]');
+        const down = node.querySelector('[data-action=down]');
+        const remove = node.querySelector('[data-action=remove]');
+        up.disabled = index === 0;
+        down.disabled = index === pages.length - 1;
+        up.setAttribute('aria-label', 'Mută pagina ' + (index + 1) + ' mai sus');
+        down.setAttribute('aria-label', 'Mută pagina ' + (index + 1) + ' mai jos');
+        remove.setAttribute('aria-label', 'Elimină pagina ' + (index + 1));
+        list.append(node);
+      });
+      byId('no-pages').hidden = pages.length > 0;
+      byId('page-count').textContent = pages.length === 1 ? '1 pagină' : pages.length + ' pagini';
+      showImageDuplicate();
+    }
+
+    function movePage(from, to, action) {
+      if (from === to) return;
+      const [page] = pages.splice(from, 1);
+      pages.splice(to, 0, page);
+      renderPages();
+      const card = byId('pages').children[to];
+      const preferred = card.querySelector('[data-action=' + action + ']');
+      (preferred.disabled ? card.querySelector('button:not(:disabled)') : preferred).focus();
+      announce(page.name + ' a fost mutată la poziția ' + (to + 1) + '.');
+    }
+
+    function accept(files) {
+      for (const file of files) {
+        const name = file.name;
+        const extension = /\.([^.]+)$/.exec(name)?.[1].toLowerCase();
+        const allowed = mode === 'images' ? ['jpg', 'jpeg', 'png'] : ['pdf', 'docx'];
+        if (!allowed.includes(extension) || !file.size) {
+          const detail = file.size
+            ? 'Alege un fișier ' + (mode === 'images' ? 'JPG sau PNG.' : 'PDF sau DOCX.')
+            : 'Fișierul este gol. Alege un fișier care conține pagini.';
+          transfers.push(entry(name, 'invalid', { mode, detail }));
+          continue;
+        }
+        if (mode === 'images') {
+          pages.push(entry(name, '', { preview: URL.createObjectURL(file) }));
+          continue;
+        }
+        if (/^duplicat\.(pdf|docx)$/i.test(name)) {
+          transfers.push(entry(name, 'duplicate', { mode, detail: 'Un fișier identic există deja în arhivă. Salvarea este blocată.' }));
+          continue;
+        }
+        const outcomes = {
+          'transfer.pdf': 'transferFailed',
+          'corupt.pdf': 'ocrFailed',
+          'carantina.pdf': 'quarantine',
+          'similar.pdf': 'similar',
+        };
+        const item = entry(name, 'transferring', { mode, outcome: outcomes[name] ?? 'active' });
+        item.docx = extension === 'docx';
+        transfers.push(item);
+        startTransfer(item);
+      }
+      renderLists();
+      renderPages();
+      announce(mode === 'images' ? 'Pagini în document: ' + pages.length + '.' : 'Fișierele selectate au fost verificate.');
+    }
+
+    function selectMode(next) {
+      mode = next;
+      const images = mode === 'images';
+      for (const button of modes) button.setAttribute('aria-pressed', button.dataset.mode === mode);
+      input.accept = images ? '.jpg,.jpeg,.png' : '.pdf,.docx';
+      byId('drop-title').textContent = images ? 'Trage aici paginile JPG sau PNG' : 'Trage aici fișierele PDF sau DOCX';
+      byId('drop-description').textContent = images
+        ? 'Imaginile formează un singur document, în ordinea aleasă.'
+        : 'Fiecare fișier se încarcă și se procesează separat.';
+      choose.textContent = images ? 'Adaugă imagini' : 'Alege fișiere';
+      byId('organizer').hidden = !images;
+      renderLists();
+    }
+
+    for (const button of modes) button.addEventListener('click', () => selectMode(button.dataset.mode));
+    choose.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      accept(input.files);
+      input.value = '';
+    });
+    dropzone.addEventListener('dragover', event => {
+      event.preventDefault();
+      dropzone.toggleAttribute('data-over', true);
+    });
+    dropzone.addEventListener('dragleave', event => {
+      if (!dropzone.contains(event.relatedTarget)) dropzone.removeAttribute('data-over');
+    });
+    dropzone.addEventListener('drop', event => {
+      event.preventDefault();
+      dropzone.removeAttribute('data-over');
+      accept(event.dataTransfer.files);
+    });
+
+    const pageList = byId('pages');
+    const undo = byId('undo');
+    function clearUndo() {
+      if (lastRemoval?.page.preview) URL.revokeObjectURL(lastRemoval.page.preview);
+      lastRemoval = undefined;
+      undo.hidden = true;
+    }
+    undo.addEventListener('click', () => {
+      const { index, page } = lastRemoval;
+      pages.splice(index, 0, page);
+      lastRemoval = undefined;
+      undo.hidden = true;
+      renderPages();
+      pageList.children[index].querySelector('[data-action=remove]').focus();
+      announce(page.name + ' a fost readăugată.');
+    });
+    const pageIndex = card => pages.findIndex(page => String(page.id) === card?.dataset.page);
+    pageList.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const index = pageIndex(button.closest('.page'));
+      const action = button.dataset.action;
+      if (action !== 'remove') {
+        movePage(index, index + (action === 'up' ? -1 : 1), action);
+        return;
+      }
+      const [removed] = pages.splice(index, 1);
+      clearUndo();
+      lastRemoval = { index, page: removed };
+      undo.hidden = false;
+      renderPages();
+      const neighbor = pageList.children[Math.min(index, pages.length - 1)];
+      (neighbor?.querySelector('[data-action=remove]') ?? choose).focus();
+      announce(removed.name + ' a fost eliminată.');
+    });
+    pageList.addEventListener('dragstart', event => {
+      if (!event.target.closest('.thumbnail')) return;
+      draggedPage = event.target.closest('.page');
+      event.dataTransfer.setData('text/plain', draggedPage.dataset.page);
+      event.dataTransfer.effectAllowed = 'move';
+    });
+    pageList.addEventListener('dragover', event => {
+      const target = event.target.closest('.page');
+      if (!draggedPage || !target) return;
+      event.preventDefault();
+      pageList.querySelector('[data-over]')?.removeAttribute('data-over');
+      target.toggleAttribute('data-over', true);
+      event.dataTransfer.dropEffect = 'move';
+    });
+    pageList.addEventListener('dragleave', event => {
+      const target = event.target.closest('.page');
+      if (target && !target.contains(event.relatedTarget)) target.removeAttribute('data-over');
+    });
+    pageList.addEventListener('drop', event => {
+      const target = event.target.closest('.page');
+      if (!draggedPage || !target) return;
+      event.preventDefault();
+      const from = pageIndex(draggedPage);
+      const to = pageIndex(target);
+      draggedPage = null;
+      target.removeAttribute('data-over');
+      movePage(from, to, to < from ? 'up' : 'down');
+    });
+    pageList.addEventListener('dragend', () => {
+      draggedPage = null;
+      pageList.querySelector('[data-over]')?.removeAttribute('data-over');
+    });
+
+    save.addEventListener('click', () => {
+      clearUndo();
+      const count = pages.length;
+      const item = entry(count === 1 ? 'Document dintr-o imagine' : 'Document din ' + count + ' imagini', 'transferring', { mode });
+      for (const page of pages.splice(0)) {
+        if (page.preview) URL.revokeObjectURL(page.preview);
+      }
+      transfers.push(item);
+      startTransfer(item);
+      renderPages();
+      choose.focus();
+      announce(item.name + ' se încarcă.');
+    });
+
+    function seed(state) {
+      switch (state) {
+        case 'incarcare':
+          transfers.push(entry('Dosar_sintetic.docx', 'transferring', { mode: 'documents', progress: 64 }));
+          processing.push(entry('Declarație_exemplu.pdf', 'queued'));
+          break;
+        case 'eroare':
+          transfers.push(
+            entry('duplicat.pdf', 'duplicate', { mode: 'documents', detail: 'Un fișier identic există deja în arhivă. Salvarea este blocată.' }),
+            entry('transfer.pdf', 'transferFailed', { mode: 'documents', detail: 'Transferul a fost întrerupt. Reîncearcă pentru a continua încărcarea.' }),
+          );
+          processing.push(
+            entry('Scanare_incompletă.pdf', 'failed', { detail: 'OCR nu a putut citi documentul. Reîncercarea automată este programată.' }),
+            entry('Scanare_deteriorată.pdf', 'quarantined', { detail: 'OCR a eșuat la prima încercare și la toate cele trei reîncercări.' }),
+          );
+          break;
+        case 'lung':
+        case 'succes': {
+          processing.push(
+            entry('Declarație_exemplu.pdf', 'ocr', { detail: 'Se extrage textul din document.' }),
+            entry('Inventar_exemplu.docx', 'queued', { detail: 'Se pregătește PDF-ul derivat.' }),
+          );
+          drafts.push(
+            entry(state === 'lung' ? 'Dosar_sintetic_' + 'documente_justificative_'.repeat(8) + 'exemplu.docx' : 'Contract_exemplu.pdf', 'ready', { warning: true }),
+            entry('Procură_exemplu.docx', 'started'),
+            entry('Document din 3 imagini', 'ready'),
+          );
+          if (state === 'lung') drafts.push(entry('Inventar_sintetic.pdf', 'ready'), entry('Opis_sintetic.pdf', 'started'));
+          for (const name of ['pagina-1.jpg', 'pagina-2.png', 'pagina-3.png']) pages.push(entry(name, '', { sample: true }));
+          break;
+        }
+      }
+    }
+
+    const destination = {
+      'DS-002': 'Document existent · Simulare',
+      'DS-004': params.has('carantina') ? 'Coada de carantină · Simulare' : 'Coada de revizuire · Simulare',
+      'DS-011': 'Revizuire document · Simulare',
+    }[params.get('ecran')];
+    if (destination) {
+      byId('upload-screen').hidden = true;
+      byId('destination').hidden = false;
+      byId('destination-title').textContent = destination;
+      byId('destination-file').textContent = params.get('ecran') === 'DS-011' ? 'Documentul ' + params.get('document') : '';
+      if (params.get('ecran') === 'DS-011' && params.has('ocr')) {
+        byId('destination-warning').hidden = false;
+        byId('destination-warning').textContent = similarity;
+      }
+    } else {
+      seed(params.get('stare'));
+      renderLists();
+      renderPages();
+    }
+  </script>
+</body>
+</html>

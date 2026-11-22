@@ -24,8 +24,9 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-002, D-032, D-038, D-025, D-026, D-028]
-    description: "Încărcare multiplă PDF, JPG, PNG și DOCX, cu OCR asincron și ciorne private. Hash-ul SHA-256 identic blochează salvarea. Numărul și data actului identice declanșează avertismentul de posibil duplicat."
+    design_ref: mocks/DS-003.html
+    decisions: [D-002, D-032, D-038, D-025, D-026, D-028, D-040]
+    description: "Încărcare independentă PDF și DOCX sau asamblarea unui document din imagini JPG și PNG ordonate. Afișează transferul, duplicarea exactă, avertismentele și procesarea OCR. Ciornele private pregătite se deschid în DS-011, iar coada completă în DS-004."
 
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"

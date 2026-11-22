@@ -20,26 +20,28 @@ test('handles mixed independent uploads and moves completed OCR into review', as
   await page.goto(mock);
   await expect(page.getByRole('heading', { level: 1, name: 'Încărcare documente' })).toBeVisible();
   await page.locator('input[type=file]').setInputFiles(['duplicat.pdf', 'act.docx', 'gresit.txt', 'transfer.pdf'].map(file));
-  await expect(page.getByText('Transfer în curs', { exact: true })).toBeVisible();
+  await expect(page.getByText('Transfer în curs', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Format neacceptat', { exact: false })).toBeVisible();
   const existing = page.getByRole('link', { name: 'Vezi documentul existent' });
   await expect(existing).toHaveAttribute('href', /ecran=DS-002/);
-  await expect(page.getByText('Original DOCX păstrat')).toBeVisible();
 
   await drop(page, ['corupt.pdf', 'carantina.pdf', 'similar.pdf']);
   await page.clock.runFor(1100);
   const processing = page.getByRole('region', { name: 'În procesare' });
   await expect(processing.getByText('În așteptare', { exact: true }).first()).toBeVisible();
+  await expect(processing.getByText('Original DOCX păstrat')).toBeVisible();
   await page.clock.runFor(5500);
   await expect(processing.getByText('OCR în curs', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reîncearcă transferul' })).toBeVisible();
   await expect(processing.getByText('OCR eșuat', { exact: true })).toBeVisible();
   await expect(processing.getByText('În carantină', { exact: true })).toBeVisible();
   await expect(processing.getByText(/Posibil duplicat după OCR/)).toBeVisible();
+  await page.getByRole('button', { name: 'Reîncearcă transferul' }).click();
 
-  await page.clock.runFor(12000);
+  await page.clock.runFor(16000);
   const drafts = page.getByRole('region', { name: 'Ciorne recente' });
   await expect(processing.getByText('similar.pdf')).toHaveCount(0);
+  await expect(drafts.getByText('transfer.pdf')).toBeVisible();
   const similar = drafts.getByRole('listitem').filter({ hasText: 'similar.pdf' });
   await expect(similar.getByText('Nerevizuită')).toBeVisible();
   await similar.getByRole('link', { name: 'Începe revizuirea' }).click();
@@ -54,7 +56,7 @@ test('handles mixed independent uploads and moves completed OCR into review', as
   await expect(page).toHaveURL(/ecran=DS-004/);
 });
 
-test('organizes image pages and distinguishes exact matches from warnings', async ({ page }) => {
+test('organizes image pages and distinguishes exact matches from warnings', async ({ page, isMobile }) => {
   await page.goto(mock);
   await page.getByRole('button', { name: 'Imagini (JPG / PNG)' }).click();
   const input = page.locator('input[type=file]');
@@ -81,6 +83,13 @@ test('organizes image pages and distinguishes exact matches from warnings', asyn
   await expect(page.getByText(/Aceleași pagini, în altă ordine/)).toHaveCount(0);
   await drop(page, ['pagina-3.png'], 'image/png');
   await expect(pages.getByRole('listitem')).toHaveCount(3);
+  if (isMobile) {
+    await pages.getByRole('button', { name: /Mută pagina 3 mai sus/ }).tap();
+    await expect(pages.getByRole('listitem').nth(1)).toContainText('pagina-3.png');
+  } else {
+    await pages.locator('.thumbnail').last().dragTo(pages.getByRole('listitem').first());
+    await expect(pages.getByRole('listitem').first()).toContainText('pagina-3.png');
+  }
   await page.clock.install();
   await save.click();
   await expect(page.getByText('Transfer în curs', { exact: true })).toBeVisible();
@@ -111,11 +120,11 @@ for (const [state, text] of Object.entries({
       await expect(name).toHaveAttribute('title', /^Dosar_sintetic_.+\.docx$/);
     }
     await page.locator(':focus').blur();
-    await page.screenshot({ path: info.outputPath('DS-003.png'), fullPage: true });
+    await page.screenshot({ path: info.outputPath('DS-003.png'), fullPage: true, scale: 'css' });
     if (state === 'succes') {
       await page.getByRole('button', { name: 'Imagini (JPG / PNG)' }).click();
       await expect(page.getByRole('list', { name: 'Ordinea paginilor' }).getByRole('listitem')).toHaveCount(3);
-      await page.screenshot({ path: info.outputPath('DS-003-imagini.png'), fullPage: true });
+      await page.screenshot({ path: info.outputPath('DS-003-imagini.png'), fullPage: true, scale: 'css' });
     }
   });
 }

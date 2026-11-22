@@ -12,6 +12,7 @@
 - PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
 - PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
 - PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks · candidate
+- PATTERN-007 · Run standalone mock checks through existing Playwright projects · candidate
 
 ---
 
@@ -45,3 +46,15 @@
 - **Status:** candidate
 - **How:** Verify the source marker extracts successfully. Extract from the fresh derivative and check its rendered page plus the embedded image at the rectangle edges. Hash the source before and after.
 - **Example:** [Redaction integration test](../../backend/tests/Feature/RedactedPdfTest.php).
+
+## PATTERN-007 · Run standalone mock checks through existing Playwright projects
+- **Status:** candidate
+- **How:** Keep a standalone design mock and its spec under `docs/design/`. Mount the spec and design files read-only into the existing frontend test container on demand. Reuse its viewport and theme projects. Keep supplemental screenshots in the Playwright output directory.
+- **Example:** [DS-003 mock spec](../design/tests/DS-003.spec.js). From the repository root:
+
+  ```bash
+  docker compose run --build --rm \
+    -v "$PWD/docs:/docs:ro" \
+    -v "$PWD/docs/design/tests/DS-003.spec.js:/app/tests/DS-003.spec.js:ro" \
+    frontend-test
+  ```
