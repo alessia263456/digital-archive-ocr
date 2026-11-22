@@ -60,8 +60,8 @@ Artisan::command('storage:r2-smoke', function () {
         }
 
         $this->line('3. Generare URL semnat cu token opac');
-        $url = $service->temporaryUrl($path, now()->addMinutes(15));
-        $this->line("URL semnat generat: {$url}");
+        $service->temporaryUrl($path, now()->addMinutes(15));
+        $this->line('URL-ul semnat a fost generat.');
 
         $this->line('4. Ștergere obiect de unică folosință');
         $service->delete($path);

@@ -192,4 +192,24 @@ final class DocumentStorageTest extends TestCase
             ->expectsOutputToContain('Cloudflare R2')
             ->assertExitCode(1);
     }
+
+    public function test_r2_smoke_reports_success_without_printing_the_signed_url(): void
+    {
+        Config::set('filesystems.disks.documents', [
+            'driver' => 's3',
+            'key' => 'validation-only',
+            'secret' => 'validation-only',
+            'region' => 'auto',
+            'bucket' => 'validation-only',
+            'endpoint' => 'https://example.eu.r2.cloudflarestorage.com',
+            'use_path_style_endpoint' => false,
+        ]);
+        Storage::fake('documents');
+
+        $this->artisan('storage:r2-smoke')
+            ->doesntExpectOutputToContain('signature=')
+            ->doesntExpectOutputToContain('/api/documents/deliver/')
+            ->expectsOutputToContain('Verificarea Cloudflare R2 a trecut cu succes.')
+            ->assertExitCode(0);
+    }
 }

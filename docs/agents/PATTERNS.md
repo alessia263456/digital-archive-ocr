@@ -12,6 +12,7 @@
 - PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
 - PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
 - PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks · candidate
+- PATTERN-007 · Verify live Signed URLs with a disposable object · candidate
 
 ---
 
@@ -45,3 +46,8 @@
 - **Status:** candidate
 - **How:** Verify the source marker extracts successfully. Extract from the fresh derivative and check its rendered page plus the embedded image at the rectangle edges. Hash the source before and after.
 - **Example:** [Redaction integration test](../../backend/tests/Feature/RedactedPdfTest.php).
+
+## PATTERN-007 · Verify live Signed URLs with a disposable object
+- **Status:** candidate
+- **How:** Create a random synthetic object, request it through the authenticated public Caddy listener, check delivery headers and valid/expired/tampered responses, and delete the object from an exit trap. Keep Signed URLs and hosting credentials out of logs and files.
+- **Example:** [Live Signed URL probe](../../docker/live/tests/signed-delivery-smoke.sh) and [P22-56b plan](plans/p22-56b-live-skeleton-deployment.md).
