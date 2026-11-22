@@ -256,6 +256,62 @@ test('derives classification and handles confirmed future, pending, and permanen
   await expect(workspace(page)).toContainText('Fără termen de distrugere');
 });
 
+test('aligns Step 1 metadata labels and keeps fields usable at desktop and narrow widths', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(mock + '?document=Contract_exemplu.pdf');
+  const names = [
+    'Data actului', 'Numărul actului', 'Numărul dosarului fizic', 'Numărul de inventar',
+    'Sumă', 'Etichete', 'Tip document', 'Subtip', 'Context arhivare', 'Indicativ arhivistic',
+    'Data expirării contractului',
+  ];
+  const positions = async name => field(page, name).evaluate(control => {
+    const label = control.labels[0].getBoundingClientRect();
+    const input = control.getBoundingClientRect();
+    return {
+      labelRight: label.right, labelBottom: label.bottom, labelCenter: label.y + label.height / 2,
+      inputX: input.x, inputY: input.y, inputCenter: input.y + input.height / 2,
+      inputWidth: input.width, inputHeight: input.height,
+    };
+  });
+
+  for (const width of [1440, 1024, 768, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const fields = await Promise.all(names.map(positions));
+    for (const position of fields) {
+      if (width === 320) {
+        expect(position.labelBottom).toBeLessThanOrEqual(position.inputY);
+        expect(position.inputHeight).toBeGreaterThanOrEqual(44);
+      } else {
+        expect(position.labelRight).toBeLessThanOrEqual(position.inputX);
+        expect(Math.abs(position.labelCenter - position.inputCenter)).toBeLessThanOrEqual(1);
+      }
+    }
+    const [date, number, dossier, inventory, amount, tags, ...classification] = fields;
+    if (width === 1440) {
+      expect(date.inputY).toBe(number.inputY);
+      expect(dossier.inputY).toBe(inventory.inputY);
+      expect(date.inputX).toBe(dossier.inputX);
+      expect(number.inputX).toBe(inventory.inputX);
+      expect(amount.inputWidth).toBeGreaterThan(number.inputWidth);
+    }
+    if (width === 1024 || width === 320) expect(date.inputY).toBeLessThan(number.inputY);
+    for (const input of [tags, ...classification]) expect(input.inputX).toBe(amount.inputX);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+
+  await field(page, 'Data actului').focus();
+  await page.keyboard.press('Tab');
+  await expect(field(page, 'Numărul actului')).toBeFocused();
+  await expect(field(page, 'Numărul actului')).toHaveCSS('outline-style', 'solid');
+  await field(page, 'Tip document').focus();
+  await page.keyboard.press('Tab');
+  await expect(field(page, 'Subtip')).toBeFocused();
+  await field(page, 'Subtip').selectOption({ label: 'Vânzare-cumpărare / schimb / donație / întreținere / rentă viageră' });
+  await expect(field(page, 'Subtip')).toBeFocused();
+  await expect(field(page, 'Indicativ arhivistic')).toHaveValue('IA 1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
 test('covers review widths, accessibility states and captures each step', async ({ page, isMobile, colorScheme }, info) => {
   await page.setViewportSize({ width: isMobile ? 320 : 1440, height: isMobile ? 800 : 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
