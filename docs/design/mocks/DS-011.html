@@ -383,7 +383,6 @@
               <button id="original" aria-pressed="true">Original</button>
               <button id="anonymized" aria-pressed="false">Anonimizat</button>
             </div>
-            <button id="outlines" aria-pressed="false" hidden>Arată marcajele</button>
             <a class="jump" href="#step-title">Sari la spațiul de lucru</a>
           </div>
           <div id="viewport" tabindex="0" role="region" aria-label="Pagină document cu derulare">
@@ -496,7 +495,6 @@
     let drag;
     let selectedMark = '';
     let removedMark;
-    let showOutlines = false;
     let finalAnonymized = true;
     let failSave = scenario === 'eroare-salvare';
     let approvalTrigger;
@@ -723,8 +721,6 @@
       $('versions').hidden = !review && !final;
       $('original').setAttribute('aria-pressed', String(!anonymized));
       $('anonymized').setAttribute('aria-pressed', String(anonymized));
-      $('outlines').hidden = !review || anonymized;
-      $('outlines').setAttribute('aria-pressed', String(showOutlines));
       $('page-number').textContent = `Pagina ${draft.page} din 2`;
       $('zoom-value').textContent = Math.round(draft.zoom * 100) + '%';
       $('previous-page').disabled = draft.page === 1;
@@ -736,7 +732,7 @@
       if (drawing) $('viewport').setAttribute('aria-describedby', 'drawing-help');
       else $('viewport').removeAttribute('aria-describedby');
 
-      const overlays = (anonymized || (review && showOutlines) ? marks() : [])
+      const overlays = (review || anonymized ? marks() : [])
         .filter(item => item.page === draft.page)
         .map(item => `<div class="scan-region ${anonymized ? 'coverage' : 'mark-outline'}"
           ${review ? `data-mark="${item.key}"` : ''}
@@ -1021,7 +1017,6 @@
       removedMark = null;
       selectedMark = '';
       inspection = '';
-      showOutlines = false;
       finalAnonymized = true;
       $('state').hidden = true;
       $('editor').hidden = false;
@@ -1397,15 +1392,6 @@
     };
     $('original').onclick = () => selectVersion(false);
     $('anonymized').onclick = () => selectVersion(true);
-    $('outlines').onclick = () => {
-      showOutlines = !showOutlines;
-      if (!showOutlines) {
-        inspection = '';
-        selectedMark = '';
-      }
-      renderViewer();
-      renderReview();
-    };
     const movePage = offset => {
       draft.page += offset;
       if (drawing) {
