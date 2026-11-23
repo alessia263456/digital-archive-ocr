@@ -15,6 +15,7 @@
 - PATTERN-007 · Run standalone mock checks through existing Playwright projects · candidate
 - PATTERN-008 · Verify live Signed URLs with a disposable object · candidate
 - PATTERN-009 · Count only failed credential responses in login throttling · candidate
+- PATTERN-010 · Persist mixed intake items independently across database and storage · candidate
 
 ---
 
@@ -70,3 +71,8 @@
 - **Status:** candidate
 - **How:** Key a login limiter by a hash of the normalized username and client IP. Count only failed credential responses so malformed requests do not consume the password-guessing budget; return the localized throttle response after the threshold.
 - **Example:** [Login rate limiter](../../backend/app/Providers/AppServiceProvider.php) and [authentication feature tests](../../backend/tests/Feature/AuthenticationAndRolesTest.php).
+
+## PATTERN-010 · Persist mixed intake items independently across database and storage
+- **Status:** candidate
+- **How:** Persist each independent submission in its own database transaction. Track the private object keys created for that item and remove only those objects if its persistence fails. Return a result for each item so one failure does not discard valid siblings.
+- **Example:** [Draft intake service](../../backend/app/Services/DocumentDraftIntakeService.php) and [draft intake feature tests](../../backend/tests/Feature/DocumentDraftIntakeTest.php).
