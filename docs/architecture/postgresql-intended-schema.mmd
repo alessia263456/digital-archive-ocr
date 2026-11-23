@@ -1,0 +1,99 @@
+%% Intended schema from all Laravel migrations available in local and remote-tracking Git refs.
+%% This is not the live archive.public schema: it includes OCR and P22-18 migrations that are not applied there.
+%% Source files: backend/database/migrations/*.php. Migration status and unimplemented table plans are documented in postgresql-schema-status.md.
+%% There are no declared foreign keys in these migrations. The current sessions.user_id index is not a foreign key.
+erDiagram
+    cache {
+        varchar key PK
+        text value
+        bigint expiration
+    }
+
+    cache_locks {
+        varchar key PK
+        varchar owner
+        bigint expiration
+    }
+
+    failed_jobs {
+        bigint id PK
+        varchar uuid UK "failed_jobs_uuid_unique"
+        varchar connection
+        varchar queue
+        text payload
+        text exception
+        timestamp failed_at
+    }
+
+    job_batches {
+        varchar id PK
+        varchar name
+        int total_jobs
+        int pending_jobs
+        int failed_jobs
+        text failed_job_ids
+        text options "Nullable"
+        int cancelled_at "Nullable"
+        int created_at
+        int finished_at "Nullable"
+    }
+
+    jobs {
+        bigint id PK
+        varchar queue
+        text payload
+        smallint attempts
+        int reserved_at "Nullable"
+        int available_at
+        int created_at
+    }
+
+    migrations {
+        int id PK
+        varchar migration
+        int batch
+    }
+
+    ocr_pages {
+        uuid extraction PK "Composite PK: extraction, page; no foreign key"
+        char source_sha256 "64 characters"
+        int page PK "Composite PK: extraction, page"
+        int width
+        int height
+        text text
+        text tsv
+        jsonb words
+    }
+
+    password_reset_tokens {
+        varchar email PK
+        varchar token
+        timestamp created_at "Nullable"
+    }
+
+    physical_dossiers {
+        bigint id PK
+        text physical_dossier_number "NOT NULL; not unique; printed value"
+    }
+
+    sessions {
+        varchar id PK
+        bigint user_id "Nullable, indexed; no foreign key"
+        varchar ip_address "Nullable"
+        text user_agent "Nullable"
+        text payload
+        int last_activity
+    }
+
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK "users_email_unique"
+        timestamp email_verified_at "Nullable"
+        varchar password
+        varchar remember_token "Nullable"
+        timestamp created_at "Nullable"
+        timestamp updated_at "Nullable"
+        varchar username UK "NOT NULL; users_username_unique"
+        varchar role "NOT NULL; CHECK admin | arhivar | cititor"
+    }

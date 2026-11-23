@@ -1,0 +1,82 @@
+%% Read-only snapshot of PostgreSQL database archive, schema public.
+%% Inspected 2026-11-23. The database has only the three Laravel scaffold migrations applied.
+%% The OCR pages and account/physical dossier migrations in backend/database/migrations are not applied here and are not part of this current-schema diagram.
+%% No foreign-key constraints are declared in the inspected database, so no relationships are drawn.
+%% See postgresql-schema-status.md for migration-only and not-yet-implemented tables, and postgresql-intended-schema.mmd for the full migration-defined schema.
+erDiagram
+    cache {
+        varchar key PK
+        text value
+        bigint expiration
+    }
+
+    cache_locks {
+        varchar key PK
+        varchar owner
+        bigint expiration
+    }
+
+    failed_jobs {
+        bigint id PK
+        varchar uuid UK
+        varchar connection
+        varchar queue
+        text payload
+        text exception
+        timestamp failed_at
+    }
+
+    job_batches {
+        varchar id PK
+        varchar name
+        int total_jobs
+        int pending_jobs
+        int failed_jobs
+        text failed_job_ids
+        text options "Nullable"
+        int cancelled_at "Nullable"
+        int created_at
+        int finished_at "Nullable"
+    }
+
+    jobs {
+        bigint id PK
+        varchar queue
+        text payload
+        smallint attempts
+        int reserved_at "Nullable"
+        int available_at
+        int created_at
+    }
+
+    migrations {
+        int id PK
+        varchar migration
+        int batch
+    }
+
+    password_reset_tokens {
+        varchar email PK
+        varchar token
+        timestamp created_at "Nullable"
+    }
+
+    sessions {
+        varchar id PK
+        bigint user_id "Nullable, indexed; no foreign key"
+        varchar ip_address "Nullable"
+        text user_agent "Nullable"
+        text payload
+        int last_activity
+    }
+
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK
+        timestamp email_verified_at "Nullable"
+        varchar password
+        varchar remember_token "Nullable"
+        timestamp created_at "Nullable"
+        timestamp updated_at "Nullable"
+    }
