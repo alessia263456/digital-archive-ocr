@@ -32,6 +32,8 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 | Storage | Private object storage | Original Document Scans and derived redacted copies | Laravel Backend |
 | Visual Testing | `frontend/` (Playwright) | Automated desktop and mobile screenshot capture in light/dark themes ([D-006](DECISIONS.md#D-006)) | Frontend UI |
 
+PostgreSQL accounts live in `users` with required unique usernames, password hashes, and roles constrained to `admin`, `arhivar`, or `cititor`. `physical_dossiers` uses a generated primary key for stable relationships and stores the printed Physical Dossier Number as text; printed numbers may repeat.
+
 ## Data flow
 1. **Ingestion.** An `admin` or `arhivar` uploads a Document Scan into a resumable private draft. An exact SHA-256 match warns and blocks saving. A matching act number and Act Date warns and lets staff create a new Document Version, save separately, or abandon the save. Keep uploaded DOCX originals and derive PDFs for viewing, Redaction, and sharing.
 2. **OCR Extraction.** A separate worker runs Tesseract with Romanian language data and retains TSV word Bounding Boxes. After the initial failure and three failed retries, move the Document Scan to the Quarantine Queue and notify the Arhivar.

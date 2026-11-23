@@ -1,6 +1,6 @@
 # Plan — P22-18 · Part 1 account and Physical Dossier tables
 
-**Status:** Approved on 2026-11-23. Implementation has not started.
+**Status:** Approved and implemented on 2026-11-23.
 
 ## Size
 

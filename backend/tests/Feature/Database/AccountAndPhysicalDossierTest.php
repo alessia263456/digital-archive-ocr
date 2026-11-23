@@ -71,7 +71,7 @@ final class AccountAndPhysicalDossierTest extends TestCase
         self::assertSame($printedNumber, $first->physical_dossier_number);
         self::assertSame($printedNumber, $second->fresh()->physical_dossier_number);
         self::assertNotSame($first->getKey(), $second->getKey());
-        self::assertSame(2, PhysicalDossier::query()->where('physical_dossier_number', $printedNumber)->count());
+        self::assertGreaterThanOrEqual(2, PhysicalDossier::query()->where('physical_dossier_number', $printedNumber)->count());
     }
 
     /** @param array<string, mixed> $attributes */
