@@ -29,7 +29,7 @@
     }
     *, *::before, *::after { box-sizing: border-box; }
     [hidden] { display: none !important; }
-    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    body { display: flex; flex-direction: column; min-block-size: 100svh; margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
     h1, h2, h3, p { margin: 0; }
     button, input, select { font: inherit; color: inherit; }
     :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
@@ -45,13 +45,10 @@
     .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
     .header-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
     .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
-    .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-    .page { display: grid; justify-items: center; padding: var(--space-3xl) var(--space-md); }
-    .login-card { display: grid; gap: var(--space-lg); inline-size: min(100%, calc(var(--space-3xl) * 8)); padding: var(--space-xl); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .intro { display: grid; gap: var(--space-sm); }
-    .intro h2 { font: var(--text-h2); }
-    .intro p, .hint { color: var(--color-text-secondary); }
-    .form { display: grid; gap: var(--space-md); }
+    .page { display: grid; flex: 1; align-items: center; justify-items: center; min-block-size: 0; padding: var(--space-3xl) var(--space-md); }
+    .login-card { display: grid; gap: var(--space-lg); inline-size: min(100%, calc(var(--space-3xl) * 7)); padding: var(--space-2xl); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .login-card h1 { font: var(--text-h1); }
+    .form { display: grid; gap: var(--space-lg); }
     .field { display: grid; gap: var(--space-xs); }
     .field label { font-weight: 600; }
     .field input { min-block-size: var(--space-2xl); inline-size: 100%; padding: var(--space-sm) var(--space-md); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
@@ -65,11 +62,9 @@
     .button.secondary { border-color: var(--color-text-secondary); background: var(--color-bg-subtle); color: var(--color-text-primary); }
     .button.secondary:hover { border-color: var(--color-accent-mid); }
     .submit { inline-size: 100%; }
-    .state-message { min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    .state-message { padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
     main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
     main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
-    .hint { font: var(--text-small); }
-    .footer-note { color: var(--color-text-secondary); font: var(--text-small); }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
   </style>
 </head>
@@ -97,33 +92,27 @@
     <div class="brand-mark" aria-hidden="true">AD</div>
     <div class="header-copy">
       <p class="header-kicker">Cabinet Individual Notarial</p>
-      <h1 class="header-title">Autentificare</h1>
     </div>
   </header>
 
   <main class="page" id="login" data-state="default">
     <section class="login-card" aria-labelledby="login-title">
-      <div class="intro">
-        <p class="header-kicker">Cabinet Individual Notarial</p>
-        <h2 id="login-title">Acces la arhiva digitală</h2>
-        <p>Introdu datele de acces furnizate de administratorul Aplicației.</p>
-      </div>
+      <h1 id="login-title">Autentificare</h1>
       <form class="form" id="login-form">
         <div class="field">
           <label for="username">Nume de utilizator</label>
-          <input id="username" name="username" type="text" autocomplete="username" placeholder="Nume de utilizator">
+          <input id="username" name="username" type="text" autocomplete="username">
         </div>
         <div class="field">
           <label for="password">Parolă</label>
           <div class="password-row">
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Parola contului">
+            <input id="password" name="password" type="password" autocomplete="current-password">
             <button class="button secondary" id="show-password" type="button" aria-label="Arată parola">Arată</button>
           </div>
         </div>
-        <p class="state-message" id="state-message" role="status" aria-live="polite">Folosește numele de utilizator și parola contului.</p>
+        <p class="state-message" id="state-message" role="status" aria-live="polite" hidden></p>
         <button class="button submit" id="submit-login" type="submit">Autentificare</button>
       </form>
-      <p class="footer-note">Dacă nu poți intra în cont, contactează administratorul cabinetului.</p>
     </section>
   </main>
   <script>
@@ -143,6 +132,7 @@
     function setState(state) {
       main.dataset.state = state;
       stateMessage.textContent = messages[state];
+      stateMessage.hidden = state === 'default';
       submit.disabled = state === 'loading' || state === 'disabled';
       main.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
       document.querySelectorAll('#login-form input').forEach(input => { input.disabled = ['loading', 'disabled'].includes(state); });
@@ -165,6 +155,7 @@
     document.getElementById('login-form').addEventListener('submit', event => {
       event.preventDefault();
       stateMessage.textContent = 'Autentificarea nu este conectată; aceasta este doar o previzualizare.';
+      stateMessage.hidden = false;
     });
   </script>
 </body>
