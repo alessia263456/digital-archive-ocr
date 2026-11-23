@@ -110,7 +110,8 @@ Check off a task after verification. Record approval time, verification time, ev
 ## Day 4 · Run batches without blocking the worker
 
 - [ ] P22-49b · Finish the corpus inventory
-- [ ] P22-12a · Private draft intake and status
+- [x] P22-12a · Private draft intake and status
+  - Approved in chat on 2026-11-23. Added authenticated PDF/DOCX intake, ordered image-collection intake, per-item batch results, private original and derived-object storage, and persisted draft status. PHPUnit passed in an isolated Compose project with a fresh PostgreSQL volume and generated local-only credentials (68 tests, 357 assertions, 2 skipped). The backend image build passed. The standard project database volume was not used for test writes.
 - [ ] P22-13a · Worker job and backoff
 - [x] P22-18 · Part 1 account and Physical Dossier tables
   - The existing PostgreSQL database had the scaffold migrations applied and zero account rows, so implementation uses an additive migration that preserves existing data. `users` now requires a unique username, password, and one of the approved roles; `physical_dossiers` has a stable primary key and exact printed-number text. Focused PHPUnit passed (4 tests, 24 assertions); the full backend suite passed (57 tests, 237 assertions, 2 skipped) on a fresh disposable PostgreSQL volume. A fresh migration and seeder smoke passed. Backend image build, Ledger lint, and `git diff --check` passed. The existing development database volume was not used for test writes.
