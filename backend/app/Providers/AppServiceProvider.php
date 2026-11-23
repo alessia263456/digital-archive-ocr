@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\HttpFoundation\Response;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        RateLimiter::for('login', function (Request $request) {
+            $username = mb_strtolower(trim((string) $request->input('username', '')));
+            $key = hash('sha256', $username.'|'.($request->ip() ?? ''));
+
+            return Limit::perMinute(5)
+                ->by('login:'.$key)
+                ->after(fn (Response $response): bool => $response->getStatusCode() === 401)
+                ->response(fn (Request $request, array $headers) => response()->json([
+                    'eroare' => 'Prea multe încercări de autentificare. Încercați din nou mai târziu.',
+                ], 429, $headers));
+        });
     }
 }

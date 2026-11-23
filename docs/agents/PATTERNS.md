@@ -14,6 +14,7 @@
 - PATTERN-006 · Verify permanent PDF Redaction with a source text control and pixel checks · candidate
 - PATTERN-007 · Run standalone mock checks through existing Playwright projects · candidate
 - PATTERN-008 · Verify live Signed URLs with a disposable object · candidate
+- PATTERN-009 · Count only failed credential responses in login throttling · candidate
 
 ---
 
@@ -64,3 +65,8 @@
 - **Status:** candidate
 - **How:** Create a random synthetic object, request it through the authenticated public Caddy listener, check delivery headers and valid/expired/tampered responses, and delete the object from an exit trap. Keep Signed URLs and hosting credentials out of logs and files.
 - **Example:** [Live Signed URL probe](../../docker/live/tests/signed-delivery-smoke.sh) and [P22-56b plan](plans/p22-56b-live-skeleton-deployment.md).
+
+## PATTERN-009 · Count only failed credential responses in login throttling
+- **Status:** candidate
+- **How:** Key a login limiter by a hash of the normalized username and client IP. Count only failed credential responses so malformed requests do not consume the password-guessing budget; return the localized throttle response after the threshold.
+- **Example:** [Login rate limiter](../../backend/app/Providers/AppServiceProvider.php) and [authentication feature tests](../../backend/tests/Feature/AuthenticationAndRolesTest.php).

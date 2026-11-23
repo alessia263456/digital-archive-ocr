@@ -27,6 +27,7 @@
 - Q-016 · How should a correction to an Archival Indicator be made when the classification is wrong? · _answered_
 - Q-020 · How should ordered image uploads be checked for duplicates? · _answered_
 - Q-021 · What OCR similarity criterion should trigger a possible-duplicate warning?
+- Q-022 · What bearer-token lifetime and failed-login threshold should P22-25 use? · _answered_
 
 ### [Notarial nomenclature](questions/notarial-nomenclature.md)
 - Q-017 · How should official revisions to the Notarial Nomenclature be applied? · _answered_
@@ -178,3 +179,13 @@
 - **Who answers:** repository owner
 - **Proposed answer:**
 - **Evidence required:** A justified metric and threshold evaluated with Document Corpus tests that include duplicate examples and distinct notarial acts sharing a template. Q-011's earlier proposed threshold was never approved. The existing act-number and confirmed Act Date warning remains governed by D-025.
+
+## Q-022 · What bearer-token lifetime and failed-login threshold should P22-25 use?
+- **Status:** answered 2026-11-23
+- **Blocks:** Finalizing D-041 and implementing the P22-25 token-expiry and login-rate-limit values.
+- **Who answers:** repository owner
+- **Proposed answer:** Expire each Sanctum bearer token 12 hours after issuance. Count failed credential responses per normalized username/IP pair and return HTTP 429 after five failures in one minute; do not count validation errors.
+- **Evidence:** The owner prefers an 8–24-hour lifetime and requested login throttling. Twelve hours is a proposed compromise within that range. Laravel 13 Sanctum supports per-token expiry; Laravel's starter-kit guidance demonstrates five attempts per minute keyed by username and IP, and its routing limiter can count selected response statuses.
+- **Answer:** Expire each Sanctum bearer token 12 hours after issuance. Limit failed credential attempts to five per normalized username/IP pair per minute; return HTTP 429 for further attempts during that window. Do not count credential-validation errors.
+- **Recorded as:** D-041
+- **Confirmed:** 2026-11-23

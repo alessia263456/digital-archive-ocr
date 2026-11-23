@@ -75,7 +75,7 @@ The [temporary Caddy service](../../docker/placeholder/README.md) has a separate
 The [live skeleton configuration](../../docker/live/README.md) uses a separate Compose project named `archive-live`. Its public Caddy service serves the React build, challenges all requests using the placeholder’s bcrypt import and forwards `/up`, `/api` and `/api/*` to the private FrankenPHP classic listener. Caddy removes the hosting credential before forwarding. Laravel uses PostgreSQL on the project network. Only Caddy publishes host ports and mounts the external placeholder certificate volume. P22-56b owns the future listener switch and can restore the placeholder by stopping live Caddy and restarting placeholder Caddy.
 
 ## Boundaries
-- Frontend / Backend REST API boundary with role-based token authentication.
+- Frontend / Backend REST API boundary uses Laravel Sanctum bearer tokens. Tokens expire 12 hours after issuance; logout revokes the current token. Login limits failed credentials to five attempts per normalized username and client IP per minute (D-041). The reusable `role` middleware enforces allowed role groups on protected routes; resource tasks apply it to their routes.
 - Folder Permissions restrict `cititor` by Physical Dossier. External access is limited to the selected PDF through its Share Link.
 - Immutability boundary: Document versions cannot be edited in place; new versions are appended ([D-002](DECISIONS.md#D-002)).
 - PII redaction boundary: Redaction physically burns black pixels into the scan copy, preventing client-side unmasking.

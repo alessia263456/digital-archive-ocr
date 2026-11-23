@@ -114,7 +114,8 @@ Check off a task after verification. Record approval time, verification time, ev
 - [ ] P22-13a · Worker job and backoff
 - [x] P22-18 · Part 1 account and Physical Dossier tables
   - The existing PostgreSQL database had the scaffold migrations applied and zero account rows, so implementation uses an additive migration that preserves existing data. `users` now requires a unique username, password, and one of the approved roles; `physical_dossiers` has a stable primary key and exact printed-number text. Focused PHPUnit passed (4 tests, 24 assertions); the full backend suite passed (57 tests, 237 assertions, 2 skipped) on a fresh disposable PostgreSQL volume. A fresh migration and seeder smoke passed. Backend image build, Ledger lint, and `git diff --check` passed. The existing development database volume was not used for test writes.
-- [ ] P22-25 · Username/password authentication and roles
+- [x] P22-25 · Username/password authentication and roles
+  - Implemented Sanctum bearer login/logout, 12-hour token expiry, five failed attempts per normalized username/IP per minute, and reusable role middleware. C-002 response shape is `{id, username, role}` with no name/email. PHPUnit exercised the role matrix through test-only routes. Focused auth suite passed (7 tests, 83 assertions); full backend suite passed on an isolated disposable PostgreSQL database (64 tests, 320 assertions; 2 skipped). Backend image build, Ledger lint, and `git diff --check` passed. No frontend UI or production data was touched. [Plan](p22-25-username-password-authentication-and-roles.md)
 
 ## Day 5 · Produce safe reader data
 

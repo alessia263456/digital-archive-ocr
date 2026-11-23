@@ -17,6 +17,7 @@
 - D-018 · Romanian-only user interface and system errors
 - D-019 · In-app notifications
 - D-032 · Screen inventory and role-based access control
+- D-041 · API bearer token lifetime and login throttling
 
 ### [Archive workflows](decisions/archive-workflows.md)
 - D-022 · PII detection and Redaction coverage
@@ -144,3 +145,12 @@
 - **Evidence:** D-020 and owner confirmation in chat
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-20
+
+## D-041 · API bearer token lifetime and login throttling
+- **Status:** approved
+- **Date:** 2026-11-23
+- **Rule:** Authenticate application API requests with Laravel Sanctum bearer tokens. Each token expires 12 hours after issuance; logout revokes the current token. Limit failed credential attempts to five per normalized username and client IP within one minute, then return HTTP 429 for further attempts during that window. Do not count credential-validation errors toward the limit.
+- **Why:** Defines a bounded exposure window for lost tokens and reduces password-guessing attempts while keeping the proposed lifetime inside the owner's preferred 8–24-hour range.
+- **Evidence:** Q-022 and [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md); Laravel 13 Sanctum supports per-token expiration, and Laravel's starter-kit guidance demonstrates a five-per-minute username/IP login limit.
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-23
