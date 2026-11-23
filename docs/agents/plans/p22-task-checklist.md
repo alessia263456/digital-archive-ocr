@@ -120,7 +120,8 @@ Check off a task after verification. Record approval time, verification time, ev
 
 ## Day 5 · Produce safe reader data
 
-- [ ] P22-12b · Resume and isolate drafts
+- [x] P22-12b · Resume and isolate drafts
+  - Verified that `admin` and `arhivar` can resume any draft and receive only its stable ID and current status; anonymous and `cititor` requests are denied, and missing drafts return the Romanian 404 response. Focused PHPUnit passed (5 tests, 46 assertions); full backend suite passed on a fresh isolated PostgreSQL volume (69 tests, 366 assertions, 2 skipped). Backend image build passed. Ledger lint and `git diff --check` passed.
 - [ ] P22-14 · Exact SHA-256 duplicate detection
 - [ ] P22-13b · Prove corrupt-then-valid flow
 - [ ] P22-15 · Notifications and quarantine actions

@@ -69,19 +69,31 @@ final class DocumentDraftIntakeTest extends TestCase
         self::assertSame($initialDraftCount + 1, DocumentDraft::query()->count());
     }
 
-    public function test_status_endpoint_returns_persisted_status_without_storage_keys(): void
+    public function test_admin_and_arhivar_can_resume_any_draft_with_current_status_only(): void
     {
-        $user = $this->user('arhivar');
         $draft = DocumentDraft::query()->create([
             'id' => (string) Str::uuid(),
             'source_format' => 'pdf',
             'original_storage_keys' => ['drafts/private/original.pdf'],
-            'status' => 'queued',
+            'status' => 'processing',
         ]);
 
-        $this->actingAs($user, 'sanctum')->getJson('/api/drafts/'.$draft->id)
-            ->assertOk()->assertJsonPath('id', $draft->id)->assertJsonPath('status', 'queued')
-            ->assertJsonMissingPath('original_storage_keys');
+        foreach (['admin', 'arhivar'] as $role) {
+            $response = $this->actingAs($this->user($role), 'sanctum')
+                ->getJson('/api/drafts/'.$draft->id)->assertOk()
+                ->assertJsonPath('id', $draft->id)->assertJsonPath('status', 'processing')
+                ->assertExactJson(['id' => $draft->id, 'status' => 'processing']);
+
+            self::assertSame(['id', 'status'], array_keys($response->json()));
+        }
+    }
+
+    public function test_resume_returns_romanian_not_found_for_a_missing_draft(): void
+    {
+        $this->actingAs($this->user('admin'), 'sanctum')
+            ->getJson('/api/drafts/'.Str::uuid())
+            ->assertNotFound()
+            ->assertExactJson(['eroare' => 'Ciorna solicitată nu a fost găsită.']);
     }
 
     public function test_anonymous_and_cititor_users_cannot_access_drafts(): void

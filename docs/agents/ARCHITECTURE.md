@@ -48,7 +48,7 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 | What | Where | Owner | Notes |
 |---|---|---|---|
 | Catalog and search | PostgreSQL | Laravel Backend | Approved versions, confirmed metadata, Physical Dossiers, permissions, and retention dates |
-| Private drafts and review | PostgreSQL and private object storage | Laravel Backend | `document_drafts` stores source format, ordered original object keys, optional derived PDF key, and persisted lifecycle status; uploads are restricted to `admin` and `arhivar` |
+| Private drafts and review | PostgreSQL and private object storage | Laravel Backend | `document_drafts` stores source format, ordered original object keys, optional derived PDF key, and persisted lifecycle status; upload and resume are restricted to `admin` and `arhivar`; resume returns only the draft ID and current status, and either role may resume any draft |
 | Original and redacted copies | Private object storage | Laravel Backend | Authorized internal access and version-pinned Share Links |
 | Append-Only Audit Log | Server-side | Laravel Backend | Access, changes, sharing, and retained destruction evidence |
 | Review canvas | React state | Frontend | Transient Bounding Box adjustments |
