@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Căutare în arhivă · Arhivă digitală</title>
+  <style>
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF; }
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF; }
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5; --color-bg-surface: #FFFFFF; --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C; --color-text-secondary: #556070; --color-border: #E5E0D8;
+      --color-primary: #072D5C; --color-accent-mid: #4683CF; --color-accent-teal: #46CFC3;
+      --color-accent-amber: #CE8946; --color-version-navy: #072D5C; --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A; --color-archival-label-border: #DEC09F; --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
+      --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
+      --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
+      --text-small: 400 14px/20px var(--font-body); --space-xs: 4px; --space-sm: 8px;
+      --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --radius-sm: 2px; --radius-md: 4px; --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease; --duration-normal: 250ms ease;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark; --color-bg-primary: #1E293B; --color-bg-surface: #283548; --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-border: #334155;
+      --color-primary: #4683CF; --color-accent-mid: #60A5FA; --color-focus-ring: #46CFC3;
+      --color-archival-label-bg: #3A302A; --color-archival-label-text: #E7B587; --color-archival-label-border: #69503A;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    h1, h2, h3, p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    button, input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-bottom: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
+    .tool-top, .tool-row, .mock-nav, .theme-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-top { justify-content: space-between; }
+    .mock-only { padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-accent-amber); border-radius: var(--radius-sm); color: var(--color-text-primary); font-weight: 600; }
+    .mock-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
+    .mock-nav a[aria-current="page"] { color: var(--color-text-primary); font-weight: 700; }
+    .tool-row label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); }
+    .mock-tools select, .theme-button { min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-bottom: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
+    .header-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
+    .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xl) var(--space-md) var(--space-3xl); }
+    .page-intro { display: grid; gap: var(--space-sm); margin-block-end: var(--space-lg); }
+    .page-intro h1 { font: var(--text-h1); }
+    .page-intro p { max-inline-size: calc(var(--space-3xl) * 9); color: var(--color-text-secondary); }
+    .surface { border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .browse-tabs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block-end: var(--space-md); }
+    .tab, .button, .search-input, .filter-select { min-block-size: var(--space-2xl); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .tab { padding: var(--space-sm) var(--space-md); color: var(--color-text-secondary); cursor: pointer; }
+    .tab[aria-selected="true"] { border-color: var(--color-text-secondary); color: var(--color-text-primary); font-weight: 700; box-shadow: inset 0 calc(-1 * var(--radius-sm)) var(--color-text-secondary); }
+    .tab:hover { border-color: var(--color-accent-mid); color: var(--color-text-primary); }
+    .search-panel { display: grid; gap: var(--space-md); padding: var(--space-lg); }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); }
+    .section-heading h2 { font: var(--text-h3); }
+    .mode-caption { color: var(--color-text-secondary); font: var(--text-small); }
+    .search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm); }
+    .search-input, .filter-select { min-inline-size: 0; inline-size: 100%; padding: var(--space-sm) var(--space-md); }
+    input::placeholder { color: var(--color-text-secondary); opacity: 1; }
+    .button { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-sm) var(--space-lg); background: var(--color-accent-teal); border-color: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; cursor: pointer; transition: background-color var(--duration-fast); }
+    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); text-decoration: underline; }
+    .button:active { text-decoration: underline; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 3)), 1fr)); gap: var(--space-md); }
+    .field { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .field label { color: var(--color-text-secondary); font: var(--text-small); font-weight: 600; }
+    .permission-note { padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-teal); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .result-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); margin-block: var(--space-xl) var(--space-md); }
+    .result-heading h2 { font: var(--text-h2); }
+    .result-count { color: var(--color-text-secondary); font: var(--text-small); }
+    .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 5)), 1fr)); gap: var(--space-md); }
+    .result-card { display: grid; align-content: start; gap: var(--space-sm); min-inline-size: 0; padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .skeleton-card { display: grid; align-content: start; gap: var(--space-md); min-inline-size: 0; min-block-size: calc(var(--space-3xl) * 3); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .skeleton { min-block-size: var(--space-md); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .result-card h3 { overflow-wrap: anywhere; font: var(--text-h3); }
+    .metadata { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--color-text-secondary); font: var(--text-small); }
+    .dossier { color: var(--color-archival-label-text); }
+    .excerpt { overflow-wrap: anywhere; }
+    mark { border-radius: var(--radius-sm); background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    .state-message { margin-block-end: var(--space-md); padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
+    main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
+    main[data-state="denied"] .state-message { border-color: var(--color-accent-amber); }
+    .reader-only { color: var(--color-text-secondary); font: var(--text-small); }
+    .screen-reader-only { position: absolute; inline-size: var(--space-xs); block-size: var(--space-xs); overflow: hidden; clip-path: inset(50%); }
+    @media (max-width: 639px) {
+      .search-form { grid-template-columns: 1fr; }
+      .search-form .button { inline-size: 100%; }
+      .tab { flex: 1; }
+      .wrap { padding-block-start: var(--space-lg); }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Panou de previzualizare pentru machetă">
+    <div class="tool-top"><strong>Panou de previzualizare · numai pentru machetă · DS-001</strong><span class="mock-only">NUMAI PENTRU REVIZUIREA DESIGNULUI · nu face parte din aplicație</span></div>
+    <nav class="mock-nav" aria-label="Navigare între machete de design">
+      <a href="./DS-010.html">DS-010 · Autentificare</a><a href="./DS-001.html" aria-current="page">DS-001 · Căutare</a><a href="./DS-006.html">DS-006 · Administrare</a>
+    </nav>
+    <div class="tool-row">
+      <label>Stare pentru previzualizare
+        <select id="preview-state" aria-label="Stare pentru previzualizare">
+          <option value="default">Implicit · rezultate</option><option value="one">Un rezultat</option><option value="many">Multe rezultate</option><option value="empty">Fără rezultate</option><option value="denied">Acces refuzat</option><option value="loading">Se caută</option><option value="error">Eroare</option><option value="success">Succes</option><option value="long">Text lung</option>
+        </select>
+      </label>
+      <label>Rol pentru previzualizare
+        <select id="preview-role" aria-label="Rol pentru previzualizare"><option value="admin">admin</option><option value="arhivar">arhivar</option><option value="cititor">cititor</option></select>
+      </label>
+      <button class="theme-button" id="theme-toggle" type="button" aria-label="Mod întunecat">Mod întunecat</button>
+      <span>Stările și rolul selectat sunt doar exemple vizuale; căutarea și permisiunile nu sunt conectate.</span>
+    </div>
+  </aside>
+
+  <header class="viewer-header">
+    <div class="brand-mark" aria-hidden="true">AD</div>
+    <div class="header-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div>
+  </header>
+
+  <main class="wrap" id="search-screen" data-state="default" data-role="admin">
+    <div class="page-intro"><h1>Căutare în arhivă</h1><p>Găsește documente după textul extras și consultă aceeași arhivă după dosar fizic, tip de document sau an.</p></div>
+    <div class="browse-tabs" role="tablist" aria-label="Mod de consultare">
+      <button class="tab" type="button" role="tab" aria-selected="true" data-mode="dossier">Dosar fizic</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-mode="type">Tip de document</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-mode="year">An</button>
+    </div>
+    <section class="surface search-panel" aria-labelledby="search-title">
+      <div class="section-heading"><h2 id="search-title">Caută documente</h2><span class="mode-caption" id="mode-caption">Consultare după dosar fizic</span></div>
+      <form class="search-form" id="search-form">
+        <label class="screen-reader-only" for="query">Text de căutare</label>
+        <input class="search-input" id="query" type="search" placeholder="Cuvinte din document sau număr dosar">
+        <button class="button" type="submit">Caută</button>
+      </form>
+      <div class="filters" aria-label="Filtre de căutare">
+        <div class="field"><label for="filter-dossier">Dosar fizic</label><select class="filter-select" id="filter-dossier"><option>Toate dosarele</option><option>Dosar nr. 29/2014</option></select></div>
+        <div class="field"><label for="filter-type">Tip de document</label><select class="filter-select" id="filter-type"><option>Toate tipurile</option><option>Contract</option><option>Procură</option></select></div>
+        <div class="field"><label for="filter-year">An</label><select class="filter-select" id="filter-year"><option>Toți anii</option><option>2014</option><option>2019</option></select></div>
+      </div>
+      <label class="field" id="party-search"><span>Nume din acte</span><input class="search-input" type="search" placeholder="Caută un nume din act"></label>
+      <p class="permission-note" id="role-note" role="status" aria-live="polite">Căutarea numelor din acte este disponibilă.</p>
+    </section>
+
+    <div class="result-heading"><h2>Rezultate</h2><span class="result-count" id="result-count">3 rezultate · ordonate după relevanță</span></div>
+    <p class="state-message" id="state-message" role="status" aria-live="polite" hidden></p>
+    <ul class="results" id="results">
+      <li class="result-card">
+        <h3>Contract de vânzare-cumpărare</h3>
+        <p class="metadata"><span>Contract</span><span>2014</span><span class="dossier">Dosar nr. 29/2014</span></p>
+        <p class="excerpt" data-admin-excerpt>Text extras: <mark>contract</mark> autentificat la cabinetul notarial. Nume din act: Persoană sintetică.</p>
+        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: <mark>contract</mark> autentificat la cabinetul notarial. Datele personale sunt acoperite.</p>
+      </li>
+      <li class="result-card">
+        <h3>Procură specială de reprezentare</h3>
+        <p class="metadata"><span>Procură</span><span>2019</span><span class="dossier">Dosar nr. 18/2019</span></p>
+        <p class="excerpt" data-admin-excerpt>Text extras: <mark>procură</mark> pentru reprezentare, exemplu sintetic.</p>
+        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: <mark>procură</mark> pentru reprezentare. Datele personale sunt acoperite.</p>
+      </li>
+      <li class="result-card">
+        <h3>Declarație pe propria răspundere</h3>
+        <p class="metadata"><span>Declarație</span><span>2019</span><span class="dossier">Dosar nr. 4/2019</span></p>
+        <p class="excerpt" data-admin-excerpt>Text extras: declarație păstrată în arhiva cabinetului.</p>
+        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: declarație păstrată în arhivă.</p>
+      </li>
+    </ul>
+    <div class="results loading-results" id="loading-results" aria-label="Rezultate în curs de încărcare" hidden>
+      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
+  </main>
+  <script>
+    const stateMessages = {
+      default: 'Dosar nr. 29/2014', one: '1 rezultat', many: '12 rezultate',
+      empty: 'Nu au fost găsite documente.', denied: 'Nu ai acces la acest dosar fizic.',
+      loading: 'Se caută în arhivă…', error: 'Căutarea nu a putut fi finalizată. Încearcă din nou.',
+      success: 'Starea de succes a căutării este doar demonstrativă.',
+      long: 'Dosar_exemplu_cu_un_numar_lung_si_detalii_arhivistice_suplimentare'
+    };
+    const main = document.getElementById('search-screen');
+    const stateSelect = document.getElementById('preview-state');
+    const roleSelect = document.getElementById('preview-role');
+    const message = document.getElementById('state-message');
+    const results = document.getElementById('results');
+    const loadingResults = document.getElementById('loading-results');
+    const count = document.getElementById('result-count');
+    function setState(state) {
+      main.dataset.state = state;
+      message.textContent = stateMessages[state];
+      message.hidden = !['empty', 'denied', 'loading', 'error', 'success', 'long'].includes(state);
+      results.hidden = ['empty', 'denied', 'loading', 'error'].includes(state);
+      loadingResults.hidden = state !== 'loading';
+      results.querySelectorAll('.result-card').forEach((card, index) => { card.hidden = state === 'one' && index > 0; });
+      count.textContent = state === 'one' ? '1 rezultat' : state === 'many' ? '12 rezultate · 3 exemple vizibile' : '3 rezultate · ordonate după relevanță';
+      if (state === 'long') results.querySelector('.result-card h3').textContent = stateMessages.long;
+      else results.querySelector('.result-card h3').textContent = 'Contract de vânzare-cumpărare';
+      stateSelect.value = state;
+    }
+    function setRole(role) {
+      main.dataset.role = role;
+      const reader = role === 'cititor';
+      document.getElementById('party-search').hidden = reader;
+      document.getElementById('role-note').textContent = reader
+        ? 'Rezultatele sunt aprobate și anonimizate pentru dosarele permise.'
+        : 'Căutarea numelor din acte este disponibilă.';
+      document.querySelectorAll('[data-admin-excerpt]').forEach(item => { item.hidden = reader; });
+      document.querySelectorAll('[data-reader-excerpt]').forEach(item => { item.hidden = !reader; });
+    }
+    const modeTabs = [...document.querySelectorAll('[data-mode]')];
+    function activateMode(tab, moveFocus = false) {
+      modeTabs.forEach(item => { item.setAttribute('aria-selected', String(item === tab)); item.tabIndex = item === tab ? 0 : -1; });
+      document.getElementById('mode-caption').textContent = `Consultare după ${tab.textContent.toLocaleLowerCase('ro')}`;
+      if (moveFocus) tab.focus();
+    }
+    modeTabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateMode(tab));
+      tab.addEventListener('keydown', event => {
+        const next = event.key === 'ArrowRight' ? (index + 1) % modeTabs.length : event.key === 'ArrowLeft' ? (index + modeTabs.length - 1) % modeTabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? modeTabs.length - 1 : null;
+        if (next !== null) { event.preventDefault(); activateMode(modeTabs[next], true); }
+      });
+    });
+    stateSelect.addEventListener('change', event => setState(event.target.value));
+    roleSelect.addEventListener('change', event => setRole(event.target.value));
+    document.getElementById('theme-toggle').addEventListener('click', event => {
+      const dark = document.documentElement.dataset.theme !== 'dark';
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      event.currentTarget.setAttribute('aria-label', dark ? 'Mod luminos' : 'Mod întunecat');
+      event.currentTarget.textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+    });
+    document.getElementById('search-form').addEventListener('submit', event => {
+      event.preventDefault();
+      setState('success');
+    });
+    setRole('admin');
+  </script>
+</body>
+</html>

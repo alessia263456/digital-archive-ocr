@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administrare · Arhivă digitală</title>
+  <style>
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF; }
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF; }
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5; --color-bg-surface: #FFFFFF; --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C; --color-text-secondary: #556070; --color-border: #E5E0D8;
+      --color-primary: #072D5C; --color-accent-mid: #4683CF; --color-accent-teal: #46CFC3;
+      --color-accent-amber: #CE8946; --color-version-navy: #072D5C; --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A; --color-archival-label-border: #DEC09F; --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
+      --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
+      --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
+      --text-small: 400 14px/20px var(--font-body); --space-xs: 4px; --space-sm: 8px;
+      --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --radius-sm: 2px; --radius-md: 4px; --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease; --duration-normal: 250ms ease;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark; --color-bg-primary: #1E293B; --color-bg-surface: #283548; --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-border: #334155;
+      --color-primary: #4683CF; --color-accent-mid: #60A5FA; --color-focus-ring: #46CFC3;
+      --color-archival-label-bg: #3A302A; --color-archival-label-text: #E7B587; --color-archival-label-border: #69503A;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    h1, h2, h3, p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    button, input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-bottom: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
+    .tool-top, .tool-row, .mock-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-top { justify-content: space-between; }
+    .mock-only { padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-accent-amber); border-radius: var(--radius-sm); color: var(--color-text-primary); font-weight: 600; }
+    .mock-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
+    .mock-nav a[aria-current="page"] { color: var(--color-text-primary); font-weight: 700; }
+    .tool-row label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); }
+    .mock-tools select, .theme-button { min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-bottom: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
+    .header-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
+    .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xl) var(--space-md) var(--space-3xl); }
+    .page-intro { display: grid; gap: var(--space-sm); margin-block-end: var(--space-lg); }
+    .page-intro h1 { font: var(--text-h1); }
+    .page-intro p { max-inline-size: calc(var(--space-3xl) * 9); color: var(--color-text-secondary); }
+    .tabs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block-end: var(--space-md); }
+    .tab, .button, .field input, .field select { min-block-size: var(--space-2xl); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .tab { padding: var(--space-sm) var(--space-md); color: var(--color-text-secondary); cursor: pointer; }
+    .tab[aria-selected="true"] { border-color: var(--color-text-secondary); color: var(--color-text-primary); font-weight: 700; box-shadow: inset 0 calc(-1 * var(--radius-sm)) var(--color-text-secondary); }
+    .tab:hover { border-color: var(--color-accent-mid); color: var(--color-text-primary); }
+    .panel { display: grid; gap: var(--space-lg); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .panel h2 { font: var(--text-h2); }
+    .panel-copy, .secondary { color: var(--color-text-secondary); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
+    .field { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .field label { font: var(--text-small); font-weight: 600; }
+    .field input, .field select { inline-size: 100%; min-inline-size: 0; padding: var(--space-sm) var(--space-md); }
+    input::placeholder { color: var(--color-text-secondary); opacity: 1; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--space-3xl); padding: var(--space-sm) var(--space-lg); border-color: var(--color-accent-teal); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; cursor: pointer; transition: background-color var(--duration-fast); }
+    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); text-decoration: underline; }
+    .button:active { text-decoration: underline; }
+    .button:disabled, .field input:disabled, .field select:disabled { border-color: var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); cursor: default; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+    .form-actions .button { inline-size: fit-content; }
+    .state-message, .rule-note { padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
+    main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
+    .entry-list { display: grid; gap: var(--space-sm); }
+    .entry { display: grid; gap: var(--space-xs); min-inline-size: 0; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+    .entry-title { font-weight: 700; }
+    .entry-meta { color: var(--color-text-secondary); font: var(--text-small); }
+    .permission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-sm); }
+    .permission-card { display: grid; gap: var(--space-sm); padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); }
+    .permission-card strong { overflow-wrap: anywhere; }
+    .badge { justify-self: start; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--color-bg-subtle); font: var(--text-small); font-weight: 600; }
+    .permission-card .badge { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    .footnote { color: var(--color-text-secondary); font: var(--text-small); }
+    @media (max-width: 639px) { .tab { flex: 1; } .wrap { padding-block-start: var(--space-lg); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Panou de previzualizare pentru machetă">
+    <div class="tool-top"><strong>Panou de previzualizare · numai pentru machetă · DS-006</strong><span class="mock-only">NUMAI PENTRU REVIZUIREA DESIGNULUI · nu face parte din aplicație</span></div>
+    <nav class="mock-nav" aria-label="Navigare între machete de design">
+      <a href="./DS-010.html">DS-010 · Autentificare</a><a href="./DS-001.html">DS-001 · Căutare</a><a href="./DS-006.html" aria-current="page">DS-006 · Administrare</a>
+    </nav>
+    <div class="tool-row">
+      <label>Stare pentru previzualizare
+        <select id="preview-state" aria-label="Stare pentru previzualizare"><option value="default">Implicit</option><option value="empty">Listă goală</option><option value="loading">Se încarcă</option><option value="error">Eroare</option><option value="success">Succes</option><option value="disabled">Dezactivat</option><option value="long">Text lung</option></select>
+      </label>
+      <button class="theme-button" id="theme-toggle" type="button" aria-label="Mod întunecat">Mod întunecat</button>
+      <span>Stările sunt exemple vizuale; datele nu se salvează.</span>
+    </div>
+  </aside>
+  <header class="viewer-header"><div class="brand-mark" aria-hidden="true">AD</div><div class="header-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div></header>
+
+  <main class="wrap" id="admin-screen" data-state="default">
+    <div class="page-intro"><h1>Administrare</h1><p>Gestiune conturi și permisiuni pentru consultarea după dosarul fizic.</p></div>
+    <p class="state-message" id="state-message" role="status" aria-live="polite">Acces refuzat implicit. Permisiunea individuală are prioritate față de cea a rolului.</p>
+    <div class="tabs" role="tablist" aria-label="Formulare de administrare">
+      <button class="tab" id="accounts-tab" type="button" role="tab" aria-controls="accounts" aria-selected="true">Conturi</button>
+      <button class="tab" id="dossiers-tab" type="button" role="tab" aria-controls="dossiers" aria-selected="false" tabindex="-1">Dosare fizice</button>
+      <button class="tab" id="permissions-tab" type="button" role="tab" aria-controls="permissions" aria-selected="false" tabindex="-1">Permisiuni</button>
+    </div>
+
+    <section class="panel" id="accounts" role="tabpanel" aria-labelledby="accounts-tab" tabindex="0">
+      <div><h2>Conturi</h2><p class="panel-copy">Conturile cabinetului folosesc nume de utilizator și parolă.</p></div>
+      <form class="admin-form">
+        <div class="form-grid">
+          <div class="field"><label for="account-username">Nume de utilizator</label><input id="account-username" autocomplete="off" placeholder="exemplu.utilizator"></div>
+          <div class="field"><label for="account-password">Parolă</label><input id="account-password" type="password" autocomplete="new-password" placeholder="Parolă pentru cont"></div>
+          <div class="field"><label for="account-role">Rol</label><select id="account-role"><option>cititor</option><option>arhivar</option><option>admin</option></select></div>
+        </div>
+        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
+      </form>
+      <ul class="entry-list">
+        <li class="entry"><span class="entry-title">cont.arhiva</span><span class="entry-meta">Rol: arhivar</span></li>
+        <li class="entry"><span class="entry-title">cont.consultare</span><span class="entry-meta">Rol: cititor</span></li>
+      </ul>
+    </section>
+
+    <section class="panel" id="dossiers" role="tabpanel" aria-labelledby="dossiers-tab" tabindex="0" hidden>
+      <div><h2>Dosare fizice</h2><p class="panel-copy">Folosește identificatorul înscris pe cotorul dosarului fizic.</p></div>
+      <form class="admin-form">
+        <div class="form-grid"><div class="field"><label for="dossier-number">Număr dosar fizic</label><input id="dossier-number" placeholder="Dosar nr. 29/2014"></div></div>
+        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
+      </form>
+      <ul class="entry-list">
+        <li class="entry"><span class="entry-title">Dosar nr. 29/2014</span><span class="entry-meta">Dosar fizic disponibil pentru permisiuni.</span></li>
+        <li class="entry"><span class="entry-title">Dosar nr. 18/2019</span><span class="entry-meta">Dosar fizic disponibil pentru permisiuni.</span></li>
+      </ul>
+    </section>
+
+    <section class="panel" id="permissions" role="tabpanel" aria-labelledby="permissions-tab" tabindex="0" hidden>
+      <div><h2>Permisiuni pe dosare fizice</h2><p class="panel-copy">Permisiunile pentru cititor se acordă explicit pe dosar fizic și se aplică în toate modurile de consultare.</p></div>
+      <p class="rule-note">Acces refuzat implicit pentru dosarele fără permisiune.</p>
+      <form class="admin-form">
+        <div class="form-grid">
+          <div class="field"><label for="permission-user">Cont cititor</label><select id="permission-user"><option>cont.consultare</option><option>cititor.sintetic</option></select></div>
+          <div class="field"><label for="permission-dossier">Dosar fizic</label><select id="permission-dossier"><option>Dosar nr. 29/2014</option><option>Dosar nr. 18/2019</option></select></div>
+          <div class="field"><label for="permission-value">Permisiune individuală</label><select id="permission-value"><option>Permis</option><option>Refuzat</option></select></div>
+        </div>
+        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
+      </form>
+      <h3>Prioritatea permisiunilor</h3>
+      <div class="permission-grid">
+        <article class="permission-card"><strong>cont.consultare · Dosar nr. 29/2014</strong><span class="entry-meta">Rol: permis · Individual: refuzat</span><span class="badge">Rezultat: refuzat</span></article>
+        <article class="permission-card"><strong>cititor.sintetic · Dosar nr. 18/2019</strong><span class="entry-meta">Rol: refuzat · Individual: permis</span><span class="badge">Rezultat: permis</span></article>
+      </div>
+      <p class="footnote">Exemple sintetice pentru explicarea priorității; nicio permisiune nu se salvează.</p>
+    </section>
+  </main>
+  <script>
+    const messages = {
+      default: 'Acces refuzat implicit. Permisiunea individuală are prioritate față de cea a rolului.',
+      empty: 'Nu există înregistrări în această listă.',
+      loading: 'Se încarcă datele…',
+      error: 'Nu am putut salva modificările. Verifică datele și încearcă din nou.',
+      success: 'Confirmare vizuală; datele nu se salvează.',
+      disabled: 'Salvarea nu este disponibilă în previzualizare.',
+      long: 'Utilizator_exemplu_cu_un_nume_extins_pentru_verificarea_adaptării'
+    };
+    const main = document.getElementById('admin-screen');
+    const stateSelect = document.getElementById('preview-state');
+    function setState(state) {
+      main.dataset.state = state;
+      document.getElementById('state-message').textContent = messages[state];
+      main.querySelectorAll('.entry-list, .permission-grid').forEach(list => { list.hidden = state === 'empty'; });
+      stateSelect.value = state;
+      main.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+      main.querySelectorAll('input, select:not(#preview-state), .admin-form button').forEach(control => {
+        if (!control.closest('.mock-tools')) control.disabled = ['loading', 'disabled'].includes(state);
+      });
+    }
+    stateSelect.addEventListener('change', event => setState(event.target.value));
+    document.getElementById('theme-toggle').addEventListener('click', event => {
+      const dark = document.documentElement.dataset.theme !== 'dark';
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      event.currentTarget.setAttribute('aria-label', dark ? 'Mod luminos' : 'Mod întunecat');
+      event.currentTarget.textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+    });
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function activateTab(tab, moveFocus = false) {
+      tabs.forEach(item => { const selected = item === tab; item.setAttribute('aria-selected', String(selected)); item.tabIndex = selected ? 0 : -1; document.getElementById(item.getAttribute('aria-controls')).hidden = !selected; });
+      if (moveFocus) tab.focus();
+    }
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(tab));
+      tab.addEventListener('keydown', event => {
+        const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null;
+        if (next !== null) { event.preventDefault(); activateTab(tabs[next], true); }
+      });
+    });
+    document.querySelectorAll('.admin-form').forEach(form => form.addEventListener('submit', event => { event.preventDefault(); setState('success'); }));
+  </script>
+</body>
+</html>

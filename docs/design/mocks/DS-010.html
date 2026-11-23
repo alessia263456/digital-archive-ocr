@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autentificare · Arhivă digitală</title>
+  <style>
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF; }
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF; }
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5; --color-bg-surface: #FFFFFF; --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C; --color-text-secondary: #556070; --color-border: #E5E0D8;
+      --color-primary: #072D5C; --color-accent-mid: #4683CF; --color-accent-teal: #46CFC3;
+      --color-version-navy: #072D5C;
+      --color-accent-amber: #CE8946; --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
+      --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
+      --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
+      --text-small: 400 14px/20px var(--font-body); --space-xs: 4px; --space-sm: 8px;
+      --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --radius-sm: 2px; --radius-md: 4px; --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease; --duration-normal: 250ms ease;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark; --color-bg-primary: #1E293B; --color-bg-surface: #283548; --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-border: #334155;
+      --color-primary: #4683CF; --color-accent-mid: #60A5FA; --color-focus-ring: #46CFC3;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-bottom: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
+    .tool-top, .tool-row, .mock-nav, .theme-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-top { justify-content: space-between; }
+    .mock-only { padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-accent-amber); border-radius: var(--radius-sm); color: var(--color-text-primary); font-weight: 600; }
+    .mock-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
+    .mock-nav a[aria-current="page"] { color: var(--color-text-primary); font-weight: 700; }
+    .mock-tools label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); }
+    .mock-tools select, .theme-button { min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-bottom: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
+    .header-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
+    .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .page { display: grid; justify-items: center; padding: var(--space-3xl) var(--space-md); }
+    .login-card { display: grid; gap: var(--space-lg); inline-size: min(100%, calc(var(--space-3xl) * 8)); padding: var(--space-xl); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .intro { display: grid; gap: var(--space-sm); }
+    .intro h2 { font: var(--text-h2); }
+    .intro p, .hint { color: var(--color-text-secondary); }
+    .form { display: grid; gap: var(--space-md); }
+    .field { display: grid; gap: var(--space-xs); }
+    .field label { font-weight: 600; }
+    .field input { min-block-size: var(--space-2xl); inline-size: 100%; padding: var(--space-sm) var(--space-md); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    input::placeholder { color: var(--color-text-secondary); opacity: 1; }
+    .password-row { display: flex; gap: var(--space-sm); }
+    .password-row input { min-inline-size: 0; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border: thin solid var(--color-accent-teal); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; cursor: pointer; transition: background-color var(--duration-fast); }
+    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); color: var(--color-version-navy); text-decoration: underline; }
+    .button:active { text-decoration: underline; }
+    .button:disabled { border-color: var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); cursor: default; }
+    .button.secondary { border-color: var(--color-text-secondary); background: var(--color-bg-subtle); color: var(--color-text-primary); }
+    .button.secondary:hover { border-color: var(--color-accent-mid); }
+    .submit { inline-size: 100%; }
+    .state-message { min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
+    main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
+    .hint { font: var(--text-small); }
+    .footer-note { color: var(--color-text-secondary); font: var(--text-small); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Panou de previzualizare pentru machetă">
+    <div class="tool-top">
+      <strong>Panou de previzualizare · numai pentru machetă · DS-010</strong>
+      <span class="mock-only">NUMAI PENTRU REVIZUIREA DESIGNULUI · nu face parte din aplicație</span>
+    </div>
+    <nav class="mock-nav" aria-label="Navigare între machete de design">
+      <a href="./DS-010.html" aria-current="page">DS-010 · Autentificare</a><a href="./DS-001.html">DS-001 · Căutare</a><a href="./DS-006.html">DS-006 · Administrare</a>
+    </nav>
+    <div class="tool-row">
+      <label>Stare pentru previzualizare
+        <select id="preview-state" aria-label="Stare pentru previzualizare">
+          <option value="default">Implicit</option><option value="empty">Câmpuri goale</option><option value="loading">Se încarcă</option><option value="error">Eroare</option><option value="success">Succes</option><option value="disabled">Dezactivat</option><option value="long">Text lung</option>
+        </select>
+      </label>
+      <button class="theme-button" id="theme-toggle" type="button" aria-label="Mod întunecat">Mod întunecat</button>
+      <span>Stările sunt exemple vizuale; autentificarea nu este conectată.</span>
+    </div>
+  </aside>
+
+  <header class="viewer-header">
+    <div class="brand-mark" aria-hidden="true">AD</div>
+    <div class="header-copy">
+      <p class="header-kicker">Cabinet Individual Notarial</p>
+      <h1 class="header-title">Autentificare</h1>
+    </div>
+  </header>
+
+  <main class="page" id="login" data-state="default">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="intro">
+        <p class="header-kicker">Cabinet Individual Notarial</p>
+        <h2 id="login-title">Acces la arhiva digitală</h2>
+        <p>Introdu datele de acces furnizate de administratorul Aplicației.</p>
+      </div>
+      <form class="form" id="login-form">
+        <div class="field">
+          <label for="username">Nume de utilizator</label>
+          <input id="username" name="username" type="text" autocomplete="username" placeholder="Nume de utilizator">
+        </div>
+        <div class="field">
+          <label for="password">Parolă</label>
+          <div class="password-row">
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Parola contului">
+            <button class="button secondary" id="show-password" type="button" aria-label="Arată parola">Arată</button>
+          </div>
+        </div>
+        <p class="state-message" id="state-message" role="status" aria-live="polite">Folosește numele de utilizator și parola contului.</p>
+        <button class="button submit" id="submit-login" type="submit">Autentificare</button>
+      </form>
+      <p class="footer-note">Dacă nu poți intra în cont, contactează administratorul cabinetului.</p>
+    </section>
+  </main>
+  <script>
+    const messages = {
+      default: 'Folosește numele de utilizator și parola contului.',
+      empty: 'Completează câmpurile pentru a continua.',
+      loading: 'Se verifică datele introduse…',
+      error: 'Nu am putut verifica datele introduse. Încearcă din nou.',
+      success: 'Starea de succes a autentificării este doar pentru previzualizare.',
+      disabled: 'Autentificarea nu este disponibilă în previzualizare.',
+      long: 'Nume de utilizator foarte lung pentru verificarea adaptării vizuale'
+    };
+    const main = document.getElementById('login');
+    const stateSelect = document.getElementById('preview-state');
+    const stateMessage = document.getElementById('state-message');
+    const submit = document.getElementById('submit-login');
+    function setState(state) {
+      main.dataset.state = state;
+      stateMessage.textContent = messages[state];
+      submit.disabled = state === 'loading' || state === 'disabled';
+      main.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+      document.querySelectorAll('#login-form input').forEach(input => { input.disabled = ['loading', 'disabled'].includes(state); });
+      stateSelect.value = state;
+    }
+    stateSelect.addEventListener('change', event => setState(event.target.value));
+    document.getElementById('theme-toggle').addEventListener('click', event => {
+      const dark = document.documentElement.dataset.theme !== 'dark';
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      event.currentTarget.setAttribute('aria-label', dark ? 'Mod luminos' : 'Mod întunecat');
+      event.currentTarget.textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+    });
+    document.getElementById('show-password').addEventListener('click', event => {
+      const input = document.getElementById('password');
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      event.currentTarget.textContent = show ? 'Ascunde' : 'Arată';
+      event.currentTarget.setAttribute('aria-label', show ? 'Ascunde parola' : 'Arată parola');
+    });
+    document.getElementById('login-form').addEventListener('submit', event => {
+      event.preventDefault();
+      stateMessage.textContent = 'Autentificarea nu este conectată; aceasta este doar o previzualizare.';
+    });
+  </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ designs:
     name: "Listă documente / Căutare (Document list / Search results)"
     kind: screen
     status: draft
+    design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-032, D-033]
     description: "Căutare full-text OCR (<2s), rezultate după relevanță cu evidențiere și numărul dosarului fizic. Consultare după dosar fizic, tip sau an, cu permisiuni pe dosar și rezultate anonimizate pentru cititor."
@@ -49,6 +50,7 @@ designs:
     name: "Panou administrare (Admin panel)"
     kind: screen
     status: draft
+    design_ref: mocks/DS-006.html
     roles: [admin]
     decisions: [D-017, D-032, D-033]
     description: "Gestiune conturi și permisiuni pentru cititor, acordate explicit pe dosar fizic. Permisiunea individuală are prioritate."
@@ -82,6 +84,7 @@ designs:
     name: "Autentificare (Login)"
     kind: screen
     status: draft
+    design_ref: mocks/DS-010.html
     roles: [unauthenticated]
     decisions: [D-017, D-018]
     description: "Ecran autentificare cu utilizator și parolă pentru personalul cabinetului notarial, mesaje de eroare exclusiv în limba română."
