@@ -9,7 +9,7 @@ designs:
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-032, D-033]
-    description: "Căutare full-text OCR (<2s), rezultate după relevanță cu evidențiere și numărul dosarului fizic. Consultare după dosar fizic, tip sau an, cu permisiuni pe dosar și rezultate anonimizate pentru cititor."
+    description: "Acasă cu colecții după tip, dosar fizic, an și documente adăugate recent (ordonate după data adăugării în arhivă). Căutare full-text OCR cu filtre, rezultate după relevanță și numărul dosarului fizic vizibil. Accesul cititorului respectă permisiunile pe dosar."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"

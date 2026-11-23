@@ -36,7 +36,7 @@
     button, input, select { font: inherit; color: inherit; }
     :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
     .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-bottom: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
-    .tool-top, .tool-row, .mock-nav, .theme-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-top, .tool-row, .mock-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
     .tool-top { justify-content: space-between; }
     .mock-only { padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-accent-amber); border-radius: var(--radius-sm); color: var(--color-text-primary); font-weight: 600; }
     .mock-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
@@ -49,52 +49,78 @@
     .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
     .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
     .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xl) var(--space-md) var(--space-3xl); }
-    .page-intro { display: grid; gap: var(--space-sm); margin-block-end: var(--space-lg); }
+    .page-intro { margin-block-end: var(--space-lg); }
     .page-intro h1 { font: var(--text-h1); }
-    .page-intro p { max-inline-size: calc(var(--space-3xl) * 9); color: var(--color-text-secondary); }
-    .surface { border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .browse-tabs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block-end: var(--space-md); }
-    .tab, .button, .search-input, .filter-select { min-block-size: var(--space-2xl); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
-    .tab { padding: var(--space-sm) var(--space-md); color: var(--color-text-secondary); cursor: pointer; }
-    .tab[aria-selected="true"] { border-color: var(--color-text-secondary); color: var(--color-text-primary); font-weight: 700; box-shadow: inset 0 calc(-1 * var(--radius-sm)) var(--color-text-secondary); }
-    .tab:hover { border-color: var(--color-accent-mid); color: var(--color-text-primary); }
-    .search-panel { display: grid; gap: var(--space-md); padding: var(--space-lg); }
-    .section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); }
-    .section-heading h2 { font: var(--text-h3); }
-    .mode-caption { color: var(--color-text-secondary); font: var(--text-small); }
-    .search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm); }
-    .search-input, .filter-select { min-inline-size: 0; inline-size: 100%; padding: var(--space-sm) var(--space-md); }
+    .search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm); margin-block-end: var(--space-xl); }
+    .search-input, .filter-select { min-inline-size: 0; inline-size: 100%; min-block-size: var(--space-3xl); padding: var(--space-sm) var(--space-md); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .search-input { font: var(--text-body); }
     input::placeholder { color: var(--color-text-secondary); opacity: 1; }
-    .button { display: inline-flex; align-items: center; justify-content: center; padding: var(--space-sm) var(--space-lg); background: var(--color-accent-teal); border-color: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; cursor: pointer; transition: background-color var(--duration-fast); }
-    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); text-decoration: underline; }
-    .button:active { text-decoration: underline; }
-    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 3)), 1fr)); gap: var(--space-md); }
+    .button, .expand-button, .folder-card, .back-button, .clear-search { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); color: var(--color-text-primary); font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast); }
+    .button { min-block-size: var(--space-3xl); border-color: var(--color-accent-teal); background: var(--color-accent-teal); color: var(--color-version-navy); }
+    .button:hover, .folder-card:hover, .expand-button:hover, .back-button:hover, .clear-search:hover { border-color: var(--color-accent-mid); background: var(--color-bg-subtle); text-decoration: underline; }
+    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); }
+    .button:active, .folder-card:active, .expand-button:active, .back-button:active, .clear-search:active { text-decoration: underline; }
+    .archive-layout { display: grid; grid-template-columns: minmax(calc(var(--space-3xl) * 3), calc(var(--space-3xl) * 4)) minmax(0, 1fr); align-items: start; gap: var(--space-xl); }
+    .filter-sidebar { display: grid; gap: var(--space-lg); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .filter-sidebar h2 { font: var(--text-h3); }
+    .filters { display: grid; gap: var(--space-md); }
     .field { display: grid; gap: var(--space-xs); min-inline-size: 0; }
     .field label { color: var(--color-text-secondary); font: var(--text-small); font-weight: 600; }
-    .permission-note { padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-teal); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
-    .result-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); margin-block: var(--space-xl) var(--space-md); }
-    .result-heading h2 { font: var(--text-h2); }
-    .result-count { color: var(--color-text-secondary); font: var(--text-small); }
-    .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 5)), 1fr)); gap: var(--space-md); }
-    .result-card { display: grid; align-content: start; gap: var(--space-sm); min-inline-size: 0; padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .skeleton-card { display: grid; align-content: start; gap: var(--space-md); min-inline-size: 0; min-block-size: calc(var(--space-3xl) * 3); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); }
-    .skeleton { min-block-size: var(--space-md); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
-    .result-card h3 { overflow-wrap: anywhere; font: var(--text-h3); }
-    .metadata { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--color-text-secondary); font: var(--text-small); }
-    .dossier { color: var(--color-archival-label-text); }
+    .filter-select { min-block-size: var(--space-2xl); padding: var(--space-sm); }
+    .permission-note { padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-teal); border-radius: var(--radius-sm); background: var(--color-bg-subtle); font: var(--text-small); }
+    .content-column { display: grid; gap: var(--space-xl); min-inline-size: 0; }
+    .home-sections { display: grid; gap: var(--space-xl); }
+    .browse-section { display: grid; gap: var(--space-md); min-inline-size: 0; padding-block-end: var(--space-xl); border-block-end: thin solid var(--color-border); }
+    .browse-heading, .view-heading, .results-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); }
+    .browse-heading h2, .view-heading h2 { font: var(--text-h2); }
+    .expand-button { gap: var(--space-sm); min-block-size: var(--space-2xl); margin-inline-start: auto; padding-inline: var(--space-md); color: var(--color-primary); font: var(--text-small); }
+    .chevron { inline-size: var(--space-sm); block-size: var(--space-sm); border-inline-end: thin solid currentColor; border-block-end: thin solid currentColor; transform: rotate(45deg) translateY(calc(-1 * var(--space-xs))); transition: transform var(--duration-fast); }
+    .browse-section.is-expanded .chevron { transform: rotate(225deg) translateY(calc(-1 * var(--space-xs))); }
+    .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 3)), 1fr)); gap: var(--space-sm); }
+    .folder-card { justify-content: flex-start; gap: var(--space-md); min-inline-size: 0; min-block-size: calc(var(--space-3xl) * 1.5); padding: var(--space-md); text-align: start; }
+    .folder-symbol { position: relative; flex: none; inline-size: var(--space-xl); block-size: var(--space-lg); border: thin solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .folder-symbol::before { position: absolute; inset-block-start: calc(-1 * var(--space-xs)); inset-inline-start: var(--space-xs); inline-size: var(--space-md); block-size: var(--space-xs); border: thin solid var(--color-accent-mid); border-block-end: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--color-bg-subtle); content: ''; }
+    .folder-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .folder-title { overflow-wrap: anywhere; font-weight: 600; }
+    .folder-caption { color: var(--color-text-secondary); font: var(--text-small); }
+    .folder-number { color: var(--color-archival-label-text); font-weight: 600; }
+    .recent-list { display: grid; gap: var(--space-sm); }
+    .recent-preview { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--space-sm) var(--space-lg); min-inline-size: 0; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .recent-main { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .recent-preview h3 { overflow-wrap: anywhere; font: var(--text-h3); }
+    .recent-meta { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--color-text-secondary); font: var(--text-small); }
+    .recent-added { display: grid; gap: var(--space-xs); justify-items: end; color: var(--color-text-secondary); font: var(--text-small); white-space: nowrap; }
+    .recent-added time { color: var(--color-text-primary); font-weight: 600; }
+    .view-panel { display: grid; gap: var(--space-lg); min-inline-size: 0; }
+    .view-heading { align-items: flex-start; }
+    .view-title { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .view-title p { color: var(--color-text-secondary); font: var(--text-small); }
+    .back-button, .clear-search { min-block-size: var(--space-2xl); padding-inline: var(--space-md); font: var(--text-small); }
+    .results-toolbar { justify-content: flex-start; color: var(--color-text-secondary); font: var(--text-small); }
+    .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
+    .document-card { min-inline-size: 0; }
+    .document-card article { display: grid; align-content: start; gap: var(--space-sm); min-inline-size: 0; block-size: 100%; padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .document-card h3 { overflow-wrap: anywhere; font: var(--text-h3); }
+    .document-metadata { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--color-text-secondary); font: var(--text-small); }
+    .dossier-number { color: var(--color-archival-label-text); font-weight: 600; }
     .excerpt { overflow-wrap: anywhere; }
-    mark { border-radius: var(--radius-sm); background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
-    .state-message { margin-block-end: var(--space-md); padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
-    main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
+    .state-message { padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    main[data-state="error"] .state-message, main[data-state="denied"] .state-message { border-color: var(--color-accent-amber); }
     main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
-    main[data-state="denied"] .state-message { border-color: var(--color-accent-amber); }
-    .reader-only { color: var(--color-text-secondary); font: var(--text-small); }
+    .skeleton-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
+    .skeleton-card { display: grid; align-content: start; gap: var(--space-md); min-block-size: calc(var(--space-3xl) * 3); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .skeleton { min-block-size: var(--space-md); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
     .screen-reader-only { position: absolute; inline-size: var(--space-xs); block-size: var(--space-xs); overflow: hidden; clip-path: inset(50%); }
+    @media (max-width: 1023px) { .archive-layout { grid-template-columns: minmax(0, 1fr); } .filter-sidebar { order: 0; } .content-column { order: 1; } }
     @media (max-width: 639px) {
-      .search-form { grid-template-columns: 1fr; }
-      .search-form .button { inline-size: 100%; }
-      .tab { flex: 1; }
       .wrap { padding-block-start: var(--space-lg); }
+      .page-intro { margin-block-end: var(--space-md); }
+      .search-form { margin-block-end: var(--space-lg); }
+      .search-form .button { padding-inline: var(--space-md); }
+      .filter-sidebar { gap: var(--space-md); padding: var(--space-md); }
+      .recent-preview { grid-template-columns: minmax(0, 1fr); }
+      .recent-added { grid-template-columns: auto auto; justify-content: start; justify-items: start; gap: var(--space-xs); }
+      .results { grid-template-columns: minmax(0, 1fr); }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
   </style>
@@ -108,14 +134,14 @@
     <div class="tool-row">
       <label>Stare pentru previzualizare
         <select id="preview-state" aria-label="Stare pentru previzualizare">
-          <option value="default">Implicit · rezultate</option><option value="one">Un rezultat</option><option value="many">Multe rezultate</option><option value="empty">Fără rezultate</option><option value="denied">Acces refuzat</option><option value="loading">Se caută</option><option value="error">Eroare</option><option value="success">Succes</option><option value="long">Text lung</option>
+          <option value="default">Implicit · arhivă</option><option value="one">Un rezultat</option><option value="many">Multe rezultate</option><option value="empty">Fără rezultate</option><option value="denied">Acces refuzat</option><option value="loading">Se caută</option><option value="error">Eroare</option><option value="success">Succes</option><option value="long">Text lung</option>
         </select>
       </label>
       <label>Rol pentru previzualizare
         <select id="preview-role" aria-label="Rol pentru previzualizare"><option value="admin">admin</option><option value="arhivar">arhivar</option><option value="cititor">cititor</option></select>
       </label>
       <button class="theme-button" id="theme-toggle" type="button" aria-label="Mod întunecat">Mod întunecat</button>
-      <span>Stările și rolul selectat sunt doar exemple vizuale; căutarea și permisiunile nu sunt conectate.</span>
+      <span>Toate datele sunt fictive; stările și rolul sunt numai exemple vizuale.</span>
     </div>
   </aside>
 
@@ -124,119 +150,398 @@
     <div class="header-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div>
   </header>
 
-  <main class="wrap" id="search-screen" data-state="default" data-role="admin">
-    <div class="page-intro"><h1>Căutare în arhivă</h1><p>Găsește documente după textul extras și consultă aceeași arhivă după dosar fizic, tip de document sau an.</p></div>
-    <div class="browse-tabs" role="tablist" aria-label="Mod de consultare">
-      <button class="tab" type="button" role="tab" aria-selected="true" data-mode="dossier">Dosar fizic</button>
-      <button class="tab" type="button" role="tab" aria-selected="false" data-mode="type">Tip de document</button>
-      <button class="tab" type="button" role="tab" aria-selected="false" data-mode="year">An</button>
-    </div>
-    <section class="surface search-panel" aria-labelledby="search-title">
-      <div class="section-heading"><h2 id="search-title">Caută documente</h2><span class="mode-caption" id="mode-caption">Consultare după dosar fizic</span></div>
-      <form class="search-form" id="search-form">
-        <label class="screen-reader-only" for="query">Text de căutare</label>
-        <input class="search-input" id="query" type="search" placeholder="Cuvinte din document sau număr dosar">
-        <button class="button" type="submit">Caută</button>
-      </form>
-      <div class="filters" aria-label="Filtre de căutare">
-        <div class="field"><label for="filter-dossier">Dosar fizic</label><select class="filter-select" id="filter-dossier"><option>Toate dosarele</option><option>Dosar nr. 29/2014</option></select></div>
-        <div class="field"><label for="filter-type">Tip de document</label><select class="filter-select" id="filter-type"><option>Toate tipurile</option><option>Contract</option><option>Procură</option></select></div>
-        <div class="field"><label for="filter-year">An</label><select class="filter-select" id="filter-year"><option>Toți anii</option><option>2014</option><option>2019</option></select></div>
-      </div>
-      <label class="field" id="party-search"><span>Nume din acte</span><input class="search-input" type="search" placeholder="Caută un nume din act"></label>
-      <p class="permission-note" id="role-note" role="status" aria-live="polite">Căutarea numelor din acte este disponibilă.</p>
-    </section>
+  <main class="wrap" id="search-screen" data-state="default" data-role="admin" data-view="home">
+    <div class="page-intro"><h1>Căutare în arhivă</h1></div>
+    <form class="search-form" id="search-form" role="search">
+      <label class="screen-reader-only" for="query">Text de căutare</label>
+      <input class="search-input" id="query" type="search" aria-label="Text de căutare" placeholder="Caută după text sau număr de dosar">
+      <button class="button" type="submit">Caută</button>
+    </form>
 
-    <div class="result-heading"><h2>Rezultate</h2><span class="result-count" id="result-count">3 rezultate · ordonate după relevanță</span></div>
-    <p class="state-message" id="state-message" role="status" aria-live="polite" hidden></p>
-    <ul class="results" id="results">
-      <li class="result-card">
-        <h3>Contract de vânzare-cumpărare</h3>
-        <p class="metadata"><span>Contract</span><span>2014</span><span class="dossier">Dosar nr. 29/2014</span></p>
-        <p class="excerpt" data-admin-excerpt>Text extras: <mark>contract</mark> autentificat la cabinetul notarial. Nume din act: Persoană sintetică.</p>
-        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: <mark>contract</mark> autentificat la cabinetul notarial. Datele personale sunt acoperite.</p>
-      </li>
-      <li class="result-card">
-        <h3>Procură specială de reprezentare</h3>
-        <p class="metadata"><span>Procură</span><span>2019</span><span class="dossier">Dosar nr. 18/2019</span></p>
-        <p class="excerpt" data-admin-excerpt>Text extras: <mark>procură</mark> pentru reprezentare, exemplu sintetic.</p>
-        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: <mark>procură</mark> pentru reprezentare. Datele personale sunt acoperite.</p>
-      </li>
-      <li class="result-card">
-        <h3>Declarație pe propria răspundere</h3>
-        <p class="metadata"><span>Declarație</span><span>2019</span><span class="dossier">Dosar nr. 4/2019</span></p>
-        <p class="excerpt" data-admin-excerpt>Text extras: declarație păstrată în arhiva cabinetului.</p>
-        <p class="excerpt" data-reader-excerpt hidden>Text disponibil după anonimizare: declarație păstrată în arhivă.</p>
-      </li>
-    </ul>
-    <div class="results loading-results" id="loading-results" aria-label="Rezultate în curs de încărcare" hidden>
-      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
-      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
-      <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    <div class="archive-layout">
+      <aside class="filter-sidebar" aria-label="Filtre de arhivă">
+        <h2>Filtre</h2>
+        <div class="filters">
+          <div class="field"><label for="filter-dossier">Dosar fizic</label><select class="filter-select" id="filter-dossier"><option value="all">Toate dosarele</option></select></div>
+          <div class="field"><label for="filter-type">Tipul documentului</label><select class="filter-select" id="filter-type"><option value="all">Toate tipurile</option></select></div>
+          <div class="field"><label for="filter-year">Anul actului</label><select class="filter-select" id="filter-year"><option value="all">Toți anii</option></select></div>
+          <label class="field" id="party-search"><span>Nume din acte</span><input class="filter-select" id="party-query" type="search" placeholder="Caută un nume din act"></label>
+        </div>
+        <p class="permission-note" id="role-note" role="status" aria-label="Diferențe de previzualizare" aria-live="polite">Exemple pentru consultare după rol.</p>
+      </aside>
+
+      <div class="content-column">
+        <div class="home-sections" id="home-sections">
+          <section class="browse-section" id="browse-type" aria-labelledby="browse-type-title">
+            <div class="browse-heading"><h2 id="browse-type-title">După tipul documentului</h2><button class="expand-button" type="button" aria-expanded="false" aria-controls="type-folders"><span class="expand-label">Vezi toate</span><span class="chevron" aria-hidden="true"></span></button></div>
+            <div class="folder-grid" id="type-folders"></div>
+          </section>
+          <section class="browse-section" id="browse-dossier" aria-labelledby="browse-dossier-title">
+            <div class="browse-heading"><h2 id="browse-dossier-title">După dosar fizic</h2><button class="expand-button" type="button" aria-expanded="false" aria-controls="dossier-folders"><span class="expand-label">Vezi toate</span><span class="chevron" aria-hidden="true"></span></button></div>
+            <div class="folder-grid" id="dossier-folders"></div>
+          </section>
+          <section class="browse-section" id="browse-year" aria-labelledby="browse-year-title">
+            <div class="browse-heading"><h2 id="browse-year-title">După an</h2><button class="expand-button" type="button" aria-expanded="false" aria-controls="year-folders"><span class="expand-label">Vezi toate</span><span class="chevron" aria-hidden="true"></span></button></div>
+            <div class="folder-grid" id="year-folders"></div>
+          </section>
+          <section class="browse-section" id="browse-recent" aria-labelledby="browse-recent-title">
+            <div class="browse-heading"><h2 id="browse-recent-title">Adăugate recent</h2><button class="expand-button" type="button" aria-expanded="false" aria-controls="recent-documents"><span class="expand-label">Vezi toate</span><span class="chevron" aria-hidden="true"></span></button></div>
+            <ul class="recent-list" id="recent-documents"></ul>
+          </section>
+        </div>
+
+        <section class="view-panel" id="folder-view" aria-labelledby="folder-view-title" hidden>
+          <div class="view-heading"><div class="view-title"><h2 id="folder-view-title"></h2><p id="folder-view-caption"></p></div><button class="back-button" id="back-to-home" type="button">Înapoi la arhivă</button></div>
+          <ul class="results" id="folder-documents"></ul>
+          <p class="state-message" id="folder-empty" role="status" hidden></p>
+        </section>
+
+        <section class="view-panel" id="search-view" aria-labelledby="results-title" hidden>
+          <div class="view-heading"><div class="view-title"><h2 id="results-title">Rezultate</h2><p id="result-count"></p></div><button class="clear-search" id="clear-search" type="button">Șterge căutarea</button></div>
+          <div class="results-toolbar"><span id="sort-caption">Ordonare: relevanță</span><span id="query-caption"></span></div>
+          <p class="state-message" id="state-message" role="status" aria-label="Stare rezultate" aria-live="polite" hidden></p>
+          <ul class="results" id="search-results"></ul>
+          <div class="skeleton-list" id="loading-results" aria-label="Rezultate în curs de încărcare" hidden>
+            <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+            <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
   <script>
-    const stateMessages = {
-      default: 'Dosar nr. 29/2014', one: '1 rezultat', many: '12 rezultate',
-      empty: 'Nu au fost găsite documente.', denied: 'Nu ai acces la acest dosar fizic.',
-      loading: 'Se caută în arhivă…', error: 'Căutarea nu a putut fi finalizată. Încearcă din nou.',
-      success: 'Starea de succes a căutării este doar demonstrativă.',
-      long: 'Dosar_exemplu_cu_un_numar_lung_si_detalii_arhivistice_suplimentare'
-    };
+    const dossiers = [
+      { id: 'dossier-004-procura', number: 'Dosar nr. 004', context: 'Procuri · 2026', year: '2026' },
+      { id: 'dossier-004-succesiune', number: 'Dosar nr. 004', context: 'Succesiuni · 2024', year: '2024' },
+      { id: 'dossier-018-2025', number: 'Dosar nr. 018/2025', context: 'Cereri / Proiecte · 2025', year: '2025' },
+      { id: 'dossier-029-2014', number: 'Dosar nr. 29/2014', context: 'Declarații · 2014', year: '2014' },
+      { id: 'dossier-012-2023', number: 'Dosar nr. 012/2023', context: 'Succesiuni · 2023', year: '2023' },
+      { id: 'dossier-007-2024', number: 'Dosar nr. 007/2024', context: 'Cereri / Proiecte · 2024', year: '2024' },
+      { id: 'dossier-006-2025', number: 'Dosar nr. 006/2025', context: 'Declarații · 2025', year: '2025' },
+      { id: 'dossier-003-2019', number: 'Dosar nr. 003/2019', context: 'Procuri · 2019', year: '2019' },
+      { id: 'dossier-031-2022', number: 'Dosar nr. 031/2022', context: 'Divorț / Familie · 2022', year: '2022' }
+    ];
+    const typeFolders = [
+      { id: 'type-procuri', title: 'Procuri', type: 'Procură', caption: 'Acte autentice de reprezentare' },
+      { id: 'type-succesiuni', title: 'Succesiuni', type: 'Testament / Succesiune', caption: 'Acte din proceduri succesorale' },
+      { id: 'type-cereri', title: 'Cereri / Proiecte', type: 'Cereri / Proiecte', caption: 'Cereri și proiecte de act' },
+      { id: 'type-declaratii', title: 'Declarații', type: 'Declarație', caption: 'Declarații autentice' },
+      { id: 'type-divort', title: 'Divorț / Familie', type: 'Divorț / Familie', caption: 'Documente de stare civilă' }
+    ];
+    const documents = [
+      { id: 'doc-procura-184', title: 'Procură pentru vânzarea unui imobil', type: 'Procură', year: '2026', actNumber: 'Act nr. 184', actDate: '12.05.2026', inventory: 'Inventar nr. 271', dossierId: 'dossier-004-procura', dossierNumber: 'Dosar nr. 004', addedDate: '2026-11-23', addedLabel: '23.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: procură pentru vânzarea imobilului. Nume din act: Persoană sintetică.', readerExcerpt: 'Text disponibil după anonimizare: procură pentru vânzarea imobilului.' },
+      { id: 'doc-certificat-58', title: 'Certificat de moștenitor', type: 'Testament / Succesiune', year: '2024', actNumber: 'Act nr. 58/2024', actDate: '03.02.2024', inventory: 'Inventar nr. 118', dossierId: 'dossier-004-succesiune', dossierNumber: 'Dosar nr. 004', addedDate: '2026-11-22', addedLabel: '22.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: certificat de moștenitor emis în procedura succesorală.', readerExcerpt: 'Text disponibil după anonimizare: certificat de moștenitor emis în procedura succesorală.' },
+      { id: 'doc-cerere-63', title: 'Cerere de deschidere a succesiunii', type: 'Cereri / Proiecte', year: '2025', actNumber: 'Act nr. 63/2025', actDate: '17.09.2025', inventory: 'Inventar nr. 204', dossierId: 'dossier-018-2025', dossierNumber: 'Dosar nr. 018/2025', addedDate: '2026-11-21', addedLabel: '21.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: cerere de deschidere pentru procedura succesorală.', readerExcerpt: 'Text disponibil după anonimizare: cerere de deschidere pentru procedura succesorală.' },
+      { id: 'doc-declaratie-27', title: 'Declarație de acceptare a succesiunii', type: 'Declarație', year: '2014', actNumber: 'Act nr. 27/2014', actDate: '08.04.2014', inventory: 'Inventar nr. 053', dossierId: 'dossier-029-2014', dossierNumber: 'Dosar nr. 29/2014', addedDate: '2026-11-20', addedLabel: '20.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: declarație de acceptare a succesiunii.', readerExcerpt: 'Text disponibil după anonimizare: declarație de acceptare a succesiunii.' },
+      { id: 'doc-incheiere-41', title: 'Încheiere finală de succesiune', type: 'Testament / Succesiune', year: '2023', actNumber: 'Act nr. 41/2023', actDate: '15.11.2023', inventory: 'Inventar nr. 012', dossierId: 'dossier-012-2023', dossierNumber: 'Dosar nr. 012/2023', addedDate: '2026-11-19', addedLabel: '19.11.2026', readerVisible: false, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: încheiere finală din procedura succesorală.', readerExcerpt: 'Text disponibil după anonimizare: încheiere finală din procedura succesorală.' },
+      { id: 'doc-cerere-47', title: 'Cerere de eliberare a certificatului de sarcini', type: 'Cereri / Proiecte', year: '2024', actNumber: 'Act nr. 47/2024', actDate: '28.08.2024', inventory: 'Inventar nr. 264', dossierId: 'dossier-007-2024', dossierNumber: 'Dosar nr. 007/2024', addedDate: '2026-11-18', addedLabel: '18.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: cerere pentru eliberarea certificatului de sarcini.', readerExcerpt: 'Text disponibil după anonimizare: cerere pentru eliberarea certificatului de sarcini.' },
+      { id: 'doc-declaratie-19', title: 'Declarație pe propria răspundere', type: 'Declarație', year: '2025', actNumber: 'Act nr. 19/2025', actDate: '11.03.2025', inventory: 'Inventar nr. 140', dossierId: 'dossier-006-2025', dossierNumber: 'Dosar nr. 006/2025', addedDate: '2026-11-17', addedLabel: '17.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: declarație păstrată în arhiva cabinetului.', readerExcerpt: 'Text disponibil după anonimizare: declarație păstrată în arhivă.' },
+      { id: 'doc-procura-122', title: 'Procură pentru operațiuni administrative', type: 'Procură', year: '2019', actNumber: 'Act nr. 122/2019', actDate: '22.07.2019', inventory: 'Inventar nr. 080', dossierId: 'dossier-003-2019', dossierNumber: 'Dosar nr. 003/2019', addedDate: '2026-11-16', addedLabel: '16.11.2026', readerVisible: false, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: procură pentru operațiuni administrative.', readerExcerpt: 'Text disponibil după anonimizare: procură pentru operațiuni administrative.' },
+      { id: 'doc-cerere-divort-31', title: 'Cerere de divorț', type: 'Divorț / Familie', year: '2022', actNumber: 'Act nr. 31/2022', actDate: '05.06.2022', inventory: 'Inventar nr. 096', dossierId: 'dossier-031-2022', dossierNumber: 'Dosar nr. 031/2022', addedDate: '2026-11-15', addedLabel: '15.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: cerere de divorț și acte de procedură.', readerExcerpt: 'Text disponibil după anonimizare: cerere de divorț și acte de procedură.' }
+    ];
+    const years = [...new Set(documents.map(document => document.year))].sort((a, b) => b.localeCompare(a));
     const main = document.getElementById('search-screen');
-    const stateSelect = document.getElementById('preview-state');
+    const home = document.getElementById('home-sections');
+    const folderView = document.getElementById('folder-view');
+    const searchView = document.getElementById('search-view');
+    const previewState = document.getElementById('preview-state');
     const roleSelect = document.getElementById('preview-role');
-    const message = document.getElementById('state-message');
-    const results = document.getElementById('results');
+    const queryInput = document.getElementById('query');
+    const searchResults = document.getElementById('search-results');
+    const folderDocuments = document.getElementById('folder-documents');
+    const stateMessage = document.getElementById('state-message');
     const loadingResults = document.getElementById('loading-results');
-    const count = document.getElementById('result-count');
-    function setState(state) {
+    const expandedSections = new Set();
+    let activeFolder = null;
+    let currentView = 'home';
+    let currentSearchResults = [];
+
+    function activeDocuments() {
+      return main.dataset.role === 'cititor' ? documents.filter(item => item.readerVisible) : documents;
+    }
+    function normalize(value) {
+      return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('ro');
+    }
+    function folderButton(item, kind, caption) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'folder-card browse-item';
+      button.dataset.folderId = item.id;
+      button.dataset.folderKind = kind;
+      const symbol = document.createElement('span');
+      symbol.className = 'folder-symbol';
+      symbol.setAttribute('aria-hidden', 'true');
+      const copy = document.createElement('span');
+      copy.className = 'folder-copy';
+      const title = document.createElement('span');
+      title.className = kind === 'dossier' ? 'folder-number' : 'folder-title';
+      title.textContent = kind === 'dossier' ? item.number : item.title;
+      const subline = document.createElement('span');
+      subline.className = 'folder-caption';
+      subline.textContent = caption;
+      copy.append(title, subline);
+      button.append(symbol, copy);
+      return button;
+    }
+    function setSectionItems(sectionId, targetId, items, makeButton, initialCount = 4) {
+      const section = document.getElementById(sectionId);
+      const target = document.getElementById(targetId);
+      const expanded = expandedSections.has(sectionId);
+      target.replaceChildren();
+      items.forEach((item, index) => {
+        const card = makeButton(item);
+        card.hidden = !expanded && index >= initialCount;
+        target.append(card);
+      });
+      section.classList.toggle('is-expanded', expanded);
+      const control = section.querySelector('.expand-button');
+      control.setAttribute('aria-expanded', String(expanded));
+      control.querySelector('.expand-label').textContent = expanded ? 'Vezi mai puține' : 'Vezi toate';
+      control.hidden = items.length <= initialCount;
+    }
+    function addMeta(parent, value, className = '') {
+      const span = document.createElement('span');
+      if (className) span.className = className;
+      span.textContent = value;
+      parent.append(span);
+    }
+    function documentCard(item, compact = false) {
+      const li = document.createElement('li');
+      li.className = compact ? 'browse-item' : 'document-card';
+      li.dataset.documentId = item.id;
+      if (compact) li.dataset.addedDate = item.addedDate;
+      const article = document.createElement('article');
+      article.className = compact ? 'recent-preview' : '';
+      const heading = document.createElement('h3');
+      heading.textContent = item.title;
+      const meta = document.createElement('div');
+      meta.className = 'recent-meta document-metadata';
+      addMeta(meta, item.type);
+      addMeta(meta, item.actNumber);
+      addMeta(meta, `Data actului: ${item.actDate}`);
+      addMeta(meta, item.inventory);
+      addMeta(meta, item.dossierNumber, 'dossier-number');
+      if (compact) {
+        const summary = document.createElement('div');
+        summary.className = 'recent-main';
+        summary.append(heading, meta);
+        article.append(summary);
+        const added = document.createElement('div');
+        added.className = 'recent-added';
+        const label = document.createElement('span');
+        label.textContent = 'Adăugat la arhivă';
+        const time = document.createElement('time');
+        time.dateTime = item.addedDate;
+        time.textContent = item.addedLabel;
+        added.append(label, time);
+        article.append(added);
+      } else {
+        article.append(heading, meta);
+        const excerpt = document.createElement('p');
+        excerpt.className = 'excerpt';
+        excerpt.dataset.readerExcerpt = '';
+        excerpt.hidden = main.dataset.role !== 'cititor';
+        excerpt.textContent = item.readerExcerpt;
+        const adminExcerpt = document.createElement('p');
+        adminExcerpt.className = 'excerpt';
+        adminExcerpt.dataset.adminExcerpt = '';
+        adminExcerpt.hidden = main.dataset.role === 'cititor';
+        adminExcerpt.textContent = item.adminExcerpt;
+        article.append(adminExcerpt, excerpt);
+      }
+      li.append(article);
+      return li;
+    }
+    function renderHome() {
+      const available = activeDocuments();
+      const visibleTypeFolders = typeFolders.filter(folder => available.some(item => item.type === folder.type));
+      setSectionItems('browse-type', 'type-folders', visibleTypeFolders, item => folderButton(item, 'type', item.caption), 4);
+      const visibleDossiers = dossiers.filter(folder => available.some(item => item.dossierId === folder.id));
+      setSectionItems('browse-dossier', 'dossier-folders', visibleDossiers, item => folderButton({ ...item, title: item.number }, 'dossier', item.context), 4);
+      const visibleYears = years.filter(year => available.some(item => item.year === year));
+      setSectionItems('browse-year', 'year-folders', visibleYears.map(year => ({ id: `year-${year}`, title: year, year })), item => folderButton(item, 'year', `Documente din ${item.year}`), 4);
+      const recent = [...available].sort((a, b) => b.addedDate.localeCompare(a.addedDate));
+      setSectionItems('browse-recent', 'recent-documents', recent, item => documentCard(item, true), 4);
+    }
+    function setView(view) {
+      currentView = view;
+      main.dataset.view = view;
+      home.hidden = view !== 'home';
+      folderView.hidden = view !== 'folder';
+      searchView.hidden = view !== 'search';
+    }
+    function openFolder(kind, id) {
+      let items = [];
+      let title = '';
+      let caption = '';
+      if (kind === 'type') {
+        const folder = typeFolders.find(item => item.id === id);
+        if (!folder) return;
+        items = activeDocuments().filter(item => item.type === folder.type);
+        title = folder.title;
+        caption = folder.caption;
+      } else if (kind === 'dossier') {
+        const folder = dossiers.find(item => item.id === id);
+        if (!folder) return;
+        items = activeDocuments().filter(item => item.dossierId === folder.id);
+        title = folder.number;
+        caption = folder.context;
+      } else {
+        const year = id.replace('year-', '');
+        items = activeDocuments().filter(item => item.year === year);
+        title = year;
+        caption = `Documente cu data actului din ${year}`;
+      }
+      activeFolder = { kind, id };
+      document.getElementById('folder-view-title').textContent = title;
+      document.getElementById('folder-view-caption').textContent = caption;
+      folderDocuments.replaceChildren(...items.map(item => documentCard(item)));
+      const empty = document.getElementById('folder-empty');
+      empty.hidden = items.length > 0;
+      empty.textContent = main.dataset.role === 'cititor' ? 'Nu ai acces la acest dosar fizic.' : 'Nu există documente în acest folder.';
+      setView('folder');
+      main.dataset.state = items.length ? 'default' : 'denied';
+    }
+    function showHome() {
+      activeFolder = null;
+      queryInput.value = '';
+      searchResults.replaceChildren();
+      stateMessage.hidden = true;
+      loadingResults.hidden = true;
+      previewState.value = 'default';
+      main.dataset.state = 'default';
+      renderHome();
+      setView('home');
+    }
+    function getFilteredDocuments(query = '') {
+      const dossierId = document.getElementById('filter-dossier').value;
+      const type = document.getElementById('filter-type').value;
+      const year = document.getElementById('filter-year').value;
+      const party = document.getElementById('party-query').value;
+      const normalizedQuery = normalize(query.trim());
+      const normalizedParty = normalize(party.trim());
+      return activeDocuments().filter(item => {
+        const text = normalize([item.title, item.type, item.actNumber, item.actDate, item.inventory, item.dossierNumber, item.adminExcerpt, item.readerExcerpt].join(' '));
+        const matchesQuery = !normalizedQuery || text.includes(normalizedQuery);
+        const matchesDossier = dossierId === 'all' || item.dossierId === dossierId;
+        const matchesType = type === 'all' || item.type === type;
+        const matchesYear = year === 'all' || item.year === year;
+        const matchesParty = !normalizedParty || (main.dataset.role !== 'cititor' && normalize(item.partyName).includes(normalizedParty));
+        return matchesQuery && matchesDossier && matchesType && matchesYear && matchesParty;
+      });
+    }
+    function showSearchResults(items, query, state = 'success', preview = false) {
+      currentSearchResults = items;
+      setView('search');
       main.dataset.state = state;
-      message.textContent = stateMessages[state];
-      message.hidden = !['empty', 'denied', 'loading', 'error', 'success', 'long'].includes(state);
-      results.hidden = ['empty', 'denied', 'loading', 'error'].includes(state);
+      activeFolder = null;
+      stateMessage.hidden = true;
       loadingResults.hidden = state !== 'loading';
-      results.querySelectorAll('.result-card').forEach((card, index) => { card.hidden = state === 'one' && index > 0; });
-      count.textContent = state === 'one' ? '1 rezultat' : state === 'many' ? '12 rezultate · 3 exemple vizibile' : '3 rezultate · ordonate după relevanță';
-      if (state === 'long') results.querySelector('.result-card h3').textContent = stateMessages.long;
-      else results.querySelector('.result-card h3').textContent = 'Contract de vânzare-cumpărare';
-      stateSelect.value = state;
+      searchResults.replaceChildren(...items.map(item => documentCard(item)));
+      document.getElementById('result-count').textContent = `${items.length} ${items.length === 1 ? 'rezultat' : 'rezultate'}${preview ? ' · exemple vizuale' : ' · ordonate după relevanță'}`;
+      document.getElementById('query-caption').textContent = query ? `Căutare: „${query}”` : '';
+      if (['empty', 'denied', 'error', 'success', 'long'].includes(state)) {
+        stateMessage.hidden = false;
+        stateMessage.textContent = {
+          empty: 'Nu au fost găsite documente.',
+          denied: 'Nu ai acces la acest dosar fizic.',
+          error: 'Căutarea nu a putut fi finalizată. Încearcă din nou.',
+          success: 'Starea de succes a căutării este doar demonstrativă.',
+          long: 'Dosar de arhivă cu un nume intenționat lung pentru verificarea adaptării vizuale.'
+        }[state];
+      }
+      if (state === 'loading') searchResults.replaceChildren();
+      previewState.value = preview ? state : 'default';
+    }
+    function runSearch() {
+      const query = queryInput.value.trim();
+      if (!query) { showHome(); return; }
+      const matching = getFilteredDocuments(query);
+      showSearchResults(matching, query, matching.length ? 'search' : 'empty');
+    }
+    function setPreviewState(state) {
+      if (state === 'default') { showHome(); return; }
+      const available = activeDocuments();
+      if (state === 'one') { showSearchResults(available.slice(0, 1), '', 'one', true); return; }
+      if (state === 'many') { showSearchResults(available, '', 'many', true); document.getElementById('result-count').textContent = 'Multe rezultate demonstrative'; main.dataset.state = 'many'; return; }
+      if (state === 'denied') { showSearchResults([], '', 'denied', true); return; }
+      if (state === 'loading') { showSearchResults([], '', 'loading', true); stateMessage.hidden = false; stateMessage.textContent = 'Se caută în arhivă…'; return; }
+      if (state === 'error' || state === 'success' || state === 'long') {
+        const items = state === 'long' ? [{ ...available[0], id: 'long-preview', title: 'Dosar de arhivă cu un nume intenționat lung pentru verificarea adaptării vizuale' }] : available.slice(0, 3);
+        showSearchResults(items, '', state, true);
+        return;
+      }
+      showSearchResults([], '', 'empty', true);
     }
     function setRole(role) {
       main.dataset.role = role;
       const reader = role === 'cititor';
       document.getElementById('party-search').hidden = reader;
       document.getElementById('role-note').textContent = reader
-        ? 'Rezultatele sunt aprobate și anonimizate pentru dosarele permise.'
+        ? 'Exemple aprobate și anonimizate din dosarele permise.'
         : 'Căutarea numelor din acte este disponibilă.';
-      document.querySelectorAll('[data-admin-excerpt]').forEach(item => { item.hidden = reader; });
-      document.querySelectorAll('[data-reader-excerpt]').forEach(item => { item.hidden = !reader; });
+      renderHome();
+      if (currentView === 'search') {
+        if (previewState.value !== 'default') setPreviewState(previewState.value);
+        else runSearch();
+      } else if (currentView === 'folder' && activeFolder) {
+        openFolder(activeFolder.kind, activeFolder.id);
+      }
     }
-    const modeTabs = [...document.querySelectorAll('[data-mode]')];
-    function activateMode(tab, moveFocus = false) {
-      modeTabs.forEach(item => { item.setAttribute('aria-selected', String(item === tab)); item.tabIndex = item === tab ? 0 : -1; });
-      document.getElementById('mode-caption').textContent = `Consultare după ${tab.textContent.toLocaleLowerCase('ro')}`;
-      if (moveFocus) tab.focus();
+    function populateFilters() {
+      const dossierFilter = document.getElementById('filter-dossier');
+      dossiers.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.number} · ${item.context}`;
+        dossierFilter.append(option);
+      });
+      const typeFilter = document.getElementById('filter-type');
+      typeFolders.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.type;
+        option.textContent = item.title;
+        typeFilter.append(option);
+      });
+      const yearFilter = document.getElementById('filter-year');
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.append(option);
+      });
     }
-    modeTabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => activateMode(tab));
-      tab.addEventListener('keydown', event => {
-        const next = event.key === 'ArrowRight' ? (index + 1) % modeTabs.length : event.key === 'ArrowLeft' ? (index + modeTabs.length - 1) % modeTabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? modeTabs.length - 1 : null;
-        if (next !== null) { event.preventDefault(); activateMode(modeTabs[next], true); }
+
+    document.querySelectorAll('.browse-section').forEach(section => {
+      section.querySelector('.expand-button').addEventListener('click', event => {
+        if (expandedSections.has(section.id)) expandedSections.delete(section.id);
+        else expandedSections.add(section.id);
+        renderHome();
+        event.currentTarget.focus();
       });
     });
-    stateSelect.addEventListener('change', event => setState(event.target.value));
-    roleSelect.addEventListener('change', event => setRole(event.target.value));
+    home.addEventListener('click', event => {
+      const folder = event.target.closest('.folder-card');
+      if (folder) openFolder(folder.dataset.folderKind, folder.dataset.folderId);
+    });
+    document.getElementById('back-to-home').addEventListener('click', showHome);
+    document.getElementById('search-form').addEventListener('submit', event => { event.preventDefault(); runSearch(); });
+    queryInput.addEventListener('input', () => { if (!queryInput.value.trim() && currentView === 'search') showHome(); });
+    document.getElementById('clear-search').addEventListener('click', showHome);
     document.getElementById('theme-toggle').addEventListener('click', event => {
       const dark = document.documentElement.dataset.theme !== 'dark';
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       event.currentTarget.setAttribute('aria-label', dark ? 'Mod luminos' : 'Mod întunecat');
       event.currentTarget.textContent = dark ? 'Mod luminos' : 'Mod întunecat';
     });
-    document.getElementById('search-form').addEventListener('submit', event => {
-      event.preventDefault();
-      setState('success');
-    });
+    previewState.addEventListener('change', event => setPreviewState(event.target.value));
+    roleSelect.addEventListener('change', event => setRole(event.target.value));
+    document.getElementById('filter-dossier').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
+    document.getElementById('filter-type').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
+    document.getElementById('filter-year').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
+    document.getElementById('party-query').addEventListener('input', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
+    populateFilters();
+    renderHome();
     setRole('admin');
   </script>
 </body>
