@@ -111,15 +111,16 @@ Check off a task after verification. Record approval time, verification time, ev
 
 - [ ] P22-49b · Finish the corpus inventory
 - [ ] P22-12a · Private draft intake and status
-- [ ] P22-12b · Resume and isolate drafts
 - [ ] P22-13a · Worker job and backoff
-- [ ] P22-13b · Prove corrupt-then-valid flow
-- [ ] P22-14 · Exact SHA-256 duplicate detection
-- [ ] P22-15 · Notifications and quarantine actions
 - [ ] P22-18 · Part 1 account and Physical Dossier tables
+- [ ] P22-25 · Username/password authentication and roles
 
 ## Day 5 · Produce safe reader data
 
+- [ ] P22-12b · Resume and isolate drafts
+- [ ] P22-14 · Exact SHA-256 duplicate detection
+- [ ] P22-13b · Prove corrupt-then-valid flow
+- [ ] P22-15 · Notifications and quarantine actions
 - [ ] P22-16 · CNP and IBAN confidence rules
 - [ ] P22-17a · Detect names and contact data
 - [ ] P22-17b · Flag other sensitive regions
@@ -132,7 +133,6 @@ Check off a task after verification. Record approval time, verification time, ev
 
 ## Day 6 · Make intake and review usable
 
-- [ ] P22-25 · Username/password authentication and roles
 - [ ] P22-22 · Metadata suggestions and classification
 - [ ] P22-23 · DS-003 upload
 - [ ] P22-24a · Build DS-011 OCR editing
@@ -148,14 +148,14 @@ Check off a task after verification. Record approval time, verification time, ev
 
 - [ ] P22-27a · Draw and preview manual Redaction
 - [ ] P22-27b · Capture metadata and review confirmation
+
+## Day 8 · Find documents and apply access rules
+
 - [ ] P22-28a · Implement immutable version publication
 - [ ] P22-28b · Wire Editor publication and verify
 - [ ] P22-29 · Possible duplicates
 - [ ] P22-31 · Folder Permission policy
 - [ ] P22-32 · PostgreSQL Romanian search index
-
-## Day 8 · Find documents and apply access rules
-
 - [ ] P22-33 · Browse and search API
 - [ ] P22-34 · DS-001 search and browse
 - [ ] P22-35 · DS-010 login

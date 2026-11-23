@@ -89,27 +89,28 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 
 ## Day 4 · Run batches without blocking the worker
 
-**Outcome:** All 30 test documents are inventoried. The worker quarantines a corrupt item on failure four and processes the next valid item. Staff draft resume and quarantine actions work at the API level.
+**Outcome:** All 30 test documents are inventoried. Private draft intake, worker retry/backoff, account and dossier foundations, and authentication are in place.
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
 | P22-49b · Finish the corpus inventory | 49a | 90m | Complete all 30 entries and tag the five Redaction cases and search candidates. | Check distinct references, approved formats and absence of real personal data or official documents. |
 | P22-12a · Private draft intake and status | 07–08, 11 | 90m | Add draft schema, upload and per-document status endpoints. | P: mixed batch and persisted status. |
-| P22-12b · Resume and isolate drafts | 12a | 75m | Add resume and protected draft retrieval. | P: draft access isolation and resume. |
 | P22-13a · Worker job and backoff | 08, 12a | 90m | Dispatch queued OCR to a separate worker, apply retry/backoff and persist final quarantine. | P/I: four attempts and final state. |
-| P22-13b · Prove corrupt-then-valid flow | 12b, 13a | 75m | Exercise the queue with corrupt and valid inputs. | P/I: corrupt item quarantines and valid item completes. |
-| P22-14 · Exact SHA-256 duplicate detection | 12b | 60m | Hash uploaded bytes. Add duplicate lookup and a database-backed guard at final save. | Warn and identify the existing document for authorized staff. Block exact duplicates, including new versions. **P:** Exact match, changed bytes and concurrent final saves. |
-| P22-15 · Notifications and quarantine actions | 13b | 60m | Add retry and permanently-failed actions plus alerts for Arhivar. | Arhivar gets an in-Application alert and can retry or mark permanently failed. **P:** Transitions and role checks. |
 | P22-18 · Part 1 account and Physical Dossier tables | 02 | 60m | Add account and Physical Dossier migrations/models with username and role constraints. | Reuse scaffold account migration where suitable. Enforce username uniqueness, approved roles and stable dossier IDs. **P:** Constraint checks and printed dossier number round trip. |
+| P22-25 · Username/password authentication and roles | 18 | 75m | Add login/logout endpoints, auth middleware and role policies. | Admin-managed accounts authenticate by username/password and backend routes enforce roles. **P:** Valid/invalid credentials, logout and role matrix. |
 
-**Day 4 forecast checkpoint:** Use recorded task turnaround, the P22-13b queue result and a timed early corpus review to project remaining work. Flag any milestone the forecast puts beyond Day 14.
+**Day 4 forecast checkpoint:** Use recorded task turnaround and a timed early corpus review to project remaining work. Flag any milestone the forecast puts beyond Day 14.
 
 ## Day 5 · Produce safe reader data
 
-**Outcome:** Corpus examples produce review candidates and safe PDF, search text and reader metadata. All 49 classifications import repeatably.
+**Outcome:** Staff can resume isolated drafts, detect exact duplicates and prove corrupt-then-valid queue handling with quarantine actions. Corpus examples produce review candidates and safe PDF, search text and reader metadata. All 49 classifications import repeatably.
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
+| P22-12b · Resume and isolate drafts | 12a, 18, 25 | 75m | Add resume and protected draft retrieval. | P: draft access isolation and resume. |
+| P22-14 · Exact SHA-256 duplicate detection | 12b | 60m | Hash uploaded bytes. Add duplicate lookup and a database-backed guard at final save. | Warn and identify the existing document for authorized staff. Block exact duplicates, including new versions. **P:** Exact match, changed bytes and concurrent final saves. |
+| P22-13b · Prove corrupt-then-valid flow | 12b, 13a | 75m | Exercise the queue with corrupt and valid inputs. | P/I: corrupt item quarantines and valid item completes. |
+| P22-15 · Notifications and quarantine actions | 13b | 60m | Add retry and permanently-failed actions plus alerts for Arhivar. | Arhivar gets an in-Application alert and can retry or mark permanently failed. **P:** Transitions and role checks. |
 | P22-16 · CNP and IBAN confidence rules | 08 | 75m | Implement CNP/IBAN validators and an anchored confidence scorer. | Apply CNP mod-11 and IBAN MOD-97 validation with Notarial Context Anchors. Automatic Redaction pending review is limited to anchored, checksum-valid CNP/IBAN. **P:** Valid, invalid, absent-anchor and OCR substitutions. |
 | P22-17a · Detect names and contact data | 16 | 90m | Match names, phones and emails with Romanian context and OCR Bounding Boxes. | P: annotated fixtures and Notary Public name exemption. |
 | P22-17b · Flag other sensitive regions | 17a | 90m | Flag addresses, identity cards, signatures, cadastral and vehicle identifiers and CUI/CIF. | P/I: uncertain/handwritten cases and Notary Public title/signature exemptions. |
@@ -126,7 +127,6 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
-| P22-25 · Username/password authentication and roles | 18 | 75m | Add login/logout endpoints, auth middleware and role policies. | Admin-managed accounts authenticate by username/password and backend routes enforce roles. **P:** Valid/invalid credentials, logout and role matrix. |
 | P22-22 · Metadata suggestions and classification | 08, 19 | 75m | Add OCR suggestion extraction, confirmation rules and classification lookup. | Suggest editable dates, amounts, numbers and tags. Derive Archival Indicator from type, subtype and Storage Context. **P:** Manual Act Date, required fields, reclassification and repeated indicators. Direct override depends on Q-016. |
 | P22-23 · DS-003 upload | 03, 10a, 12b, 14, 25 | 90m | Build DS-003 with a drop zone, per-document progress, resume and duplicate feedback. | Drag and drop all four formats, show individual status, resume drafts and show exact duplicates with the existing document. **PW:** Batch, resume, duplicate and error flows. |
 | P22-24a · Build DS-011 OCR editing | 03, 08, 10c, 25 | 90m | Add inline OCR correction and associated page/word Bounding Boxes. | PW: edits persist on correct page. |
@@ -137,26 +137,26 @@ All agreed Screen functionality remains scheduled, including accessibility, requ
 | P22-30c · Design DS-008 | 05 | 60m | Mock filtered access history and retained evidence. | Owner confirms against guardrails. |
 | P22-30d · Review DS-009 mock | 05 | 60m | Review recipient controls, passwords and expired/revoked states. | Owner confirms against guardrails. |
 
-## Day 7 · Approve immutable Document Versions
+## Day 7 · Prepare reviewed documents for publication
 
-**Outcome:** Staff can approve a reviewed document or replacement. A pending replacement leaves the current version visible. Only approved content enters role-appropriate projections.
+**Outcome:** Staff can draw and preview manual Redaction, then capture confirmed metadata and an explicit review decision. Publication follows after retention validation on Day 8.
 
 | Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
 |---|---|---:|---|---|
 | P22-27a · Draw and preview manual Redaction | 21a, 24b | 90m | Build Bounding Box drawing and preview. | PW: zoom/rotation mapping. |
 | P22-27b · Capture metadata and review confirmation | 22, 26, 27a | 75m | Collect confirmed fields and explicit review decision. Test form behavior before publication wiring in 28b. | PW: missing fields and zero detections. |
+
+## Day 8 · Find documents and apply access rules
+
+**Outcome:** Retention validation precedes immutable publication. Staff can recover a Physical Dossier Number through search. Cititor sees approved redacted results in granted dossiers only. Protected access writes audit events.
+
+| Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
+|---|---|---:|---|---|
 | P22-28a · Implement immutable version publication | 14, 21b, 22, 25–26 | 90m | Add immutable Document Version records, current pointer and gated approval endpoint. | P: first approval, pending update, atomic swap and failed publication. |
 | P22-28b · Wire Editor publication and verify | 27b, 28a | 90m | Connect DS-011 to real approval endpoint. | P/PW: first version, replacement and unpublished draft states. |
 | P22-29 · Possible duplicates | 22, 28b | 60m | Add the act-number/Act-Date lookup and wire the three duplicate choices into the pending save flow. | Matching act number and Act Date links to the existing document and offers new version, separate document or abandon. **P/PW:** All outcomes and exact-match precedence. |
 | P22-31 · Folder Permission policy | 18, 25, 28b | 75m | Add a Folder Permission table and policy. Apply the policy to archive queries and direct access. | One current Physical Dossier per document. Default-deny `cititor` access, with individual permissions taking precedence. **P:** Precedence, reassignment and browse/search/direct access. |
 | P22-32 · PostgreSQL Romanian search index | 21b, 28b, 31 | 90m | Add Romanian PostgreSQL full-text vectors, indexes and separate staff/reader projections updated on approval. | Romanian `tsvector`, relevance and highlights. Index only the latest approved version and use the redacted projection for `cititor`. **P/I:** Relevance, drafts excluded, index replacement and sanitized snippets. |
-
-## Day 8 · Find documents and apply access rules
-
-**Outcome:** Staff can recover a Physical Dossier Number through search. Cititor sees approved redacted results in granted dossiers only. Protected access writes audit events.
-
-| Task | Depends on | Provisional task timebox | What to build or do | Acceptance and verification |
-|---|---|---:|---|---|
 | P22-33 · Browse and search API | 31–32 | 75m | Add browse/search endpoints with permission filtering, rank, snippets and Physical Dossier Number. | Browse by Physical Dossier, type or year. Filter by folder, type, date and tags. Show Physical Dossier Number on every hit. Restrict Signatory Party name lookup to staff roles. **P:** Modes, filters, metadata and role boundaries. |
 | P22-34 · DS-001 search and browse | 20b, 33 | 90m | Build the DS-001 filters, browse selector, ranked results and highlight rendering. | React search, ranking, highlights, filters and all browse modes. **PW:** Staff and `cititor` journeys with a newly approved result and a denied dossier. |
 | P22-35 · DS-010 login | 20a, 25 | 60m | Build the DS-010 username/password form, Romanian errors and authorized redirects. | Staff sign in and reach authorized Screens with Romanian feedback. **PW:** Keyboard login, invalid credentials and denied navigation. |
