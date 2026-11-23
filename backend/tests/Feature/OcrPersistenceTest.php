@@ -5,8 +5,12 @@ namespace Tests\Feature;
 use App\Services\OcrExtraction;
 use App\Services\RedactedPdf;
 use App\Services\DocumentPageRenderer;
+use App\Models\DocumentDraft;
+use App\Services\DocumentDraftProcessor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class OcrPersistenceTest extends TestCase
@@ -76,6 +80,34 @@ SH);
         } finally {
             DB::table('ocr_pages')->where('extraction', $id)->delete();
             File::deleteDirectory($work);
+        }
+    }
+
+    public function test_ordered_image_sources_persist_as_one_contiguous_extraction(): void
+    {
+        if (!is_executable('/usr/bin/tesseract')) {
+            self::markTestSkipped('Integration runs in the OCR worker image.');
+        }
+        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        $this->artisan('migrate')->assertExitCode(0);
+        $first = base_path('tests/Fixtures/rendering/romanian.png');
+        $second = base_path('tests/Fixtures/rendering/mark.pdf');
+        Storage::fake('documents');
+        config(['filesystems.default_document_disk' => 'documents']);
+        Storage::disk('documents')->put('drafts/ordered/page-1.png', file_get_contents($first));
+        Storage::disk('documents')->put('drafts/ordered/page-2.pdf', file_get_contents($second));
+        $draft = DocumentDraft::query()->create([
+            'id' => (string) Str::uuid(), 'source_format' => 'image_collection',
+            'original_storage_keys' => ['drafts/ordered/page-1.png', 'drafts/ordered/page-2.pdf'], 'status' => 'queued',
+        ]);
+        $id = app(DocumentDraftProcessor::class)->process($draft);
+        try {
+            $pages = DB::table('ocr_pages')->where('extraction', $id)->orderBy('page')->get();
+            self::assertSame([1, 2], $pages->pluck('page')->all());
+            self::assertSame([hash_file('sha256', $first), hash_file('sha256', $second)], $pages->pluck('source_sha256')->all());
+        } finally {
+            DB::table('ocr_pages')->where('extraction', $id)->delete();
+            $draft->delete();
         }
     }
 }

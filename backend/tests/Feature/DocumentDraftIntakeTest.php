@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\DocumentDraft;
 use App\Models\User;
+use App\Jobs\ProcessDocumentDraft;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -16,6 +18,7 @@ final class DocumentDraftIntakeTest extends TestCase
         parent::setUp();
 
         Storage::fake('documents');
+        Queue::fake();
         config(['filesystems.default_document_disk' => 'documents']);
         $this->artisan('migrate')->assertExitCode(0);
     }
@@ -23,6 +26,7 @@ final class DocumentDraftIntakeTest extends TestCase
     public function test_mixed_intake_persists_independent_document_and_ordered_image_drafts(): void
     {
         $user = $this->user('arhivar');
+        $initialDraftCount = DocumentDraft::query()->count();
         $response = $this->actingAs($user, 'sanctum')->post('/api/drafts', [
             'documents' => [
                 $this->upload('Fixtures/rendering/mark.pdf', 'act.pdf', 'application/pdf'),
@@ -38,18 +42,19 @@ final class DocumentDraftIntakeTest extends TestCase
             ->assertJsonPath('items.1.status', 'queued')->assertJsonPath('items.2.status', 'queued')
             ->assertJsonPath('items.0.group', 'documents')->assertJsonPath('items.0.index', 0)
             ->assertJsonPath('items.2.group', 'images');
-        self::assertSame(3, DocumentDraft::query()->count());
-        $pdf = DocumentDraft::query()->where('source_format', 'pdf')->firstOrFail();
+        self::assertSame($initialDraftCount + 3, DocumentDraft::query()->count());
+        $pdf = DocumentDraft::query()->findOrFail($response->json('items.0.id'));
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/mark.pdf'), Storage::disk('documents')->get($pdf->original_storage_keys[0]));
-        $docx = DocumentDraft::query()->where('source_format', 'docx')->firstOrFail();
+        $docx = DocumentDraft::query()->findOrFail($response->json('items.1.id'));
         self::assertNotNull($docx->derived_pdf_storage_key);
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/conversion/two-pages.docx'), Storage::disk('documents')->get($docx->original_storage_keys[0]));
         self::assertTrue(Storage::disk('documents')->exists($docx->derived_pdf_storage_key));
-        $imageDraft = DocumentDraft::query()->where('source_format', 'image_collection')->firstOrFail();
+        $imageDraft = DocumentDraft::query()->findOrFail($response->json('items.2.id'));
         self::assertCount(2, $imageDraft->original_storage_keys);
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/romanian.png'), Storage::disk('documents')->get($imageDraft->original_storage_keys[0]));
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/romanian.jpg'), Storage::disk('documents')->get($imageDraft->original_storage_keys[1]));
         self::assertCount(5, Storage::disk('documents')->allFiles('drafts'));
+        Queue::assertPushed(ProcessDocumentDraft::class, 3);
     }
 
     public function test_invalid_document_item_does_not_discard_valid_siblings(): void
