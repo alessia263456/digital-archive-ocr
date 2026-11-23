@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -60,9 +61,11 @@ final class AuthenticationAndRolesTest extends TestCase
             ->first();
         self::assertNotNull($storedToken);
         self::assertNotSame($token, $storedToken->token);
-        self::assertTrue(
-            Carbon::parse($storedToken->expires_at)
-                ->equalTo(Carbon::parse($storedToken->created_at)->addHours(12))
+        self::assertEqualsWithDelta(
+            12 * 60 * 60,
+            Carbon::parse($storedToken->expires_at)->getTimestamp()
+                - Carbon::parse($storedToken->created_at)->getTimestamp(),
+            1,
         );
     }
 
@@ -91,7 +94,9 @@ final class AuthenticationAndRolesTest extends TestCase
         $invalidRequest = ['username' => '', 'password' => ''];
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->postJson('/api/login', $invalidRequest)->assertUnprocessable();
+            $this->postJson('/api/login', $invalidRequest)
+                ->assertUnprocessable()
+                ->assertJsonPath('eroare', 'Datele de autentificare sunt incomplete sau nevalide.');
         }
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
@@ -115,6 +120,8 @@ final class AuthenticationAndRolesTest extends TestCase
 
         $this->withToken($token)->postJson('/api/logout')->assertNoContent();
 
+        self::assertFalse(DB::table('personal_access_tokens')->where('tokenable_id', $user->id)->exists());
+        Auth::forgetGuards();
         $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertUnauthorized();
     }
 
@@ -126,6 +133,7 @@ final class AuthenticationAndRolesTest extends TestCase
         $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertOk();
 
         $this->travel(12)->hours();
+        Auth::forgetGuards();
         $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertUnauthorized();
     }
 
@@ -141,9 +149,13 @@ final class AuthenticationAndRolesTest extends TestCase
             $token = $this->login($this->createUser($role));
 
             foreach ($expectedStatuses as $route => $expectedStatus) {
-                $this->withToken($token)
-                    ->getJson('/api/__test/roles/'.$route)
-                    ->assertStatus($expectedStatus);
+                Auth::forgetGuards();
+                $response = $this->withToken($token)->getJson('/api/__test/roles/'.$route);
+                $response->assertStatus($expectedStatus);
+
+                if ($expectedStatus === 403) {
+                    $response->assertJsonPath('eroare', 'Nu aveți drepturi pentru această operațiune.');
+                }
             }
         }
     }
@@ -151,7 +163,9 @@ final class AuthenticationAndRolesTest extends TestCase
     public function test_all_protected_test_routes_reject_unauthenticated_requests(): void
     {
         foreach (['admin', 'staff', 'authenticated'] as $route) {
-            $this->getJson('/api/__test/roles/'.$route)->assertUnauthorized();
+            $this->getJson('/api/__test/roles/'.$route)
+                ->assertUnauthorized()
+                ->assertJsonPath('eroare', 'Autentificarea este necesară.');
         }
     }
 
