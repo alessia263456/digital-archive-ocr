@@ -17,8 +17,9 @@
       --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
       --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
       --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
-      --text-small: 400 14px/20px var(--font-body); --space-xs: 4px; --space-sm: 8px;
-      --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --text-small: 400 14px/20px var(--font-body);
+      --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px;
+      --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
       --radius-sm: 2px; --radius-md: 4px; --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
       --duration-fast: 150ms ease; --duration-normal: 250ms ease;
     }
@@ -31,60 +32,84 @@
     *, *::before, *::after { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-body); }
-    h1, h2, h3, p, ul { margin: 0; }
-    ul { padding: 0; list-style: none; }
-    button, input, select { font: inherit; color: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    button, input, select { color: inherit; font: inherit; }
+    button { cursor: pointer; }
     :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
-    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-bottom: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
-    .tool-top, .tool-row, .mock-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-block-end: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); }
+    .tool-top, .mock-nav, .tool-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
     .tool-top { justify-content: space-between; }
     .mock-only { padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-accent-amber); border-radius: var(--radius-sm); color: var(--color-text-primary); font-weight: 600; }
     .mock-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
-    .mock-nav a[aria-current="page"] { color: var(--color-text-primary); font-weight: 700; }
-    .tool-row label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); }
+    .mock-nav a[aria-current="page"] { font-weight: 700; }
+    .tool-row label { display: flex; align-items: center; gap: var(--space-xs); }
     .mock-tools select, .theme-button { min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
-    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-bottom: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-block-end: thin solid var(--color-border); background: var(--color-bg-surface); }
     .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
     .header-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
     .header-kicker { color: var(--color-text-secondary); font: var(--text-small); }
-    .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-    .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xl) var(--space-md) var(--space-3xl); }
-    .page-intro { display: grid; gap: var(--space-sm); margin-block-end: var(--space-lg); }
-    .page-intro h1 { font: var(--text-h1); }
-    .page-intro p { max-inline-size: calc(var(--space-3xl) * 9); color: var(--color-text-secondary); }
-    .tabs { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block-end: var(--space-md); }
-    .tab, .button, .field input, .field select { min-block-size: var(--space-2xl); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
-    .tab { padding: var(--space-sm) var(--space-md); color: var(--color-text-secondary); cursor: pointer; }
-    .tab[aria-selected="true"] { border-color: var(--color-text-secondary); color: var(--color-text-primary); font-weight: 700; box-shadow: inset 0 calc(-1 * var(--radius-sm)) var(--color-text-secondary); }
-    .tab:hover { border-color: var(--color-accent-mid); color: var(--color-text-primary); }
-    .panel { display: grid; gap: var(--space-lg); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .panel h2 { font: var(--text-h2); }
-    .panel-copy, .secondary { color: var(--color-text-secondary); }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
-    .field { display: grid; gap: var(--space-xs); min-inline-size: 0; }
-    .field label { font: var(--text-small); font-weight: 600; }
-    .field input, .field select { inline-size: 100%; min-inline-size: 0; padding: var(--space-sm) var(--space-md); }
-    input::placeholder { color: var(--color-text-secondary); opacity: 1; }
-    .button { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--space-3xl); padding: var(--space-sm) var(--space-lg); border-color: var(--color-accent-teal); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; cursor: pointer; transition: background-color var(--duration-fast); }
-    .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); text-decoration: underline; }
-    .button:active { text-decoration: underline; }
-    .button:disabled, .field input:disabled, .field select:disabled { border-color: var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); cursor: default; }
-    .form-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
-    .form-actions .button { inline-size: fit-content; }
-    .state-message, .rule-note { padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+    .header-title { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-3xl); }
+    .page-heading { display: flex; align-items: center; justify-content: space-between; margin-block-end: var(--space-md); }
+    .page-heading h1 { font: var(--text-h2); }
+    .tabs { display: flex; gap: var(--space-xs); margin-block-end: var(--space-md); border-block-end: thin solid var(--color-border); }
+    .tab { min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-md); border: 0; border-block-end: var(--space-xs) solid transparent; background: transparent; color: var(--color-text-secondary); }
+    .tab[aria-selected="true"] { border-block-end-color: var(--color-primary); color: var(--color-text-primary); font-weight: 700; }
+    .tab:hover { background: var(--color-bg-subtle); color: var(--color-text-primary); }
+    .panel { padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); margin-block-end: var(--space-md); }
+    .panel-head h2 { font: var(--text-h3); }
+    .tools { display: flex; align-items: center; gap: var(--space-sm); }
+    .search { inline-size: min(100%, calc(var(--space-3xl) * 5)); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .button, .icon-button { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--space-2xl); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .button { flex: none; padding: var(--space-sm) var(--space-md); white-space: nowrap; }
+    .button:hover, .icon-button:hover { border-color: var(--color-accent-mid); background: var(--color-bg-subtle); }
+    .button-primary { border-color: var(--color-accent-teal); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 600; }
+    .button-primary:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); }
+    .icon-button { inline-size: var(--space-2xl); padding: var(--space-xs); color: var(--color-text-secondary); }
+    .table-wrap { overflow-x: auto; }
+    table { inline-size: 100%; border-collapse: collapse; text-align: start; }
+    th, td { padding: var(--space-sm) var(--space-md); border-block-end: thin solid var(--color-border); text-align: start; vertical-align: middle; }
+    th { background: var(--color-bg-subtle); color: var(--color-text-secondary); font: var(--text-small); font-weight: 600; white-space: nowrap; }
+    td { font: var(--text-small); }
+    tbody tr:last-child td { border-block-end: 0; }
+    .primary-cell { color: var(--color-text-primary); font-weight: 600; overflow-wrap: anywhere; }
+    .secondary { color: var(--color-text-secondary); }
+    .role, .access { display: inline-flex; align-items: center; min-block-size: var(--space-lg); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--color-bg-subtle); font: var(--text-small); white-space: nowrap; }
+    .access[data-access="permis"] { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
+    .row-action { padding: var(--space-xs) var(--space-sm); border: 0; background: transparent; color: var(--color-accent-mid); text-decoration: underline; text-underline-offset: var(--space-xs); }
+    .state-message { margin-block-end: var(--space-md); padding: var(--space-sm) var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); background: var(--color-bg-subtle); color: var(--color-text-primary); }
     main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
     main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
-    .entry-list { display: grid; gap: var(--space-sm); }
-    .entry { display: grid; gap: var(--space-xs); min-inline-size: 0; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
-    .entry-title { font-weight: 700; }
-    .entry-meta { color: var(--color-text-secondary); font: var(--text-small); }
-    .permission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-sm); }
-    .permission-card { display: grid; gap: var(--space-sm); padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); }
-    .permission-card strong { overflow-wrap: anywhere; }
-    .badge { justify-self: start; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--color-bg-subtle); font: var(--text-small); font-weight: 600; }
-    .permission-card .badge { background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
-    .footnote { color: var(--color-text-secondary); font: var(--text-small); }
-    @media (max-width: 639px) { .tab { flex: 1; } .wrap { padding-block-start: var(--space-lg); } }
+    .empty { padding: var(--space-xl); color: var(--color-text-secondary); text-align: center; }
+    .permission-controls { display: flex; align-items: end; justify-content: flex-start; gap: var(--space-md); margin-block-end: var(--space-md); }
+    .permission-account { display: grid; gap: var(--space-xs); max-inline-size: calc(var(--space-3xl) * 6); }
+    .permission-account label, .field label { font: var(--text-small); font-weight: 600; }
+    .permission-account select, .field input, .field select { min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .permission-note { color: var(--color-text-secondary); font: var(--text-small); }
+    .detail { position: fixed; inset: 0; z-index: 2; display: grid; place-items: center; padding: var(--space-md); background: var(--color-bg-primary); }
+    .dialog { inline-size: min(100%, calc(var(--space-3xl) * 7)); max-block-size: 90vh; overflow: auto; padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .dialog-head { display: flex; align-items: start; justify-content: space-between; gap: var(--space-md); margin-block-end: var(--space-md); }
+    .dialog-head h2 { font: var(--text-h3); }
+    .dialog-content { display: grid; gap: var(--space-md); }
+    .field { display: grid; gap: var(--space-xs); }
+    .field select, .field input { inline-size: 100%; }
+    .form-actions { display: flex; justify-content: end; gap: var(--space-sm); margin-block-start: var(--space-md); }
+    .visually-hidden { position: absolute; inline-size: var(--space-xs); block-size: var(--space-xs); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    @media (max-width: 639px) {
+      .viewer-header { padding-inline: var(--space-md); }
+      .wrap { padding-block-start: var(--space-md); }
+      .page-heading h1 { font: var(--text-h3); }
+      .tabs { overflow-x: auto; }
+      .tab { flex: 1; padding-inline: var(--space-sm); white-space: nowrap; }
+      .panel { padding: var(--space-sm); }
+      .panel-head { align-items: stretch; }
+      .tools { justify-content: space-between; }
+      .search { flex: 1; min-inline-size: 0; }
+      th, td { padding-inline: var(--space-sm); }
+      .permission-account { max-inline-size: none; }
+      .permission-controls { align-items: stretch; flex-direction: column; }
+    }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
   </style>
 </head>
@@ -95,92 +120,96 @@
       <a href="./DS-010.html">DS-010 · Autentificare</a><a href="./DS-001.html">DS-001 · Căutare</a><a href="./DS-006.html" aria-current="page">DS-006 · Administrare</a>
     </nav>
     <div class="tool-row">
-      <label>Stare pentru previzualizare
-        <select id="preview-state" aria-label="Stare pentru previzualizare"><option value="default">Implicit</option><option value="empty">Listă goală</option><option value="loading">Se încarcă</option><option value="error">Eroare</option><option value="success">Succes</option><option value="disabled">Dezactivat</option><option value="long">Text lung</option></select>
-      </label>
+      <label for="preview-state">Stare pentru previzualizare</label>
+      <select id="preview-state"><option value="default">Implicit</option><option value="empty">Listă goală</option><option value="loading">Se încarcă</option><option value="error">Eroare</option><option value="success">Succes</option><option value="long">Text lung</option></select>
       <button class="theme-button" id="theme-toggle" type="button" aria-label="Mod întunecat">Mod întunecat</button>
       <span>Stările sunt exemple vizuale; datele nu se salvează.</span>
     </div>
   </aside>
   <header class="viewer-header"><div class="brand-mark" aria-hidden="true">AD</div><div class="header-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div></header>
 
-  <main class="wrap" id="admin-screen" data-state="default">
-    <div class="page-intro"><h1>Administrare</h1><p>Gestiune conturi și permisiuni pentru consultarea după dosarul fizic.</p></div>
-    <p class="state-message" id="state-message" role="status" aria-live="polite">Acces refuzat implicit. Permisiunea individuală are prioritate față de cea a rolului.</p>
-    <div class="tabs" role="tablist" aria-label="Formulare de administrare">
+  <main class="wrap" id="admin-screen" data-state="default" aria-busy="false">
+    <div class="page-heading"><h1>Administrare</h1></div>
+    <p class="state-message" id="state-message" role="status" aria-live="polite" hidden></p>
+    <div class="tabs" role="tablist" aria-label="Secțiuni de administrare">
       <button class="tab" id="accounts-tab" type="button" role="tab" aria-controls="accounts" aria-selected="true">Conturi</button>
       <button class="tab" id="dossiers-tab" type="button" role="tab" aria-controls="dossiers" aria-selected="false" tabindex="-1">Dosare fizice</button>
       <button class="tab" id="permissions-tab" type="button" role="tab" aria-controls="permissions" aria-selected="false" tabindex="-1">Permisiuni</button>
     </div>
 
     <section class="panel" id="accounts" role="tabpanel" aria-labelledby="accounts-tab" tabindex="0">
-      <div><h2>Conturi</h2><p class="panel-copy">Conturile cabinetului folosesc nume de utilizator și parolă.</p></div>
-      <form class="admin-form">
-        <div class="form-grid">
-          <div class="field"><label for="account-username">Nume de utilizator</label><input id="account-username" autocomplete="off" placeholder="exemplu.utilizator"></div>
-          <div class="field"><label for="account-password">Parolă</label><input id="account-password" type="password" autocomplete="new-password" placeholder="Parolă pentru cont"></div>
-          <div class="field"><label for="account-role">Rol</label><select id="account-role"><option>cititor</option><option>arhivar</option><option>admin</option></select></div>
-        </div>
-        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
-      </form>
-      <ul class="entry-list">
-        <li class="entry"><span class="entry-title">cont.arhiva</span><span class="entry-meta">Rol: arhivar</span></li>
-        <li class="entry"><span class="entry-title">cont.consultare</span><span class="entry-meta">Rol: cititor</span></li>
-      </ul>
+      <div class="panel-head"><h2>Conturi</h2><div class="tools"><label class="visually-hidden" for="account-search">Caută conturi</label><input class="search" id="account-search" type="search" placeholder="Caută conturi"><button class="button button-primary" id="new-account" type="button">Cont nou</button></div></div>
+      <div class="table-wrap" id="account-table-wrap">
+        <table><caption class="visually-hidden">Conturi existente</caption><thead><tr><th scope="col">Nume de utilizator</th><th scope="col">Rol</th><th scope="col"><span class="visually-hidden">Acțiuni</span></th></tr></thead>
+          <tbody id="account-rows">
+            <tr><td class="primary-cell">cont.arhiva</td><td><span class="role">arhivar</span></td><td><button class="row-action" type="button" data-account="cont.arhiva">Detalii</button></td></tr>
+            <tr><td class="primary-cell">cont.consultare</td><td><span class="role">cititor</span></td><td><button class="row-action" type="button" data-account="cont.consultare">Detalii</button></td></tr>
+            <tr><td class="primary-cell">notar.admin</td><td><span class="role">admin</span></td><td><button class="row-action" type="button" data-account="notar.admin">Detalii</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="empty" id="account-empty" hidden>Nu există conturi care să corespundă căutării.</p>
     </section>
 
     <section class="panel" id="dossiers" role="tabpanel" aria-labelledby="dossiers-tab" tabindex="0" hidden>
-      <div><h2>Dosare fizice</h2><p class="panel-copy">Folosește identificatorul înscris pe cotorul dosarului fizic.</p></div>
-      <form class="admin-form">
-        <div class="form-grid"><div class="field"><label for="dossier-number">Număr dosar fizic</label><input id="dossier-number" placeholder="Dosar nr. 29/2014"></div></div>
-        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
-      </form>
-      <ul class="entry-list">
-        <li class="entry"><span class="entry-title">Dosar nr. 29/2014</span><span class="entry-meta">Dosar fizic disponibil pentru permisiuni.</span></li>
-        <li class="entry"><span class="entry-title">Dosar nr. 18/2019</span><span class="entry-meta">Dosar fizic disponibil pentru permisiuni.</span></li>
-      </ul>
+      <div class="panel-head"><h2>Dosare fizice</h2><div class="tools"><label class="visually-hidden" for="dossier-search">Caută dosare fizice</label><input class="search" id="dossier-search" type="search" placeholder="Caută număr tipărit"></div></div>
+      <div class="table-wrap" id="dossier-table-wrap"><table><caption class="visually-hidden">Dosare fizice existente</caption><thead><tr><th scope="col">Număr tipărit</th><th scope="col">Context</th><th scope="col"><span class="visually-hidden">Acțiuni</span></th></tr></thead>
+        <tbody id="dossier-rows">
+          <tr><td class="primary-cell">Dosar nr. 029/02014</td><td class="secondary">Procuri · 2014</td><td><button class="row-action" type="button" data-dossier="Dosar nr. 029/02014 · Procuri · 2014">Detalii</button></td></tr>
+          <tr><td class="primary-cell">Dosar nr. 004</td><td class="secondary">Succesiuni · 2024</td><td><button class="row-action" type="button" data-dossier="Dosar nr. 004 · Succesiuni · 2024">Detalii</button></td></tr>
+          <tr><td class="primary-cell">Dosar nr. 004</td><td class="secondary">Cereri · 2022</td><td><button class="row-action" type="button" data-dossier="Dosar nr. 004 · Cereri · 2022">Detalii</button></td></tr>
+          <tr><td class="primary-cell">Dosar nr. 18/2019</td><td class="secondary">Succesiuni · 2019</td><td><button class="row-action" type="button" data-dossier="Dosar nr. 18/2019 · Succesiuni · 2019">Detalii</button></td></tr>
+        </tbody>
+      </table></div>
+      <p class="empty" id="dossier-empty" hidden>Nu există dosare fizice care să corespundă căutării.</p>
     </section>
 
     <section class="panel" id="permissions" role="tabpanel" aria-labelledby="permissions-tab" tabindex="0" hidden>
-      <div><h2>Permisiuni pe dosare fizice</h2><p class="panel-copy">Permisiunile pentru cititor se acordă explicit pe dosar fizic și se aplică în toate modurile de consultare.</p></div>
-      <p class="rule-note">Acces refuzat implicit pentru dosarele fără permisiune.</p>
-      <form class="admin-form">
-        <div class="form-grid">
-          <div class="field"><label for="permission-user">Cont cititor</label><select id="permission-user"><option>cont.consultare</option><option>cititor.sintetic</option></select></div>
-          <div class="field"><label for="permission-dossier">Dosar fizic</label><select id="permission-dossier"><option>Dosar nr. 29/2014</option><option>Dosar nr. 18/2019</option></select></div>
-          <div class="field"><label for="permission-value">Permisiune individuală</label><select id="permission-value"><option>Permis</option><option>Refuzat</option></select></div>
-        </div>
-        <div class="form-actions"><button class="button" type="submit">Previzualizează modificarea</button></div>
-      </form>
-      <h3>Prioritatea permisiunilor</h3>
-      <div class="permission-grid">
-        <article class="permission-card"><strong>cont.consultare · Dosar nr. 29/2014</strong><span class="entry-meta">Rol: permis · Individual: refuzat</span><span class="badge">Rezultat: refuzat</span></article>
-        <article class="permission-card"><strong>cititor.sintetic · Dosar nr. 18/2019</strong><span class="entry-meta">Rol: refuzat · Individual: permis</span><span class="badge">Rezultat: permis</span></article>
+      <div class="panel-head"><h2>Permisiuni pe dosare fizice</h2></div>
+      <div class="permission-controls">
+        <div class="permission-account"><label for="permission-account">Cont</label><select id="permission-account"><option value="cont.consultare">cont.consultare · cititor</option><option value="cont.arhiva">cont.arhiva · arhivar</option><option value="notar.admin">notar.admin · admin</option></select></div>
+        <p class="permission-note" id="permission-summary">Accesul efectiv al contului la dosarele fizice.</p>
       </div>
-      <p class="footnote">Exemple sintetice pentru explicarea priorității; nicio permisiune nu se salvează.</p>
+      <div class="table-wrap" id="permission-table-wrap"><table><caption class="visually-hidden">Acces efectiv la dosarele fizice</caption><thead><tr><th scope="col">Număr tipărit</th><th scope="col">Acces efectiv</th><th scope="col"><span class="visually-hidden">Acțiuni</span></th></tr></thead>
+          <tbody id="permission-rows">
+            <tr data-role-access="Permis · rol cititor" data-individual="Refuzat"><td class="primary-cell">Dosar nr. 029/02014</td><td><span class="access" data-access="refuzat">Refuzat</span></td><td><button class="row-action inspect-permission" type="button" data-dossier="Dosar nr. 029/02014">Detalii</button></td></tr>
+            <tr data-role-access="Refuzat implicit · rol cititor" data-individual="Permis"><td class="primary-cell">Dosar nr. 004 · Succesiuni · 2024</td><td><span class="access" data-access="permis">Permis</span></td><td><button class="row-action inspect-permission" type="button" data-dossier="Dosar nr. 004 · Succesiuni · 2024">Detalii</button></td></tr>
+            <tr data-role-access="Refuzat implicit · rol cititor" data-individual="Fără permisiune individuală"><td class="primary-cell">Dosar nr. 18/2019</td><td><span class="access" data-access="refuzat">Refuzat</span></td><td><button class="row-action inspect-permission" type="button" data-dossier="Dosar nr. 18/2019">Detalii</button></td></tr>
+          </tbody>
+        </table></div>
     </section>
   </main>
+
+  <div class="detail" id="dialog-layer" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <div class="dialog-head"><div><h2 id="dialog-title"></h2><p class="secondary" id="dialog-description"></p></div><button class="icon-button" id="dialog-close" type="button" aria-label="Închide">×</button></div>
+      <div class="dialog-content" id="dialog-content"></div>
+      <div class="form-actions" id="dialog-actions"></div>
+    </section>
+  </div>
   <script>
-    const messages = {
-      default: 'Acces refuzat implicit. Permisiunea individuală are prioritate față de cea a rolului.',
-      empty: 'Nu există înregistrări în această listă.',
-      loading: 'Se încarcă datele…',
-      error: 'Nu am putut salva modificările. Verifică datele și încearcă din nou.',
-      success: 'Confirmare vizuală; datele nu se salvează.',
-      disabled: 'Salvarea nu este disponibilă în previzualizare.',
-      long: 'Utilizator_exemplu_cu_un_nume_extins_pentru_verificarea_adaptării'
-    };
     const main = document.getElementById('admin-screen');
     const stateSelect = document.getElementById('preview-state');
+    const stateMessages = {
+      default: '', empty: 'Nu există înregistrări în această listă.', loading: 'Se încarcă datele…',
+      error: 'Nu am putut actualiza lista. Verifică datele și încearcă din nou.',
+      success: 'Modificarea este previzualizată; datele nu se salvează.',
+      long: 'Utilizator_exemplu_cu_un_nume_extins_pentru_verificarea_adaptării'
+    };
+    const message = document.getElementById('state-message');
     function setState(state) {
       main.dataset.state = state;
-      document.getElementById('state-message').textContent = messages[state];
-      main.querySelectorAll('.entry-list, .permission-grid').forEach(list => { list.hidden = state === 'empty'; });
-      stateSelect.value = state;
+      message.textContent = stateMessages[state];
+      message.hidden = !stateMessages[state];
       main.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
-      main.querySelectorAll('input, select:not(#preview-state), .admin-form button').forEach(control => {
-        if (!control.closest('.mock-tools')) control.disabled = ['loading', 'disabled'].includes(state);
-      });
+      if (state === 'empty') {
+        document.querySelector('#accounts .table-wrap').hidden = true;
+        document.getElementById('account-empty').hidden = false;
+      } else {
+        document.querySelector('#accounts .table-wrap').hidden = false;
+        document.getElementById('account-empty').hidden = true;
+      }
+      stateSelect.value = state;
     }
     stateSelect.addEventListener('change', event => setState(event.target.value));
     document.getElementById('theme-toggle').addEventListener('click', event => {
@@ -201,7 +230,97 @@
         if (next !== null) { event.preventDefault(); activateTab(tabs[next], true); }
       });
     });
-    document.querySelectorAll('.admin-form').forEach(form => form.addEventListener('submit', event => { event.preventDefault(); setState('success'); }));
+    function filterRows(inputId, rowsId, emptyId) {
+      const input = document.getElementById(inputId);
+      input.addEventListener('input', () => {
+        let visible = 0;
+        document.querySelectorAll(`#${rowsId} tr`).forEach(row => { const show = row.textContent.toLocaleLowerCase('ro').includes(input.value.toLocaleLowerCase('ro')); row.hidden = !show; if (show) visible++; });
+        document.getElementById(emptyId).hidden = visible > 0;
+        document.getElementById(rowsId).closest('.table-wrap').hidden = visible === 0;
+      });
+    }
+    filterRows('account-search', 'account-rows', 'account-empty');
+    filterRows('dossier-search', 'dossier-rows', 'dossier-empty');
+    const layer = document.getElementById('dialog-layer');
+    const dialogTitle = document.getElementById('dialog-title');
+    const dialogDescription = document.getElementById('dialog-description');
+    const dialogContent = document.getElementById('dialog-content');
+    const dialogActions = document.getElementById('dialog-actions');
+    let returnFocus = null;
+    function openDialog(title, description, content, actions = []) {
+      returnFocus = document.activeElement;
+      dialogTitle.textContent = title;
+      dialogDescription.textContent = description;
+      dialogContent.replaceChildren(content);
+      dialogActions.replaceChildren(...actions);
+      layer.hidden = false;
+      document.getElementById('dialog-close').focus();
+    }
+    function closeDialog() { layer.hidden = true; if (returnFocus) returnFocus.focus(); }
+    document.getElementById('dialog-close').addEventListener('click', closeDialog);
+    layer.addEventListener('click', event => { if (event.target === layer) closeDialog(); });
+    document.addEventListener('keydown', event => {
+      if (layer.hidden) return;
+      if (event.key === 'Escape') closeDialog();
+      if (event.key === 'Tab') {
+        const focusable = [...layer.querySelectorAll('button, input, select, [tabindex]:not([tabindex="-1"])')].filter(item => !item.disabled && !item.hidden);
+        const first = focusable[0]; const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
+    document.querySelectorAll('[data-account]').forEach(button => button.addEventListener('click', () => {
+      const row = button.closest('tr');
+      const content = document.createElement('p');
+      content.textContent = `Rol: ${row.querySelector('.role').textContent}`;
+      openDialog(button.dataset.account, 'Detalii cont', content);
+    }));
+    document.querySelectorAll('#dossier-rows [data-dossier]').forEach(button => button.addEventListener('click', () => {
+      const row = button.closest('tr');
+      const content = document.createElement('p');
+      content.textContent = row.cells[1].textContent;
+      openDialog(button.dataset.dossier, 'Dosar fizic · identificator tipărit', content);
+    }));
+    function field(labelText, id, control) {
+      const wrapper = document.createElement('div'); wrapper.className = 'field';
+      const label = document.createElement('label'); label.htmlFor = id; label.textContent = labelText; control.id = id;
+      wrapper.append(label, control); return wrapper;
+    }
+    document.getElementById('new-account').addEventListener('click', () => {
+      const username = document.createElement('input'); username.autocomplete = 'off'; username.required = true;
+      const password = document.createElement('input'); password.type = 'password'; password.autocomplete = 'new-password'; password.required = true;
+      const role = document.createElement('select');
+      for (const value of ['admin', 'arhivar', 'cititor']) { const option = document.createElement('option'); option.value = value; option.textContent = value; role.append(option); }
+      const form = document.createElement('form'); form.id = 'new-account-form'; form.className = 'dialog-content'; form.append(field('Nume de utilizator', 'new-username', username), field('Parolă inițială', 'new-password', password), field('Rol', 'new-role', role));
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'button'; cancel.textContent = 'Anulează'; cancel.addEventListener('click', closeDialog);
+      const create = document.createElement('button'); create.type = 'submit'; create.setAttribute('form', form.id); create.className = 'button button-primary'; create.textContent = 'Creează cont';
+      openDialog('Cont nou', 'Alege datele inițiale ale contului.', form, [cancel, create]);
+      form.addEventListener('submit', event => { event.preventDefault(); closeDialog(); setState('success'); });
+      username.focus();
+    });
+    document.querySelectorAll('.inspect-permission').forEach(button => button.addEventListener('click', () => {
+      const row = button.closest('tr');
+      const content = document.createElement('dl');
+      content.className = 'dialog-content';
+      for (const [labelText, value] of [['Accesul rolului', row.dataset.roleAccess], ['Permisiune individuală', row.dataset.individual], ['Acces efectiv', row.querySelector('.access').textContent]]) {
+        const label = document.createElement('dt'); label.className = 'secondary'; label.textContent = labelText;
+        const detail = document.createElement('dd'); detail.textContent = value; content.append(label, detail);
+      }
+      openDialog(button.dataset.dossier, 'Detalii permisiune', content);
+    }));
+    document.getElementById('permission-account').addEventListener('change', event => {
+      const account = event.target.value;
+      const role = account === 'cont.consultare' ? 'cititor' : account === 'cont.arhiva' ? 'arhivar' : 'admin';
+      const isReader = role === 'cititor';
+      document.getElementById('permission-summary').textContent = isReader ? 'Accesul efectiv al contului la dosarele fizice.' : `Acces nerestricționat · rol ${role}`;
+      document.querySelectorAll('#permission-rows tr').forEach(row => {
+        const badge = row.querySelector('.access');
+        const details = row.querySelector('.inspect-permission');
+        badge.textContent = isReader ? (row.dataset.individual === 'Permis' ? 'Permis' : 'Refuzat') : 'Permis';
+        badge.dataset.access = badge.textContent.toLocaleLowerCase('ro');
+        details.hidden = !isReader;
+      });
+    });
   </script>
 </body>
 </html>
