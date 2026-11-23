@@ -9,7 +9,14 @@ test('presents an unauthenticated header and switches the preview states', async
   await page.goto(mock);
 
   const header = page.getByRole('banner');
-  await expect(header.getByRole('heading', { name: 'Autentificare' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('heading', { name: 'Autentificare' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  const loginCard = page.locator('.login-card');
+  await expect(loginCard).not.toContainText('Cabinet Individual Notarial');
+  await expect(loginCard).not.toContainText('Acces la arhiva digitală');
+  await expect(loginCard).not.toContainText('Introdu datele de acces');
+  await expect(loginCard).not.toContainText('contactează administratorul');
+  await expect(page.getByRole('status')).toBeHidden();
   await expect(header.getByRole('link')).toHaveCount(0);
   await expect(header.getByRole('button')).toHaveCount(0);
   await expect(page.getByRole('navigation', { name: 'Navigare între machete de design' })).toBeVisible();
@@ -20,7 +27,7 @@ test('presents an unauthenticated header and switches the preview states', async
   await page.getByRole('link', { name: 'DS-006 · Administrare' }).click();
   await expect(page.getByRole('heading', { name: 'Administrare' })).toBeVisible();
   await page.getByRole('link', { name: 'DS-010 · Autentificare' }).click();
-  await expect(page.getByRole('banner').getByRole('heading', { name: 'Autentificare' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('heading', { name: 'Autentificare' })).toBeVisible();
 
   const preview = page.getByLabel('Stare pentru previzualizare');
   await preview.focus();
@@ -38,7 +45,8 @@ test('presents an unauthenticated header and switches the preview states', async
   ]) {
     await preview.selectOption(state);
     await expect(page.getByRole('main')).toHaveAttribute('data-state', state);
-    await expect(page.getByRole('main')).toContainText(copy);
+    await expect(page.getByRole('status')).toBeVisible();
+    await expect(page.getByRole('status')).toContainText(copy);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
     if (state === 'error') await page.screenshot({ path: info.outputPath('eroare.png'), fullPage: true, scale: 'css' });
     if (info.project.name === 'desktop-light' && ['error', 'success', 'long'].includes(state)) {
@@ -68,7 +76,7 @@ test('presents an unauthenticated header and switches the preview states', async
     await page.getByLabel('Stare pentru previzualizare').selectOption('default');
     await page.getByLabel('Nume de utilizator').fill('');
     await password.fill('');
-    await expect(page.getByRole('status')).toHaveText('Folosește numele de utilizator și parola contului.');
+    await expect(page.getByRole('status')).toBeHidden();
     await page.evaluate(() => document.activeElement?.blur());
     await page.screenshot({ path: '/screens/DS-010.dark.png', fullPage: true, scale: 'css' });
     await page.getByLabel('Mod luminos').click();
