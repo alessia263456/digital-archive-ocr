@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessDocumentDraft;
 use App\Models\DocumentDraft;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -136,8 +137,11 @@ final class DocumentDraftIntakeService
                 ]);
             });
 
+            ProcessDocumentDraft::dispatch($id);
+
             return ['id' => $id, 'status' => 'queued'];
         } catch (Throwable) {
+            DocumentDraft::query()->whereKey($id)->delete();
             foreach ($keys as $key) {
                 try {
                     $this->storage->delete($key);

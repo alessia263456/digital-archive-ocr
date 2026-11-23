@@ -20,6 +20,36 @@ services:
       DB_USERNAME: archive
       DB_PASSWORD: ${DB_PASSWORD:-}
 
+  ocr-queue-worker:
+    build:
+      context: ./docker/ocr-worker
+      additional_contexts:
+        backend: service:backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: local
+      APP_KEY:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_DATABASE: archive
+      DB_USERNAME: archive
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      QUEUE_CONNECTION: database
+      DB_QUEUE_RETRY_AFTER: 8100
+      DOCUMENTS_DISK: ${DOCUMENTS_DISK:-r2}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_DEFAULT_REGION: ${R2_DEFAULT_REGION:-auto}
+      R2_USE_PATH_STYLE_ENDPOINT: ${R2_USE_PATH_STYLE_ENDPOINT:-false}
+    command: ["php", "artisan", "queue:work", "database", "--queue=default", "--sleep=3", "--tries=4", "--timeout=8040", "--no-interaction"]
+    restart: unless-stopped
+    volumes:
+      - document-data:/app/storage/app/private/documents
+
   postgres:
     image: postgres:17-bookworm
     environment:
@@ -50,14 +80,19 @@ services:
       DB_DATABASE: archive
       DB_USERNAME: archive
       DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_QUEUE_RETRY_AFTER: 8100
       DOCUMENTS_DISK: ${DOCUMENTS_DISK:-r2}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
       R2_BUCKET: ${R2_BUCKET}
       R2_ENDPOINT: ${R2_ENDPOINT}
       R2_DEFAULT_REGION: ${R2_DEFAULT_REGION:-auto}
+      R2_USE_PATH_STYLE_ENDPOINT: ${R2_USE_PATH_STYLE_ENDPOINT:-false}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - document-data:/app/storage/app/private/documents
 
 volumes:
+  document-data:
   pgdata:

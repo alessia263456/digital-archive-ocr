@@ -49,12 +49,12 @@ class LiveConfig(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         model = json.loads(result.stdout)
         services = model["services"]
-        self.assertEqual(set(services), {"caddy", "backend", "postgres", "ocr-worker"})
+        self.assertEqual(set(services), {"caddy", "backend", "postgres", "ocr-worker", "ocr-queue-worker"})
         self.assertEqual({p["published"] for p in services["caddy"]["ports"]}, {"80", "443"})
         mounts = {v["target"]: v for v in services["caddy"]["volumes"]}
         self.assertTrue(mounts["/run/secrets/placeholder-auth"]["read_only"])
         self.assertTrue(model["volumes"][mounts["/data"]["source"]]["external"])
-        for name in ("backend", "postgres", "ocr-worker"):
+        for name in ("backend", "postgres", "ocr-worker", "ocr-queue-worker"):
             self.assertFalse(services[name].get("ports"))
             for mount in services[name].get("volumes", []):
                 self.assertNotIn(mount["target"], ("/data", "/run/secrets/placeholder-auth"))
@@ -64,6 +64,11 @@ class LiveConfig(unittest.TestCase):
         self.assertEqual(backend_env["R2_DEFAULT_REGION"], "auto")
         self.assertEqual(backend_env["R2_USE_PATH_STYLE_ENDPOINT"], "false")
         self.assertEqual(backend_env["R2_ENDPOINT"], "https://example.eu.r2.cloudflarestorage.com")
+        worker_env = services["ocr-queue-worker"]["environment"]
+        self.assertEqual(worker_env["QUEUE_CONNECTION"], "database")
+        self.assertEqual(worker_env["DB_QUEUE_RETRY_AFTER"], "8100")
+        self.assertEqual(worker_env["DOCUMENTS_DISK"], backend_env["DOCUMENTS_DISK"])
+        self.assertEqual(worker_env["R2_ENDPOINT"], backend_env["R2_ENDPOINT"])
 
 
 if __name__ == "__main__":

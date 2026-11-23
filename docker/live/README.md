@@ -50,10 +50,10 @@ The following live operations require deployment authorization and the P22-11 st
 
 ```sh
 docker compose config -q
-docker compose build backend caddy ocr-worker
+docker compose build backend caddy ocr-worker ocr-queue-worker
 docker compose run --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile
 docker compose run --rm --no-deps backend frankenphp validate --config /etc/caddy/Caddyfile
-docker compose up -d --wait backend
+docker compose up -d --wait backend ocr-queue-worker
 docker compose exec -T backend php artisan migrate --force
 docker compose exec -T backend php artisan migrate:status
 docker compose run --rm ocr-worker
