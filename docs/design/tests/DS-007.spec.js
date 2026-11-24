@@ -27,9 +27,9 @@ test('shows exactly five statistics sections with the same content for both staf
   await expect(main.locator('.section h2')).toHaveText([
     'Total documente în arhivă',
     'Documente digitalizate',
-    'Documente pe tipuri',
     'Termene de păstrare',
     'Documente digitalizate recent',
+    'Documente pe tipuri',
   ]);
   await expect(main.locator('#type-list .type-row')).toHaveCount(10);
   await expect(main.locator('#recent-list .recent-row')).toHaveCount(5);
@@ -91,6 +91,26 @@ test('links approved counts and periods to archive search and retention counters
   await expect(page.getByRole('link', { name: 'Vezi documentele cu termen de păstrare depășit' })).toHaveAttribute('href', 'DS-005.html?filter=overdue');
   await expect(page.getByRole('link', { name: 'Vezi documentele cu termen în următoarele 30 de zile' })).toHaveAttribute('href', 'DS-005.html?filter=next-30-days');
   await expect(page.locator('#recent-list a').first()).toHaveAttribute('href', 'DS-002.html?document=doc-184');
+});
+
+test('arranges the five sections in a compact desktop dashboard grid', async ({ page }, info) => {
+  test.skip(!info.project.name.startsWith('desktop'));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(mock);
+
+  const total = await page.locator('#total-section').boundingBox();
+  const digitalized = await page.locator('#digitalized-section').boundingBox();
+  const retention = await page.locator('#retention-section').boundingBox();
+  const recent = await page.locator('#recent-section').boundingBox();
+  const types = await page.locator('#types-section').boundingBox();
+  expect(Math.abs(total.y - digitalized.y)).toBeLessThanOrEqual(2);
+  expect(digitalized.x).toBeGreaterThan(total.x);
+  expect(retention.y).toBeGreaterThan(total.y + total.height);
+  expect(Math.abs(recent.y - types.y)).toBeLessThanOrEqual(2);
+  expect(recent.width / types.width).toBeGreaterThanOrEqual(1.4);
+  expect(recent.width / types.width).toBeLessThanOrEqual(1.6);
+  expect(recent.y + recent.height).toBeLessThanOrEqual(900);
+  expect(types.y + types.height).toBeLessThanOrEqual(900);
 });
 
 test('previews empty, loading, error, and long-name states', async ({ page }, info) => {
