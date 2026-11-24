@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Statistici · Arhivă digitală</title>
+  <style>
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF; }
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(./fonts/public-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF; }
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5; --color-bg-surface: #FFFFFF; --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C; --color-text-secondary: #556070; --color-border: #E5E0D8;
+      --color-primary: #072D5C; --color-accent-mid: #4683CF; --color-accent-teal: #46CFC3;
+      --color-accent-amber: #CE8946; --color-version-navy: #072D5C; --color-archival-label-bg: #F9F1E9;
+      --color-archival-label-text: #79502A; --color-archival-label-border: #DEC09F; --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
+      --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
+      --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
+      --text-small: 400 14px/20px var(--font-body); --text-mono: 400 13px/20px ui-monospace, monospace;
+      --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px;
+      --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --radius-none: 0; --radius-sm: 2px; --radius-md: 4px;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --duration-fast: 150ms ease; --duration-normal: 250ms ease;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg-primary: #1E293B; --color-bg-surface: #283548; --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-border: #334155;
+      --color-primary: #4683CF; --color-accent-mid: #60A5FA; --color-focus-ring: #46CFC3;
+      --color-archival-label-bg: #3A302A; --color-archival-label-text: #E7B587; --color-archival-label-border: #69503A;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-small); }
+    h1, h2, h3, p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    a { color: var(--color-text-primary); text-underline-offset: var(--space-xs); }
+    button, input, select { color: inherit; font: inherit; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    .mock-tools { display: grid; gap: var(--space-xs); padding: var(--space-xs) var(--space-md); border-block-end: thin solid var(--color-border); background: var(--color-bg-subtle); color: var(--color-text-secondary); }
+    .tool-row, .mock-nav, .header-copy, .page-heading, .section-heading, .section-link, .recent-row, .deadline-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-row { justify-content: space-between; }
+    .tool-controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+    .tool-controls label { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); }
+    .tool-controls select, .theme-button { min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .mock-note { font-weight: 600; }
+    .mock-nav a { color: var(--color-text-primary); }
+    .mock-nav a[aria-current="page"] { font-weight: 700; }
+    .viewer-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-sm) var(--space-lg); border-block-end: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .brand-mark { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
+    .header-copy { display: grid; gap: var(--space-xs); }
+    .header-kicker { color: var(--color-text-secondary); }
+    .header-title { font: var(--text-body); font-weight: 600; }
+    .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xl) var(--space-md) var(--space-3xl); }
+    .page-heading { justify-content: space-between; align-items: flex-end; margin-block-end: var(--space-lg); }
+    h1 { font: var(--text-h1); }
+    .page-description { max-inline-size: 68ch; margin-block-start: var(--space-xs); color: var(--color-text-secondary); }
+    .section-list { display: grid; gap: var(--space-md); }
+    .section { min-inline-size: 0; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .section-heading { justify-content: space-between; margin-block-end: var(--space-md); }
+    h2 { font: var(--text-h3); }
+    .section-kicker { color: var(--color-text-secondary); }
+    .section-link { min-block-size: var(--space-2xl); margin-inline-start: auto; font-weight: 600; }
+    .metric-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--space-md); }
+    .metric-value { font: var(--text-h1); font-variant-numeric: tabular-nums; }
+    .metric-caption { color: var(--color-text-secondary); }
+    .period-controls { display: flex; align-items: end; flex-wrap: wrap; gap: var(--space-sm); margin-block-end: var(--space-md); }
+    .field { display: grid; gap: var(--space-xs); }
+    .field label { color: var(--color-text-secondary); font-weight: 600; }
+    .field select, .field input { min-block-size: var(--space-2xl); min-inline-size: 11ch; padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .date-range { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+    .period-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm) var(--space-md); }
+    .type-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-xl); }
+    .type-row { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: var(--space-md); min-inline-size: 0; padding: var(--space-sm) 0; border-block-end: thin solid var(--color-border); }
+    .type-row a { display: inline-flex; flex: 1; align-items: center; min-block-size: var(--space-2xl); min-inline-size: 0; overflow-wrap: anywhere; }
+    .type-count { flex: none; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+    .deadline-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+    .deadline-row { justify-content: space-between; align-items: flex-start; min-inline-size: 0; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .deadline-copy { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .deadline-copy strong { font: var(--text-h2); font-variant-numeric: tabular-nums; }
+    .deadline-copy span { color: var(--color-text-secondary); }
+    .recent-list { display: grid; }
+    .recent-row { justify-content: space-between; min-inline-size: 0; padding: var(--space-sm) 0; border-block-end: thin solid var(--color-border); }
+    .recent-row:last-child { border-block-end: 0; }
+    .recent-main { display: grid; gap: var(--space-xs); min-inline-size: 0; }
+    .recent-title { display: inline-flex; align-items: center; min-block-size: var(--space-2xl); font-weight: 600; overflow-wrap: anywhere; }
+    .recent-meta { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); color: var(--color-text-secondary); }
+    .dossier { color: var(--color-archival-label-text); }
+    .empty-message, .state-message { padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    main[data-state="error"] .state-message { border-color: var(--color-accent-amber); }
+    .skeleton { display: block; min-block-size: var(--space-2xl); margin-block: var(--space-sm); border-radius: var(--radius-sm); background: var(--color-bg-subtle); }
+    .sr-only { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @media (max-width: 639px) {
+      .wrap { padding-block-start: var(--space-lg); }
+      .page-heading { align-items: flex-start; }
+      h1 { font: var(--text-h2); }
+      .section { padding: var(--space-md); }
+      .type-list, .deadline-list { grid-template-columns: minmax(0, 1fr); }
+      .metric-layout { grid-template-columns: minmax(0, 1fr); }
+      .section-link { margin-inline-start: 0; }
+      .period-controls, .date-range { inline-size: 100%; }
+      .field, .field select, .field input { inline-size: 100%; }
+      .recent-row { align-items: flex-start; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Instrumente de previzualizare; nu fac parte din aplicație">
+    <div class="tool-row">
+      <div class="mock-nav" aria-label="Navigare demonstrativă">
+        <a href="DS-001.html">Căutare în arhivă</a>
+        <a href="DS-007.html" aria-current="page">Statistici</a>
+        <span class="mock-note">Previzualizare, nu face parte din aplicație</span>
+      </div>
+      <div class="tool-controls">
+        <label for="preview-role">Rol <select id="preview-role"><option>admin</option><option>arhivar</option></select></label>
+        <label for="preview-state">Stare <select id="preview-state"><option value="default">Implicit</option><option value="loading">Se încarcă</option><option value="empty">Fără documente</option><option value="error">Eroare</option><option value="long">Titluri lungi</option></select></label>
+        <button class="theme-button" id="theme-toggle" type="button" aria-label="Activează modul întunecat">Mod întunecat</button>
+      </div>
+    </div>
+    <p>Datele sunt sintetice. Rolurile admin și arhivar au conținut și funcționalitate identice.</p>
+  </aside>
+
+  <header class="viewer-header">
+    <div class="brand-mark" aria-hidden="true">AD</div>
+    <div class="header-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div>
+  </header>
+
+  <main class="wrap" id="statistics-screen" data-state="default">
+    <div class="page-heading">
+      <div><h1>Statistici</h1><p class="page-description">Situația documentelor aprobate și a termenelor de păstrare din arhiva curentă.</p></div>
+    </div>
+
+    <div class="section-list">
+      <section class="section" aria-labelledby="total-title">
+        <div class="section-heading"><h2 id="total-title">Total documente în arhivă</h2><span class="section-kicker">Arhiva curentă</span></div>
+        <div class="metric-layout">
+          <div><p class="metric-value" data-default="1.264" data-empty="0">1.264</p><p class="metric-caption">documente aprobate</p></div>
+          <a class="section-link" href="DS-001.html?status=approved">Vezi toate documentele aprobate <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="period-title">
+        <div class="section-heading"><div><h2 id="period-title">Documente digitalizate</h2><p class="section-kicker">Numărul se bazează pe data aprobării documentului.</p></div></div>
+        <div class="period-controls">
+          <div class="field"><label for="period">Perioadă</label><select id="period">
+            <option value="this-month" data-count="42" data-label="Luna aceasta">Luna aceasta</option>
+            <option value="last-month" data-count="38" data-label="Luna trecută">Luna trecută</option>
+            <option value="this-year" data-count="326" data-label="Anul acesta">Anul acesta</option>
+            <option value="all-time" data-count="1264" data-label="Toată perioada">Toată perioada</option>
+            <option value="custom" data-count="12" data-label="Interval personalizat">Interval personalizat</option>
+          </select></div>
+          <div class="date-range" id="custom-range" hidden>
+            <div class="field"><label for="date-from">De la</label><input id="date-from" type="date" value="2026-10-01"></div>
+            <div class="field"><label for="date-to">Până la</label><input id="date-to" type="date" value="2026-10-31"></div>
+          </div>
+        </div>
+        <div class="period-summary">
+          <p><strong class="metric-value" id="period-count" data-default="42" data-empty="0">42</strong> <span id="period-label">documente aprobate în luna aceasta</span></p>
+          <a class="section-link" id="period-link" href="DS-001.html?status=approved&amp;approved_period=this-month">Vezi documentele perioadei <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="types-title">
+        <div class="section-heading"><div><h2 id="types-title">Documente pe tipuri</h2><p class="section-kicker">Documente aprobate din întreaga arhivă</p></div></div>
+        <ul class="type-list" id="type-list">
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Procur%C4%83">Procură</a><span class="type-count">288</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Contract">Contract</a><span class="type-count">246</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Declara%C8%9Bie">Declarație</a><span class="type-count">209</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Testament%20%2F%20Succesiune">Testament / Succesiune</a><span class="type-count">148</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Divor%C8%9B%20%2F%20Familie">Divorț / Familie</a><span class="type-count">92</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Societ%C4%83%C8%9Bi%20%2F%20Asocia%C8%9Bii">Societăți / Asociații</a><span class="type-count">74</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=%C3%8Encheieri%20%2F%20Legaliz%C4%83ri">Încheieri / Legalizări</a><span class="type-count">68</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Cereri%20%2F%20Proiecte">Cereri / Proiecte</a><span class="type-count">55</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Registre%20%2F%20Opise">Registre / Opise</a><span class="type-count">48</span></li>
+          <li class="type-row"><a href="DS-001.html?status=approved&amp;type=Administrativ%20%2F%20Financiar">Administrativ / Financiar</a><span class="type-count">36</span></li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="retention-title">
+        <div class="section-heading"><div><h2 id="retention-title">Termene de păstrare</h2><p class="section-kicker">Termenul depășit nu autorizează automat casarea.</p></div></div>
+        <div class="deadline-list">
+          <a class="deadline-row" href="DS-005.html?filter=overdue" aria-label="Vezi documentele cu termen de păstrare depășit">
+            <span class="deadline-copy"><strong data-default="8" data-empty="0">8</strong><span>Termen depășit</span></span><span aria-hidden="true">→</span>
+          </a>
+          <a class="deadline-row" href="DS-005.html?filter=next-30-days" aria-label="Vezi documentele cu termen în următoarele 30 de zile">
+            <span class="deadline-copy"><strong data-default="14" data-empty="0">14</strong><span>În următoarele 30 de zile</span></span><span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="recent-title-heading">
+        <div class="section-heading"><div><h2 id="recent-title-heading">Documente digitalizate recent</h2><p class="section-kicker">Ultimele cinci documente aprobate</p></div></div>
+        <ul class="recent-list" id="recent-list">
+          <li class="recent-row"><div class="recent-main"><a class="recent-title" href="DS-002.html?document=doc-184">Contract de vânzare-cumpărare</a><div class="recent-meta"><span class="dossier">Dosar nr. 184/2026</span><time datetime="2026-11-23">23.11.2026</time></div></div><span class="sr-only">Deschide documentul aprobat</span></li>
+          <li class="recent-row"><div class="recent-main"><a class="recent-title" href="DS-002.html?document=doc-183">Procură pentru operațiuni administrative</a><div class="recent-meta"><span class="dossier">Dosar nr. 183/2026</span><time datetime="2026-11-22">22.11.2026</time></div></div><span class="sr-only">Deschide documentul aprobat</span></li>
+          <li class="recent-row"><div class="recent-main"><a class="recent-title" href="DS-002.html?document=doc-182">Declarație de acceptare a succesiunii</a><div class="recent-meta"><span class="dossier">Dosar nr. 182/2026</span><time datetime="2026-11-21">21.11.2026</time></div></div><span class="sr-only">Deschide documentul aprobat</span></li>
+          <li class="recent-row"><div class="recent-main"><a class="recent-title" href="DS-002.html?document=doc-181">Încheiere de legalizare de semnătură</a><div class="recent-meta"><span class="dossier">Dosar nr. 181/2026</span><time datetime="2026-11-20">20.11.2026</time></div></div><span class="sr-only">Deschide documentul aprobat</span></li>
+          <li class="recent-row"><div class="recent-main"><a class="recent-title" href="DS-002.html?document=doc-180">Contract de locațiune</a><div class="recent-meta"><span class="dossier">Dosar nr. 180/2026</span><time datetime="2026-11-19">19.11.2026</time></div></div><span class="sr-only">Deschide documentul aprobat</span></li>
+        </ul>
+        <p class="section-link"><a href="DS-001.html?status=approved">Vezi toate documentele aprobate <span aria-hidden="true">→</span></a></p>
+      </section>
+    </div>
+    <p class="state-message" id="state-message" role="status" hidden></p>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const main = document.getElementById('statistics-screen');
+    const period = document.getElementById('period');
+    const periodCount = document.getElementById('period-count');
+    const periodLabel = document.getElementById('period-label');
+    const periodLink = document.getElementById('period-link');
+    const customRange = document.getElementById('custom-range');
+    const stateMessage = document.getElementById('state-message');
+    const initialMarkup = {
+      types: document.getElementById('type-list').innerHTML,
+      recent: document.getElementById('recent-list').innerHTML
+    };
+    document.getElementById('theme-toggle').addEventListener('click', event => {
+      const dark = root.dataset.theme !== 'dark';
+      root.dataset.theme = dark ? 'dark' : 'light';
+      event.currentTarget.textContent = dark ? 'Mod luminos' : 'Mod întunecat';
+      event.currentTarget.setAttribute('aria-label', dark ? 'Activează modul luminos' : 'Activează modul întunecat');
+    });
+    document.getElementById('preview-role').addEventListener('change', event => {
+      main.dataset.role = event.currentTarget.value;
+      document.querySelector('.mock-tools > p').textContent = `Datele sunt sintetice. Previzualizare pentru rolul ${event.currentTarget.value}; conținutul și funcționalitatea rămân identice.`;
+    });
+    function updatePeriod() {
+      const option = period.selectedOptions[0];
+      const custom = period.value === 'custom';
+      customRange.hidden = !custom;
+      const label = option.dataset.label;
+      if (main.dataset.state !== 'loading') periodCount.textContent = main.dataset.state === 'empty' ? '0' : option.dataset.count;
+      periodLabel.textContent = `documente aprobate ${custom ? 'în intervalul selectat' : `în ${label.toLocaleLowerCase('ro')}`}`;
+      const params = new URLSearchParams({ status: 'approved', approved_period: period.value });
+      if (custom) {
+        params.set('approved_from', document.getElementById('date-from').value);
+        params.set('approved_to', document.getElementById('date-to').value);
+      }
+      periodLink.href = `DS-001.html?${params.toString()}`;
+    }
+    period.addEventListener('change', updatePeriod);
+    for (const dateInput of document.querySelectorAll('.date-range input')) dateInput.addEventListener('change', updatePeriod);
+    document.getElementById('preview-state').addEventListener('change', event => {
+      const state = event.currentTarget.value;
+      main.dataset.state = state;
+      stateMessage.hidden = !['empty', 'error'].includes(state);
+      stateMessage.textContent = state === 'empty' ? 'Nu există documente aprobate în arhivă.' : state === 'error' ? 'Statisticile nu au putut fi încărcate. Încearcă din nou.' : '';
+      document.querySelectorAll('[data-default][data-empty]').forEach(element => { element.textContent = state === 'empty' ? element.dataset.empty : element.dataset.default; });
+      if (state === 'loading') {
+        document.querySelectorAll('.metric-value, .type-list, .recent-list, .deadline-copy strong').forEach(element => {
+          if (!element.dataset.savedHtml) element.dataset.savedHtml = element.innerHTML;
+          element.innerHTML = '<span class="skeleton" aria-label="Se încarcă"></span>';
+        });
+      } else {
+        document.querySelectorAll('[data-saved-html]').forEach(element => { element.innerHTML = element.dataset.savedHtml; delete element.dataset.savedHtml; });
+        document.getElementById('type-list').innerHTML = state === 'empty' ? '<li class="empty-message">Nu există tipuri de documente aprobate.</li>' : initialMarkup.types;
+        document.getElementById('recent-list').innerHTML = state === 'empty' ? '<li class="empty-message">Documentele aprobate vor apărea aici.</li>' : initialMarkup.recent;
+      }
+      if (state === 'long') document.querySelectorAll('.recent-title').forEach(link => { link.textContent = `${link.textContent} — document cu titlu descriptiv și referință arhivistică extinsă`; });
+      updatePeriod();
+    });
+  </script>
+</body>
+</html>
