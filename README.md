@@ -112,13 +112,12 @@ docker compose up -d postgres
 # the role from PostgreSQL's local socket; this preserves all database data.
 DB_PASSWORD="$(sed -n 's/^DB_PASSWORD=//p' .env | tail -n 1)"
 escaped_db_password="$(printf '%s' "$DB_PASSWORD" | sed "s/'/''/g")"
-printf "ALTER ROLE archive WITH PASSWORD '%s';\n" "$escaped_db_password" | docker compose exec -T postgres psql -U postgres -d postgres
+printf "ALTER ROLE archive WITH PASSWORD '%s';\n" "$escaped_db_password" | docker compose exec -T postgres psql -U archive -d archive
 
 # Build/start the backend and worker, then apply pending application migrations.
 docker compose up --build -d backend ocr-queue-worker
-docker compose exec backend php artisan migrate:status
 docker compose exec backend php artisan migrate
-docker compose exec backend php artisan migrate:status
+docker compose exec -T postgres psql -U archive -d archive -c "SELECT current_database() AS database, count(*) AS applied_migrations FROM migrations;"
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
 docker compose exec backend vendor/bin/phpunit
 
