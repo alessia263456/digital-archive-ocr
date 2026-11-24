@@ -3,13 +3,13 @@
 # status: draft (awaiting approval, mock optional) | approved (confirmed in chat) | implemented | deprecated (never delete an entry)
 designs:
   - id: DS-001
-    name: "Listă documente / Căutare (Document list / Search results)"
+    name: "Căutare în arhivă (Archive search)"
     kind: screen
     status: draft
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
-    decisions: [D-002, D-004, D-032, D-033]
-    description: "Acasă cu colecții după tip, dosar fizic, an și documente adăugate recent (ordonate după data adăugării în arhivă). Căutare full-text OCR cu filtre, rezultate după relevanță și numărul dosarului fizic vizibil. Accesul cititorului respectă permisiunile pe dosar."
+    decisions: [D-002, D-004, D-033, D-042]
+    description: "Screen implicit după autentificare pentru admin, arhivar și cititor. Păstrează navigarea și colecțiile arhivei existente, inclusiv documentele adăugate recent, ordonate după data adăugării în arhivă. Căutare full-text OCR cu filtre, rezultate după relevanță și numărul dosarului fizic vizibil. Acceptă filtrele pentru documente aprobate și intervalul datei aprobării transmise din DS-007. Accesul cititorului respectă permisiunile pe dosar."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
@@ -17,7 +17,7 @@ designs:
     status: approved
     design_ref: mocks/DS-002.html
     roles: [admin, arhivar, cititor]
-    decisions: [D-004, D-032, D-038, D-022, D-033, D-034]
+    decisions: [D-004, D-038, D-022, D-033, D-034, D-042]
     description: "Consultare document în regim de citire, navigare între pagini, căutare în document, descărcare PDF și partajarea versiunii selectate pentru rolurile autorizate. Link cu expirare prestabilită sau personalizată și parolă opțională. Acces la Editor și la versiunile anterioare pentru admin și arhivar."
 
   - id: DS-003
@@ -26,7 +26,7 @@ designs:
     status: approved
     roles: [admin, arhivar]
     design_ref: mocks/DS-003.html
-    decisions: [D-002, D-032, D-038, D-025, D-026, D-028, D-040]
+    decisions: [D-002, D-038, D-025, D-026, D-028, D-040, D-042]
     description: "Încărcare independentă PDF și DOCX sau asamblarea unui document din imagini JPG și PNG ordonate. Previzualizarea ilustrează separat documentele în procesare, documentele gata de revizuit și ciornele de revizuire salvate explicit, cu o previzualizare a ultimelor trei ciorne. Revizuirea se deschide în DS-011, iar coada completă în DS-004."
 
   - id: DS-004
@@ -35,16 +35,16 @@ designs:
     status: approved
     design_ref: mocks/DS-004.html
     roles: [admin, arhivar]
-    decisions: [D-019, D-032, D-038, D-022, D-026]
+    decisions: [D-019, D-038, D-022, D-026, D-042]
     description: "File pentru revizuire și carantină, cu numărul de documente în fiecare coadă. Documentele procesate, inclusiv cele fără potriviri PII incerte, necesită revizuire umană în DS-011 înainte de aprobare. Carantină după patru încercări OCR eșuate (încercarea inițială și trei reîncercări), cu reîncercare manuală și confirmarea schimbării stării la eșuat definitiv."
 
   - id: DS-005
     name: "Retenție & Listă de casare (Retention & Destruction list)"
     kind: screen
     status: draft
-    roles: [admin]
-    decisions: [D-002, D-032, D-035]
-    description: "Termene calculate de la data aplicabilă conform Nomenclatorului. Grupare după marcajul C.S., prelungirea termenului și confirmarea casării pe loturi."
+    roles: [admin, arhivar]
+    decisions: [D-002, D-035, D-042]
+    description: "Admin are permisiuni de gestionare a termenelor și casării, inclusiv prelungirea termenului și confirmarea casării pe loturi. Arhivar are acces doar la citire: poate consulta și filtra termenele de păstrare și documentele eligibile pentru casare, fără a modifica termenele, aproba casarea sau efectua alte operațiuni de gestionare. Restricțiile arhivarului sunt impuse și pe server. Termenele urmează regulile aprobate din D-035; atingerea unui termen nu autorizează automat casarea."
 
   - id: DS-006
     name: "Panou administrare (Admin panel)"
@@ -52,23 +52,23 @@ designs:
     status: draft
     design_ref: mocks/DS-006.html
     roles: [admin]
-    decisions: [D-017, D-032, D-033]
+    decisions: [D-017, D-033, D-042]
     description: "Gestiune conturi și permisiuni pentru cititor, acordate explicit pe dosar fizic. Permisiunea individuală are prioritate."
 
   - id: DS-007
-    name: "Panou principal / Statistici (Dashboard)"
+    name: "Statistici (Statistics)"
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-019, D-032, D-038, D-026, D-035]
-    description: "Indicatori volum arhivă (documente, spațiu, scanuri), contor alerte revizuire PII și carantină, scadențe de retenție, flux activitate recentă."
+    decisions: [D-035, D-038, D-033, D-042]
+    description: "Conținut identic pentru admin și arhivar. Exact cinci secțiuni: (1) Total documente în arhivă: numărul documentelor aprobate din arhiva curentă; deschide DS-001 cu lista corespunzătoare. (2) Documente digitalizate: numărul documentelor aprobate după data aprobării, nu data încărcării sau finalizării OCR, fără numărarea versiunilor ori încercărilor; implicit «Luna aceasta», cu perioadele «Luna aceasta», «Luna trecută», «Anul acesta», «Toată perioada» și «Interval personalizat». Selectorul afectează doar acest indicator, iar clickul deschide DS-001 filtrat după documente aprobate și intervalul datei aprobării. (3) Documente pe tipuri: listă compactă cu tipurile reale de document definite de proiect și numărul documentelor aprobate din întreaga arhivă pentru fiecare; fiecare rând deschide DS-001 filtrat după tip. (4) Termene de păstrare: numărul documentelor cu termen depășit și numărul cu termen în următoarele 30 de zile; fiecare deschide DS-005 cu filtrul corespunzător, conform D-035; termenul nu autorizează automat casarea. (5) Documente digitalizate recent: cele mai recente cinci documente aprobate, în ordine descrescătoare după data aprobării, cu identificarea documentului, referința dosarului fizic și data aprobării; fiecare deschide DS-002 și există un link către toate documentele aprobate. Fără consum de spațiu, scanuri/pagini, statistici tehnice OCR, alerte de revizuire sau carantină, flux de audit, comparații, procente, grafice, număr de dosare fizice ori acțiuni rapide."
 
   - id: DS-008
     name: "Jurnal de audit (Audit Log viewer)"
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-002, D-032, D-034, D-035]
+    decisions: [D-002, D-034, D-035, D-042]
     description: "Jurnal de audit imuabil pentru accesări, modificări, partajare și casare. Păstrează dovezile după casare și permite filtrarea după operator și perioadă. Admin și arhivar pot vedea, copia și revoca linkurile active."
 
   - id: DS-009
@@ -77,7 +77,7 @@ designs:
     status: draft
     design_ref: mocks/DS-009.html
     roles: [unauthenticated]
-    decisions: [D-032, D-034]
+    decisions: [D-034, D-042]
     description: "Consultare și descărcare PDF pentru versiunea exactă selectată la partajare, prin link semnat cu expirare și parolă dacă a fost configurată. Titlul este Document partajat. Detaliile arhivistice apar doar în PDF."
 
   - id: DS-010
@@ -94,7 +94,7 @@ designs:
     kind: screen
     status: approved
     roles: [admin, arhivar]
-    decisions: [D-004, D-032, D-038, D-022, D-035]
+    decisions: [D-004, D-038, D-022, D-035, D-042]
     description: "Corectare OCR, revizuire PII obligatorie, marcaje manuale și generare PDF anonimizat. Confirmarea metadatelor obligatorii și a datei aplicabile de retenție dacă este cunoscută. Data de retenție poate rămâne în așteptare. Indicativ derivat din clasificarea editabilă."
     design_ref: mocks/DS-011.html
 
@@ -103,5 +103,5 @@ designs:
     kind: screen
     status: draft
     roles: [admin, arhivar]
-    decisions: [D-032, D-035, D-039]
+    decisions: [D-035, D-039, D-042]
     description: "Consultarea nomenclatorului complet, aplicarea reviziilor CSV oficiale și revizuirea regulilor aplicate documentelor deja aprobate."

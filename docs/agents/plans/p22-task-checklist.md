@@ -32,9 +32,9 @@ Check off a task after verification. Record approval time, verification time, ev
   - The owner reviews each repository mock or its screenshots in chat and explicitly approves that Screen in chat before implementation. [Q-013](../OPEN-QUESTIONS.md#q-013--where-and-how-will-the-remaining-screen-designs-be-approved)
   - Of the 12 [registered Screens](../../design/registry.yaml), DS-002, DS-003 and DS-004 are approved. The following nine await approval.
     - DS-001 · Document list / Search results
-    - DS-005 · Retention & Destruction list
+    - DS-005 · Retention & Destruction list (admin management; arhivar read-only)
     - DS-006 · Admin panel
-    - DS-007 · Dashboard
+    - DS-007 · Statistici
     - DS-008 · Audit Log viewer
     - DS-009 · Public share link viewer
     - DS-010 · Login
@@ -190,7 +190,7 @@ Check off a task after verification. Record approval time, verification time, ev
 ## Day 11 · Finish required Screens and exercise the corpus
 
 - [ ] P22-47 · DS-005 Destruction List and extension
-- [ ] P22-48 · DS-007 dashboard and notification panel
+- [ ] P22-48 · DS-007 Statistici and in-Application notification panel
 - [ ] P22-50 · Prove five visual Redactions
 - [ ] P22-51 · Measure corpus relevance and privacy
 - [ ] P22-52a · Verify intake, review and archive Screens

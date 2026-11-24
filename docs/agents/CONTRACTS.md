@@ -10,7 +10,8 @@
 
 ## Index
 - C-001 · Expiring Signed URL document delivery endpoint · provided
-- C-002 · Username/password bearer authentication and role-protected API · provided
+- C-002 · Username/password bearer authentication and role-protected API · provided · _superseded-by C-003_
+- C-003 · Username/password bearer authentication and role-protected API · provided
 
 ---
 
@@ -25,12 +26,20 @@
 - **Confirmed:** 2026-11-21
 
 ## C-002 · Username/password bearer authentication and role-protected API
-- **Status:** approved
+- **Status:** superseded-by C-003
 - **Date:** 2026-11-23
 - **Interface:** `POST /api/login` accepts JSON `{username, password}`. On success it returns HTTP 200 with `{token, token_type: "Bearer", user: {id, username, role}}`; `name` and `email` are not included. Invalid credentials return a generic Romanian HTTP 401 response using the `eroare` field. When the login rate limit is exceeded, return a Romanian HTTP 429 response using `eroare`; the limit is defined by D-041 after Q-022 is answered. `POST /api/logout` requires `Authorization: Bearer <token>`, revokes only the current token, and returns HTTP 204. Protected API routes require the bearer token; missing, revoked, or expired tokens return JSON HTTP 401, and authenticated users with a disallowed role receive JSON HTTP 403. Role grants follow D-032 and the resource-specific task.
 - **Evidence:** [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md) and owner confirmation in chat.
 - **Consumers:** Future Login Screen DS-010, P22-12b protected draft routes, P22-40 Admin account APIs, and later protected backend APIs.
 - **Confirmed:** 2026-11-23
+
+## C-003 · Username/password bearer authentication and role-protected API
+- **Status:** approved
+- **Date:** 2026-11-24
+- **Interface:** `POST /api/login` accepts JSON `{username, password}`. On success it returns HTTP 200 with `{token, token_type: "Bearer", user: {id, username, role}}`; `name` and `email` are not included. Invalid credentials return a generic Romanian HTTP 401 response using the `eroare` field. When the login rate limit is exceeded, return a Romanian HTTP 429 response using `eroare`; the limit is defined by D-041 after Q-022 is answered. `POST /api/logout` requires `Authorization: Bearer <token>`, revokes only the current token, and returns HTTP 204. Protected API routes require the bearer token; missing, revoked, or expired tokens return JSON HTTP 401, and authenticated users with a disallowed role receive JSON HTTP 403. Role grants follow D-042 and the resource-specific task.
+- **Evidence:** C-002, [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md), and owner approval in chat on 2026-11-24.
+- **Consumers:** Future Login Screen DS-010, P22-12b protected draft routes, P22-40 Admin account APIs, and later protected backend APIs.
+- **Confirmed:** 2026-11-24
 
 ## Consumed
 

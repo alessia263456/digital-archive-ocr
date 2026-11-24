@@ -16,7 +16,7 @@
 - D-017 · In-app username and password authentication
 - D-018 · Romanian-only user interface and system errors
 - D-019 · In-app notifications
-- D-032 · Screen inventory and role-based access control
+- D-042 · Screen inventory, home screen, and role-based access control
 - D-041 · API bearer token lifetime and login throttling
 
 ### [Archive workflows](decisions/archive-workflows.md)
@@ -124,27 +124,26 @@
 - **Evidence:** README.md
 - **Source:** user · confidence high
 
-## D-032 · Screen inventory and role-based access control
+## D-042 · Screen inventory, home screen, and role-based access control
 - **Status:** approved
-- **Date:** 2026-11-20
-- **Rule:** The application user interface must consist of 12 screens with strict role-based access rules:
-  1. Document list / Search results (`DS-001`): Accessible to `admin`, `arhivar`, and `cititor`.
+- **Date:** 2026-11-24
+- **Rule:** The application user interface consists of 12 Screens with strict role-based access rules:
+  1. Document list / Search results (`DS-001`): Accessible to `admin`, `arhivar`, and `cititor`; the default Screen after login for all three roles.
   2. Document viewer (`DS-002`): Read-only view accessible to all logged-in roles (`admin` and `arhivar` access original scan, redacted copy, and an edit button linking to `DS-011`; `cititor` accesses redacted copy only, with PDF download).
   3. Upload (`DS-003`): Accessible to `admin` and `arhivar`.
   4. Human Review Queue & Quarantine (`DS-004`): Accessible to `admin` and `arhivar`.
-  5. Retention & Destruction list (`DS-005`): Accessible strictly to `admin`.
+  5. Retention & Destruction list (`DS-005`): Accessible to `admin` with existing retention-management permissions and to `arhivar` with read-only access to view and filter retention deadlines and documents eligible for destruction. Only `admin` may extend retention periods, approve destruction, or perform other retention-management mutations on DS-005. Enforce role restrictions on the server.
   6. Admin panel (`DS-006`): Accessible strictly to `admin`.
-  7. Dashboard (`DS-007`): Accessible strictly to `admin` and `arhivar` ONLY.
-  8. Audit Log viewer (`DS-008`): Accessible to `admin` and `arhivar`.
-     DS-008 also lets both roles see, copy, and revoke active Share Links.
+  7. Statistics (`DS-007`): Accessible to `admin` and `arhivar` only, as a secondary Screen in application navigation.
+  8. Audit Log viewer (`DS-008`): Accessible to `admin` and `arhivar`. DS-008 also lets both roles see, copy, and revoke active Share Links.
   9. Public share link viewer (`DS-009`): Accessible only to unauthenticated visitors possessing a valid signed URL.
   10. Login (`DS-010`): Accessible to unauthenticated visitors for cabinet authentication.
   11. Document Editor & Anonymization (`DS-011`): Dedicated editing screen for inline OCR correction, TSV bounding-box inspection, PII review, manual black-box redaction drawing, Act Date confirmation, and anonymization generation; accessible strictly to `admin` and `arhivar`.
   12. Notarial Nomenclature (`DS-012`): Accessible to `admin` and `arhivar` for browsing and applying official CSV revisions.
-- **Why:** Records the confirmed archive requirements.
-- **Evidence:** D-020 and owner confirmation in chat
+- **Why:** Records the revised home Screen and role access confirmed by the owner.
+- **Evidence:** D-032 and owner approval in chat on 2026-11-24
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-20
+- **Confirmed:** 2026-11-24
 
 ## D-041 · API bearer token lifetime and login throttling
 - **Status:** approved

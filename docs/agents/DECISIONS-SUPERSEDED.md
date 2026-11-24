@@ -20,6 +20,7 @@
 - D-016 · Retention calculation and manual batch destruction confirmation · _superseded-by D-027_
 - D-021 · Upload review, metadata, and Document Versions · _superseded-by D-031_
 - D-020 · Screen inventory and role-based access control · _superseded-by D-032_
+- D-032 · Screen inventory and role-based access control · _superseded-by D-042_
 
 ### [Archive workflows](decisions/archive-workflows.md)
 - D-023 · Archive browsing, Folder Permissions, and search · _superseded-by D-033_
@@ -157,3 +158,25 @@
 - **Rejected:** Combining complex redaction drawing and editing tools directly into the read-only viewer; exposing admin/retention management to non-admins; allowing `cititor` access to upload, editor, review queue, dashboard, or audit logs.
 - **Evidence:** README.md, docs/design/registry.yaml
 - **Source:** user · confidence high
+
+## D-032 · Screen inventory and role-based access control
+- **Status:** superseded-by D-042
+- **Date:** 2026-11-20
+- **Rule:** The application user interface must consist of 12 screens with strict role-based access rules:
+  1. Document list / Search results (`DS-001`): Accessible to `admin`, `arhivar`, and `cititor`.
+  2. Document viewer (`DS-002`): Read-only view accessible to all logged-in roles (`admin` and `arhivar` access original scan, redacted copy, and an edit button linking to `DS-011`; `cititor` accesses redacted copy only, with PDF download).
+  3. Upload (`DS-003`): Accessible to `admin` and `arhivar`.
+  4. Human Review Queue & Quarantine (`DS-004`): Accessible to `admin` and `arhivar`.
+  5. Retention & Destruction list (`DS-005`): Accessible strictly to `admin`.
+  6. Admin panel (`DS-006`): Accessible strictly to `admin`.
+  7. Dashboard (`DS-007`): Accessible strictly to `admin` and `arhivar` ONLY.
+  8. Audit Log viewer (`DS-008`): Accessible to `admin` and `arhivar`.
+     DS-008 also lets both roles see, copy, and revoke active Share Links.
+  9. Public share link viewer (`DS-009`): Accessible only to unauthenticated visitors possessing a valid signed URL.
+  10. Login (`DS-010`): Accessible to unauthenticated visitors for cabinet authentication.
+  11. Document Editor & Anonymization (`DS-011`): Dedicated editing screen for inline OCR correction, TSV bounding-box inspection, PII review, manual black-box redaction drawing, Act Date confirmation, and anonymization generation; accessible strictly to `admin` and `arhivar`.
+  12. Notarial Nomenclature (`DS-012`): Accessible to `admin` and `arhivar` for browsing and applying official CSV revisions.
+- **Why:** Records the confirmed archive requirements.
+- **Evidence:** D-020 and owner confirmation in chat
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-20
