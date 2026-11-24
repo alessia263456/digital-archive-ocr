@@ -4,15 +4,18 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class AuthenticationAndRolesTest extends TestCase
 {
     private const PASSWORD = 'synthetic-test-password';
+
+    private ?string $csrfSessionCookie = null;
+    private ?string $csrfToken = null;
 
     protected function setUp(): void
     {
@@ -21,21 +24,38 @@ final class AuthenticationAndRolesTest extends TestCase
         self::assertSame('pgsql', DB::connection()->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
         self::assertSame('archive_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
+        config(['sanctum.stateful' => ['localhost']]);
+        $this->withHeader('Origin', 'http://localhost');
+        $csrf = $this->get('/sanctum/csrf-cookie');
+        $sessionCookie = $csrf->getCookie(config('session.cookie'));
+        $csrfCookie = $csrf->getCookie('XSRF-TOKEN');
+        $this->csrfSessionCookie = $sessionCookie?->getValue();
+
+        if ($sessionCookie !== null) {
+            $this->withCookie(config('session.cookie'), $sessionCookie->getValue());
+        }
+
+        if ($csrfCookie !== null) {
+            $token = rawurldecode($csrfCookie->getValue());
+            $this->csrfToken = $token;
+            $this->withCookie('XSRF-TOKEN', $csrfCookie->getValue())
+                ->withHeader('X-XSRF-TOKEN', $token);
+        }
 
         Route::get('/api/__test/roles/admin', fn (Request $request) => response()->json([
             'role' => $request->user()->role,
-        ]))->middleware(['auth:sanctum', 'role:admin']);
+        ]))->middleware(['auth:web', 'role:admin']);
 
         Route::get('/api/__test/roles/staff', fn (Request $request) => response()->json([
             'role' => $request->user()->role,
-        ]))->middleware(['auth:sanctum', 'role:admin,arhivar']);
+        ]))->middleware(['auth:web', 'role:admin,arhivar']);
 
         Route::get('/api/__test/roles/authenticated', fn (Request $request) => response()->json([
             'role' => $request->user()->role,
-        ]))->middleware(['auth:sanctum', 'role:admin,arhivar,cititor']);
+        ]))->middleware(['auth:web', 'role:admin,arhivar,cititor']);
     }
 
-    public function test_valid_credentials_return_a_token_and_only_approved_user_fields(): void
+    public function test_valid_credentials_start_a_session_and_return_only_approved_user_fields(): void
     {
         $user = $this->createUser('arhivar');
 
@@ -45,28 +65,23 @@ final class AuthenticationAndRolesTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('token_type', 'Bearer')
             ->assertJsonPath('user.id', $user->id)
             ->assertJsonPath('user.username', $user->username)
             ->assertJsonPath('user.role', 'arhivar')
             ->assertJsonMissingPath('user.name')
             ->assertJsonMissingPath('user.email');
 
-        $token = $response->json('token');
-        self::assertIsString($token);
-        self::assertNotSame('', $token);
-
-        $storedToken = DB::table('personal_access_tokens')
-            ->where('tokenable_id', $user->id)
-            ->first();
-        self::assertNotNull($storedToken);
-        self::assertNotSame($token, $storedToken->token);
-        self::assertEqualsWithDelta(
-            12 * 60 * 60,
-            Carbon::parse($storedToken->expires_at)->getTimestamp()
-                - Carbon::parse($storedToken->created_at)->getTimestamp(),
-            1,
-        );
+        $response->assertJsonMissingPath('token')->assertJsonMissingPath('token_type');
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        self::assertNotNull($sessionCookie);
+        self::assertNotSame($this->csrfSessionCookie, $sessionCookie->getValue());
+        self::assertTrue($sessionCookie->isHttpOnly());
+        self::assertSame('lax', strtolower((string) $sessionCookie->getSameSite()));
+        $this->withCookie(config('session.cookie'), $sessionCookie->getValue());
+        self::assertFalse(DB::table('personal_access_tokens')->where('tokenable_id', $user->id)->exists());
+        $this->getJson('/api/user')->assertOk()->assertJsonPath('id', $user->id)
+            ->assertJsonPath('username', $user->username)->assertJsonPath('role', 'arhivar')
+            ->assertJsonMissingPath('email')->assertJsonMissingPath('name');
     }
 
     public function test_unknown_username_and_wrong_password_return_the_same_generic_error(): void
@@ -113,28 +128,63 @@ final class AuthenticationAndRolesTest extends TestCase
             ->assertJsonPath('eroare', 'Prea multe încercări de autentificare. Încercați din nou mai târziu.');
     }
 
-    public function test_logout_revokes_the_current_token(): void
+    public function test_state_changing_request_requires_a_matching_csrf_token(): void
     {
-        $user = $this->createUser('admin');
-        $token = $this->login($user);
-
-        $this->withToken($token)->postJson('/api/logout')->assertNoContent();
-
-        self::assertFalse(DB::table('personal_access_tokens')->where('tokenable_id', $user->id)->exists());
-        Auth::forgetGuards();
-        $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertUnauthorized();
+        $this->withHeader('X-XSRF-TOKEN', 'invalid-token')
+            ->postJson('/api/login', ['username' => 'missing-user', 'password' => self::PASSWORD])
+            ->assertStatus(419)
+            ->assertJsonPath('eroare', 'Sesiunea a expirat. Reîncărcați pagina și încercați din nou.');
     }
 
-    public function test_tokens_expire_twelve_hours_after_issuance(): void
+    public function test_logout_invalidates_the_session(): void
     {
         $user = $this->createUser('admin');
-        $token = $this->login($user);
-
-        $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertOk();
-
-        $this->travel(12)->hours();
+        $this->login($user);
+        $logout = $this->postJson('/api/logout')->assertNoContent();
+        $csrfCookie = $logout->getCookie('XSRF-TOKEN');
+        self::assertNotNull($csrfCookie);
+        self::assertNotSame($this->csrfToken, rawurldecode($csrfCookie->getValue()));
         Auth::forgetGuards();
-        $this->withToken($token)->getJson('/api/__test/roles/authenticated')->assertUnauthorized();
+        $this->getJson('/api/user')->assertUnauthorized();
+    }
+
+    public function test_session_expires_after_thirty_minutes_of_inactivity(): void
+    {
+        $user = $this->createUser('admin');
+        $this->login($user);
+        $this->getJson('/api/user')->assertOk();
+        $this->travel(31)->minutes();
+        Auth::forgetGuards();
+        $this->getJson('/api/user')->assertUnauthorized();
+    }
+
+    public function test_session_expires_after_twelve_hours_even_with_recent_activity(): void
+    {
+        $user = $this->createUser('admin');
+        $this->login($user);
+        $this->travel(11)->hours();
+        $this->getJson('/api/user')->assertOk();
+        $this->travel(61)->minutes();
+        Auth::forgetGuards();
+        $this->getJson('/api/user')->assertUnauthorized();
+    }
+
+    public function test_legacy_bearer_tokens_do_not_authenticate_application_routes(): void
+    {
+        $user = $this->createUser('admin');
+        $secret = Str::random(40);
+        DB::table('personal_access_tokens')->insert([
+            'tokenable_type' => User::class,
+            'tokenable_id' => $user->id,
+            'name' => 'legacy',
+            'token' => hash('sha256', $secret),
+            'abilities' => '["*"]',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->withToken((string) $user->id.'|'.$secret)->getJson('/api/user')->assertUnauthorized();
+        $this->withToken((string) $user->id.'|'.$secret)->getJson('/api/__test/roles/admin')->assertUnauthorized();
     }
 
     public function test_role_route_matrix_for_all_account_roles(): void
@@ -146,11 +196,11 @@ final class AuthenticationAndRolesTest extends TestCase
         ];
 
         foreach ($roles as $role => $expectedStatuses) {
-            $token = $this->login($this->createUser($role));
+            $this->login($this->createUser($role));
 
             foreach ($expectedStatuses as $route => $expectedStatus) {
                 Auth::forgetGuards();
-                $response = $this->withToken($token)->getJson('/api/__test/roles/'.$route);
+                $response = $this->getJson('/api/__test/roles/'.$route);
                 $response->assertStatus($expectedStatus);
 
                 if ($expectedStatus === 403) {
@@ -182,7 +232,7 @@ final class AuthenticationAndRolesTest extends TestCase
         ]);
     }
 
-    private function login(User $user): string
+    private function login(User $user): void
     {
         $response = $this->postJson('/api/login', [
             'username' => $user->username,
@@ -190,7 +240,11 @@ final class AuthenticationAndRolesTest extends TestCase
         ]);
 
         $response->assertOk();
+        $sessionCookie = $response->getCookie(config('session.cookie'));
 
-        return (string) $response->json('token');
+        if ($sessionCookie !== null) {
+            $this->withCookie(config('session.cookie'), $sessionCookie->getValue());
+        }
+
     }
 }
