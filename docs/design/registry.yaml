@@ -5,7 +5,7 @@ designs:
   - id: DS-001
     name: "Căutare în arhivă (Archive search)"
     kind: screen
-    status: draft
+    status: approved
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-033, D-042]
@@ -84,7 +84,7 @@ designs:
   - id: DS-010
     name: "Autentificare (Login)"
     kind: screen
-    status: draft
+    status: approved
     design_ref: mocks/DS-010.html
     roles: [unauthenticated]
     decisions: [D-017, D-018]
