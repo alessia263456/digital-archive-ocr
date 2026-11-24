@@ -1,10 +1,10 @@
 # P22 · Task checklist
 
-**Status:** Revised draft. Roadmap approval is pending. Each remaining task requires individual approval.
+**Status:** Roadmap approved on 2026-11-24. Milestone implementation plans and builds remain separate approval steps. Live deployment requires explicit authorization.
 
-See the [14-day roadmap](p22-roadmap.md) for scope, dependencies, verification and daily outcomes.
+See the [approved remaining roadmap](p22-roadmap.md) for scope, dependencies, verification, estimates and daily targets.
 
-Check off a task after verification. Record approval time, verification time, evidence and any blockers under the entry. Track your active review time separately from elapsed turnaround. Use Days 1–2 measurements and the Day 4 checkpoint to update the delivery forecast.
+Check off a task after verification. Record Codex active implementation/verification time, owner review/approval time, owner manual testing time, elapsed approval-to-verified turnaround, evidence and blockers separately. Keep existing completed-task evidence intact. See the [approved remaining roadmap](p22-roadmap.md) for milestone scope, dependencies, acceptance criteria and daily targets.
 
 ## Day 1 · Start the stack and take delivery of the corpus
 
@@ -30,16 +30,7 @@ Check off a task after verification. Record approval time, verification time, ev
   - Verified 2026-11-20 at 18:06 EET after the owner added Allow-HTTP (310) and Allow-HTTPS (320). External HTTP returned 308 to HTTPS. Let’s Encrypt issued a trusted certificate. Anonymous requests on two paths and invalid credentials returned 401 with a Basic challenge. Chromium rendered exactly “Hello World” with valid credentials (200). Recreating only Caddy retained its TLS volume and certificate fingerprint. The same external checks passed after redeployment.
 - [x] P22-05 · Confirm the Screen approval route
   - The owner reviews each repository mock or its screenshots in chat and explicitly approves that Screen in chat before implementation. [Q-013](../OPEN-QUESTIONS.md#q-013--where-and-how-will-the-remaining-screen-designs-be-approved)
-  - Of the 12 [registered Screens](../../design/registry.yaml), DS-002, DS-003 and DS-004 are approved. The following nine await approval.
-    - DS-001 · Document list / Search results
-    - DS-005 · Retention & Destruction list (admin management; arhivar read-only)
-    - DS-006 · Admin panel
-    - DS-007 · Statistici
-    - DS-008 · Audit Log viewer
-    - DS-009 · Public share link viewer
-    - DS-010 · Login
-    - DS-011 · Document Editor & Anonymization
-    - DS-012 · Notarial Nomenclature
+  - At route confirmation, DS-002, DS-003 and DS-004 were approved. Subsequent approvals are recorded for DS-011 (P22-10c) and DS-007 (registry approval commit `34c1ed4`, 2026-11-24). Current registry status: approved — DS-002, DS-003, DS-004, DS-007, DS-011; draft — DS-001, DS-005, DS-006, DS-008, DS-009, DS-010, DS-012.
 - [x] P22-49a · Inventory first corpus batch
   - Approved 2026-11-20. On 2026-11-21 the owner confirmed synthetic data for TEST-001 through TEST-010, identified the signatures as Signatory Party signatures and clarified the vehicle registration numbers. Exact review duration was not measured.
   - The [inventory](../../../CORPUS.md#inventory) records eight scanned PDFs, one original PDF and one DOCX, with fixtures selected for P22-06 through P22-09. Follow up on single-page PDF, JPG and PNG coverage and verify the text layer of TEST-003 before the dependent checks.
@@ -109,7 +100,6 @@ Check off a task after verification. Record approval time, verification time, ev
 
 ## Day 4 · Run batches without blocking the worker
 
-- [ ] P22-49b · Finish the corpus inventory
 - [x] P22-12a · Private draft intake and status
   - Approved in chat on 2026-11-23. Added authenticated PDF/DOCX intake, ordered image-collection intake, per-item batch results, private original and derived-object storage, and persisted draft status. PHPUnit passed in an isolated Compose project with a fresh PostgreSQL volume and generated local-only credentials (68 tests, 357 assertions, 2 skipped). The backend image build passed. The standard project database volume was not used for test writes.
 - [x] P22-13a · Worker job and backoff
@@ -123,98 +113,104 @@ Check off a task after verification. Record approval time, verification time, ev
 
 - [x] P22-12b · Resume and isolate drafts
   - Verified that `admin` and `arhivar` can resume any draft and receive only its stable ID and current status; anonymous and `cititor` requests are denied, and missing drafts return the Romanian 404 response. Focused PHPUnit passed (5 tests, 46 assertions); full backend suite passed on a fresh isolated PostgreSQL volume (69 tests, 366 assertions, 2 skipped). Backend image build passed. Ledger lint and `git diff --check` passed.
+- [x] P22-30b · Design DS-007
+  - The Screen mock is [docs/design/mocks/DS-007.html](../../design/mocks/DS-007.html); [registry.yaml](../../design/registry.yaml) records `status: approved`. Approval is recorded by commit `34c1ed4` (2026-11-24). Preserve the approved five-section scope; P22-48 covers implementation and is still pending.
+
+## M1a · First usable, secure workflow · target Nov 24–25
+
+- [ ] P22-20a · Design DS-010
+- [ ] P22-20b · Design DS-001
+- [ ] P22-35 · DS-010 login
+- [ ] P22-36a · Write append-only audit events
+
+M1a also begins these later-completion tasks: P22-23 (single-document upload slice; completes M1b), P22-34 (DS-001 default home/empty state; completes M3), and P22-38 (audited staff-only draft preview; completes M3).
+
+## M1b · Intake, batch and quarantine · target Nov 25–26
+
+- [ ] P22-49b · Finish the corpus inventory — owner task, proceeds in parallel
 - [ ] P22-14 · Exact SHA-256 duplicate detection
 - [ ] P22-13b · Prove corrupt-then-valid flow
 - [ ] P22-15 · Notifications and quarantine actions
+- [ ] P22-23 · DS-003 upload
+
+## M2 · Safe review and immutable publication · target Nov 27–28
+
 - [ ] P22-16 · CNP and IBAN confidence rules
 - [ ] P22-17a · Detect names and contact data
 - [ ] P22-17b · Flag other sensitive regions
 - [ ] P22-21a · Generate reviewed Redaction PDF
 - [ ] P22-21b · Generate safe reader projections
 - [ ] P22-19 · Part 1 Notarial Nomenclature import
-- [ ] P22-20a · Design DS-010
-- [ ] P22-20b · Design DS-001
-- [ ] P22-20c · Design DS-006
-
-## Day 6 · Make intake and review usable
-
 - [ ] P22-22 · Metadata suggestions and classification
-- [ ] P22-23 · DS-003 upload
 - [ ] P22-24a · Build DS-011 OCR editing
 - [ ] P22-24b · Build DS-011 candidate review
 - [ ] P22-26 · Retention calculation and validation
-- [ ] P22-30a · Design DS-005
-- [ ] P22-30b · Design DS-007
-- [ ] Design and build DS-012 for Nomenclature browsing and CSV revisions
-- [ ] P22-30c · Design DS-008
-- [ ] P22-30d · Review DS-009 mock
-
-## Day 7 · Approve immutable Document Versions
-
 - [ ] P22-27a · Draw and preview manual Redaction
 - [ ] P22-27b · Capture metadata and review confirmation
-
-## Day 8 · Find documents and apply access rules
-
 - [ ] P22-28a · Implement immutable version publication
 - [ ] P22-28b · Wire Editor publication and verify
 - [ ] P22-29 · Possible duplicates
+- [ ] P22-45 · DS-004 review and quarantine queues — completion after Editor navigation is integrated
+
+## M3 · Search, permissions and document viewing · target Nov 28–29
+
 - [ ] P22-31 · Folder Permission policy
 - [ ] P22-32 · PostgreSQL Romanian search index
 - [ ] P22-33 · Browse and search API
 - [ ] P22-34 · DS-001 search and browse
-- [ ] P22-35 · DS-010 login
-- [ ] P22-36a · Write append-only audit events
 - [ ] P22-36b · Verify audit integrity
-- [ ] P22-38 · Authorized viewer and export access
-
-## Day 9 · Complete internal access and Share Link services
-
 - [ ] P22-37 · Metadata edits and dossier reassignment
+- [ ] P22-38 · Authorized viewer and export access
 - [ ] P22-39 · DS-002 viewer and Document Version history
+
+## M4 · Staff operations, sharing and retention · target Nov 29–Dec 1
+
+- [ ] P22-20c · Design DS-006
+- [ ] P22-30a · Design DS-005
+- [ ] P22-30c · Design DS-008
+- [ ] P22-30d · Review DS-009 mock
+- [ ] Design and build DS-012 for Nomenclature browsing and CSV revisions
 - [ ] P22-40a · Implement account, dossier and permission Admin APIs
 - [ ] P22-40b · Build DS-006 Admin forms
 - [ ] P22-41a · Issue and revoke version-pinned Share Links
 - [ ] P22-41b · Enforce Share Link access on PDF delivery
 - [ ] P22-43 · Audit Share Link lifecycle and use
-
-## Day 10 · Complete recipient, review and destruction workflows
-
 - [ ] P22-42a · Build DS-002 sharing controls
 - [ ] P22-42b · Build DS-009 recipient Screen
 - [ ] P22-44 · DS-008 Audit Log
-- [ ] P22-45 · DS-004 review and quarantine queues
 - [ ] P22-46a · Remove destroyed versions and retain audit evidence
 - [ ] P22-46b · Verify destruction recovery and invalidation
-
-## Day 11 · Finish required Screens and exercise the corpus
-
 - [ ] P22-47 · DS-005 Destruction List and extension
 - [ ] P22-48 · DS-007 Statistici and in-Application notification panel
+
+## M5 · Integration and polish · target Dec 1
+
 - [ ] P22-50 · Prove five visual Redactions
 - [ ] P22-51 · Measure corpus relevance and privacy
 - [ ] P22-52a · Verify intake, review and archive Screens
 - [ ] P22-52b · Verify operational and recipient Screens
-
-## Day 12 · Verify and promote the release
-
 - [ ] P22-53 · Debug release-blocking integration failures
 - [ ] P22-54b · Verify release deployment and rollback
 - [ ] P22-55 · Release test matrix
-- [ ] P22-56c · Promote the checked build
-- [ ] P22-57 · Technical documentation
+- [ ] P22-56c · Promote the checked build — requires separate explicit deployment authorization
+- [ ] P22-57 · Technical documentation — update progressively; final accuracy/fresh-start check in M5
 
-## Day 13 · Run university acceptance live
+## Dec 2–4 · Live acceptance and submission
 
 - [ ] P22-58 · Process first 15 documents live
 - [ ] P22-59 · Process remaining 15 documents live
 - [ ] P22-60 · Five Secretar Notarial acceptance searches
 - [ ] P22-61 · Assemble university evidence
-
-## Day 14 · Rerun, finalize and rehearse
-
 - [ ] P22-62 · Contingency fix or live rerun
 - [ ] P22-63 · Final release and documentation verification
 - [ ] P22-64 · Prepare defense walkthrough
 - [ ] P22-65 · Rehearse the defense
 - [ ] P22-66 · Final submission and defense reserve
+
+## Integration and verification notes
+
+- M1a adds the protected draft/review detail and queue endpoints needed to return persisted OCR pages, text, confidence and Bounding Boxes. Existing `GET /api/drafts/{id}` currently returns only ID/status. It also adds authorized issuance of the expiring preview Signed URL and an access audit event before serving sensitive content.
+- M1a defines safe initial live-admin provisioning without a committed/default production password and documents browser bearer-token handling within C-003. CI adds PHPUnit and Ledger lint in M1a; API examples and `AI_LOG.md` start in M1a; architecture and operational docs are updated alongside later schema changes.
+- Every milestone has local browser testing with real APIs. Capture changed Screens in desktop/mobile and light/dark modes, use Design Tokens and Romanian copy, and cover required error/empty/loading/accessibility states. Screen implementation waits for that Screen's explicit approval.
+- Incremental live checkpoints may be prepared after M1a/M1b, M3 and M5. Deploy only after separate explicit authorization; P22-56c promotion and removal of the host gate are never automatic.
+- Keep D-001–D-042, C-001/C-003, all approved archive workflows and university requirements unchanged. Q-021 remains unanswered; do not implement an invented OCR-similarity threshold.
