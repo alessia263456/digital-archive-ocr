@@ -18,7 +18,7 @@ services:
       DB_HOST: postgres
       DB_DATABASE: archive
       DB_USERNAME: archive
-      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_PASSWORD: ${DB_PASSWORD:?Run ./scripts/ensure-local-env.sh to initialize local credentials}
 
   ocr-queue-worker:
     build:
@@ -35,7 +35,7 @@ services:
       DB_HOST: postgres
       DB_DATABASE: archive
       DB_USERNAME: archive
-      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_PASSWORD: ${DB_PASSWORD:?Run ./scripts/ensure-local-env.sh to initialize local credentials}
       QUEUE_CONNECTION: database
       DB_QUEUE_RETRY_AFTER: 8100
       DOCUMENTS_DISK: ${DOCUMENTS_DISK:-r2}
@@ -55,7 +55,7 @@ services:
     environment:
       POSTGRES_DB: archive
       POSTGRES_USER: archive
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Run ./scripts/ensure-local-env.sh to initialize local credentials}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/backend/init-test-database.sql:/docker-entrypoint-initdb.d/01-test.sql:ro
@@ -79,7 +79,7 @@ services:
       DB_HOST: postgres
       DB_DATABASE: archive
       DB_USERNAME: archive
-      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_PASSWORD: ${DB_PASSWORD:?Run ./scripts/ensure-local-env.sh to initialize local credentials}
       DB_QUEUE_RETRY_AFTER: 8100
       DOCUMENTS_DISK: ${DOCUMENTS_DISK:-r2}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}

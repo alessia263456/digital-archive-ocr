@@ -102,13 +102,23 @@ After destruction, `admin` and `arhivar` can still see prior access events, who 
 ## Commands
 
 ```bash
-# Local backend. Supply APP_KEY and DB_PASSWORD from your password manager.
-# For a new disposable environment you can generate both in this shell:
-export APP_KEY="base64:$(openssl rand -base64 32)"
-export DB_PASSWORD="$(openssl rand -hex 32)"
-# Reuse the same values on subsequent starts with the same database volume.
+# Local backend. Run once per checkout to create persistent, Git-ignored credentials.
+# The helper preserves existing values and never prints them.
+./scripts/ensure-local-env.sh
+
+# Start PostgreSQL first so an existing volume can be safely checked.
+docker compose up -d postgres
+# Only if this pre-existing volume rejects the configured password, reconcile
+# the role from PostgreSQL's local socket; this preserves all database data.
+DB_PASSWORD="$(sed -n 's/^DB_PASSWORD=//p' .env | tail -n 1)"
+escaped_db_password="$(printf '%s' "$DB_PASSWORD" | sed "s/'/''/g")"
+printf "ALTER ROLE archive WITH PASSWORD '%s';\n" "$escaped_db_password" | docker compose exec -T postgres psql -U postgres -d postgres
+
+# Build/start the backend and worker, then apply pending application migrations.
 docker compose up --build -d backend ocr-queue-worker
+docker compose exec backend php artisan migrate:status
 docker compose exec backend php artisan migrate
+docker compose exec backend php artisan migrate:status
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
 docker compose exec backend vendor/bin/phpunit
 
