@@ -58,7 +58,7 @@ designs:
   - id: DS-007
     name: "Statistici (Statistics)"
     kind: screen
-    status: draft
+    status: approved
     design_ref: mocks/DS-007.html
     roles: [admin, arhivar]
     decisions: [D-035, D-038, D-033, D-042]
