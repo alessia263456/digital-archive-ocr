@@ -118,12 +118,16 @@ Check off a task after verification. Record Codex active implementation/verifica
 
 ## M1a · First usable, secure workflow · target Nov 24–25
 
-- [ ] P22-20a · Design DS-010
-- [ ] P22-20b · Design DS-001
+- [x] P22-20a · Design DS-010
+  - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
+- [x] P22-20b · Design DS-001
+  - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
 - [ ] P22-35 · DS-010 login
 - [ ] P22-36a · Write append-only audit events
 
 M1a also begins these later-completion tasks: P22-23 (single-document upload slice; completes M1b), P22-34 (DS-001 default home/empty state; completes M3), and P22-38 (audited staff-only draft preview; completes M3).
+
+M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (plan approved; implementation not started), M1a.2 Upload and OCR processing, M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
 
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 
