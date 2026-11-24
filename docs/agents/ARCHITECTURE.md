@@ -12,7 +12,7 @@ Composed of a React frontend, a Laravel backend API, a PostgreSQL relational dat
 ```text
 [Browser Client (React)]
          |
-         v (REST API / Sanctum)
+         v (same-origin REST API / Sanctum session + CSRF)
 [Laravel Backend API (Docker)] <---> [PostgreSQL (Docker)]
          |
          +---> [Tesseract OCR + tesseract-ocr-ron (Docker)] ---> Emits TSV (Word Bounding Boxes) [D-004]
@@ -64,6 +64,8 @@ See [approved archive workflows](decisions/archive-workflows.md) for D-022 throu
 | `R2_BUCKET`, `R2_ENDPOINT` | Private deployment environment | Laravel Backend | Private EU-jurisdiction bucket and its S3-compatible endpoint |
 | `R2_DEFAULT_REGION`, `R2_USE_PATH_STYLE_ENDPOINT` | Private deployment environment | Laravel Backend | Defaults: `auto` and `false` |
 | `VITE_*` | `frontend/.env` | React Frontend | API URL and frontend environment |
+| `SANCTUM_STATEFUL_DOMAINS` | Compose environment | Laravel Backend | Exact local Vite origin and live application host |
+| `SESSION_*` | Compose environment | Laravel Backend | Encrypted PostgreSQL-backed browser sessions and cookie policy |
 <!-- names only, never values -->
 
 The live Compose model requires the R2 key, secret, bucket, and endpoint and passes them only to the backend. The endpoint must use the EU-jurisdiction R2 hostname. Live object round-trip verification remains pending P22-56b.
@@ -73,10 +75,10 @@ Compose runs the local Laravel service `backend` against PostgreSQL after its re
 
 The [temporary Caddy service](../../docker/placeholder/README.md) has a separate Compose project on the Azure VM. It owns TCP 80 and 443 when running. The authenticated placeholder is live. Public HTTPS and credential checks passed before and after container recreation using the same certificate volume.
 
-The [live skeleton configuration](../../docker/live/README.md) uses a separate Compose project named `archive-live`. Its public Caddy service serves the React build, challenges all requests using the placeholder’s bcrypt import and forwards `/up`, `/api` and `/api/*` to the private FrankenPHP classic listener. Caddy removes the hosting credential before forwarding. Laravel uses PostgreSQL on the project network. Only Caddy publishes host ports and mounts the external placeholder certificate volume. P22-56b owns the future listener switch and can restore the placeholder by stopping live Caddy and restarting placeholder Caddy.
+The [live skeleton configuration](../../docker/live/README.md) uses a separate Compose project named `archive-live`. Its public Caddy service serves the React build, challenges all requests using the placeholder’s bcrypt import and forwards `/up`, `/api` and `/api/*`, and `/sanctum` and `/sanctum/*` to the private FrankenPHP classic listener. Caddy removes the hosting credential before forwarding and sets a restrictive same-origin Content Security Policy without access logging. Laravel uses PostgreSQL on the project network. Only Caddy publishes host ports and mounts the external placeholder certificate volume. P22-56b owns the future listener switch and can restore the placeholder by stopping live Caddy and restarting placeholder Caddy.
 
 ## Boundaries
-- Frontend / Backend REST API boundary uses Laravel Sanctum bearer tokens. Tokens expire 12 hours after issuance; logout revokes the current token. Login limits failed credentials to five attempts per normalized username and client IP per minute (D-041). The reusable `role` middleware enforces allowed role groups on protected routes; resource tasks apply it to their routes.
+- Frontend / Backend REST API boundary uses same-origin Laravel Sanctum sessions with CSRF protection. Sessions expire after 30 minutes idle or 12 hours maximum; logout invalidates the session. Application routes reject bearer-token-only requests. Login limits failed credentials to five attempts per normalized username and client IP per minute (D-043). The reusable `role` middleware enforces allowed role groups on protected routes; resource tasks apply it to their routes.
 - Folder Permissions restrict `cititor` by Physical Dossier. External access is limited to the selected PDF through its Share Link.
 - Immutability boundary: Document versions cannot be edited in place; new versions are appended ([D-002](DECISIONS.md#D-002)).
 - PII redaction boundary: Redaction physically burns black pixels into the scan copy, preventing client-side unmasking.

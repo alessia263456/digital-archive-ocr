@@ -20,6 +20,10 @@ final class DocumentDraftIntakeTest extends TestCase
         Storage::fake('documents');
         Queue::fake();
         config(['filesystems.default_document_disk' => 'documents']);
+        $this->withSession([
+            'authentication_started_at' => now()->timestamp,
+            'authentication_last_activity_at' => now()->timestamp,
+        ]);
         $this->artisan('migrate')->assertExitCode(0);
     }
 

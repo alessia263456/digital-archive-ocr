@@ -123,11 +123,12 @@ Check off a task after verification. Record Codex active implementation/verifica
 - [x] P22-20b · Design DS-001
   - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
 - [ ] P22-35 · DS-010 login
+  - Implementation and automated verification completed on 2026-11-24 with same-origin Vite/Sanctum session auth, Romanian login and expiry states, logout, protected-route enforcement and safe local admin provisioning. PHPUnit passed (82 tests, 471 assertions, 3 skipped); standard Playwright passed (28 tests) in desktop/mobile light/dark; the real-API proxy test passed in all four projects. DS-010 screenshots and DS-001's initial copy-only empty state are recorded in `docs/design/screens/`. Owner local login/logout review remains pending.
 - [ ] P22-36a · Write append-only audit events
 
 M1a also begins these later-completion tasks: P22-23 (single-document upload slice; completes M1b), P22-34 (DS-001 default home/empty state; completes M3), and P22-38 (audited staff-only draft preview; completes M3).
 
-M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (plan approved; implementation not started), M1a.2 Upload and OCR processing, M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
+M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (implementation and automated checks complete; owner review pending), M1a.2 Upload and OCR processing, M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
 
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 
@@ -162,6 +163,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [ ] P22-32 · PostgreSQL Romanian search index
 - [ ] P22-33 · Browse and search API
 - [ ] P22-34 · DS-001 search and browse
+  - M1a.1 implements only the authenticated default home and the confirmed copy-only empty state. Search and browse remain pending.
 - [ ] P22-36b · Verify audit integrity
 - [ ] P22-37 · Metadata edits and dossier reassignment
 - [ ] P22-38 · Authorized viewer and export access

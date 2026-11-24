@@ -5,11 +5,11 @@ designs:
   - id: DS-001
     name: "Căutare în arhivă (Archive search)"
     kind: screen
-    status: approved
+    status: implemented
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-033, D-042]
-    description: "Screen implicit după autentificare pentru admin, arhivar și cititor. Păstrează navigarea și colecțiile arhivei existente, inclusiv documentele adăugate recent, ordonate după data adăugării în arhivă. Căutare full-text OCR cu filtre, rezultate după relevanță și numărul dosarului fizic vizibil. Acceptă filtrele pentru documente aprobate și intervalul datei aprobării transmise din DS-007. Accesul cititorului respectă permisiunile pe dosar."
+    description: "M1a.1 implements the authenticated default home with the confirmed copy-only empty state for admin, arhivar and cititor. Search, filters, collection browsing, recent documents and dossier permission views remain within P22-34."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
@@ -84,7 +84,7 @@ designs:
   - id: DS-010
     name: "Autentificare (Login)"
     kind: screen
-    status: approved
+    status: implemented
     design_ref: mocks/DS-010.html
     roles: [unauthenticated]
     decisions: [D-017, D-018]

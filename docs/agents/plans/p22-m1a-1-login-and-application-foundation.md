@@ -1,6 +1,6 @@
 # Plan — M1a.1 · Login and application foundation
 
-**Status:** Approved by the owner on 2026-11-24. Implementation has not started. DS-010 and DS-001 mocks were approved for implementation on 2026-11-24.
+**Status:** Approved by the owner on 2026-11-24. Implementation and automated verification are complete on `feat/p22-m1a1-login-foundation`; owner local login/logout review remains pending. DS-010 and DS-001 mocks were approved for implementation on 2026-11-24.
 
 ## Size
 
@@ -113,4 +113,10 @@ Previously confirmed, unchanged: **D-001, D-003, D-006, D-017, D-018, and D-042*
 
 ## Implementation record
 
-Pending. Plan and Screens approved on 2026-11-24; no implementation or verification has started.
+- Implemented on 2026-11-24 on branch `feat/p22-m1a1-login-foundation`. The user confirmed the local Vite origin as `http://127.0.0.1:5173` and selected copy-only for the DS-001 empty state.
+- **Codex implementation/verification duration:** about 1 hour 15 minutes elapsed from the test-first commit to automated verification; active editing time was not separately measured. **Owner review/manual login/logout test:** pending. **Approval-to-verified turnaround:** same date, 2026-11-24; approval time was not recorded.
+- **Verification:** PHPUnit 82 tests, 471 assertions, 3 existing skips; standard frontend build and Playwright 28 passed, 4 opt-in real-API tests skipped without backend URL; opt-in real-API Playwright 4 passed across desktop/mobile light/dark. Live Compose/Caddy static configuration checks passed (4 tests), local Compose config, Ledger lint, and `git diff --check` passed.
+- **Screenshots:** inspected desktop and mobile light/dark captures, plus 320×740 and 1600×900 states for both Screens. Saved under `docs/design/screens/`.
+- The existing base migration already creates `sessions`; no duplicate session-table migration was added. A narrow API CSRF adapter was added after explicit middleware tests showed Laravel returned a generic English error instead of the approved Romanian 419 response. The frontend test Docker context was corrected to include Vite proxy configuration and public fonts after a real proxy smoke test showed those files were excluded.
+- Playwright UI success/logout state tests use mocked API responses; real Vite-to-Laravel proxy, cookie attributes and CSRF header were additionally checked against the local backend with invalid credentials. Successful session login/logout and role authorization are covered by PHPUnit. The owner’s local manual login/logout review remains pending.
+- The existing scaffold heading assertion was changed to expect `Autentificare` with the user’s approval; its other assertions were preserved.

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = 'http://127.0.0.1:4173';
+const baseURL = 'http://127.0.0.1:5173';
 const projects = [];
 
 for (const [viewport, device] of [['desktop', 'Desktop Chrome'], ['mobile', 'Pixel 7']]) {
@@ -17,7 +17,7 @@ export default defineConfig({
   projects,
   use: { baseURL },
   webServer: {
-    command: 'vite preview --host 127.0.0.1 --port 4173 --strictPort',
+    command: 'vite --host 127.0.0.1 --port 5173 --strictPort',
     url: baseURL,
   },
 });

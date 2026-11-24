@@ -2,6 +2,18 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-24 · P22 M1a.1 · Autentificare și fundația aplicației
+
+**Unealta:** OpenAI Codex, Docker Compose și Playwright.
+
+**Ce am cerut:** Implementarea planului aprobat pentru autentificare cu sesiuni Sanctum, DS-010, starea goală inițială DS-001 și verificarea backend/frontend.
+
+**Ce am primit:** Login/logout cu sesiuni server-side, protecție CSRF, expirare la 30 de minute fără activitate și maximum 12 ore, oprirea token-urilor bearer pentru aplicație, creare interactivă și sigură a primului cont Admin, proxy same-origin pentru Vite/Caddy și cele două ecrane React. Pentru DS-001 am ales text explicativ fără link către ecranul de încărcare.
+
+**Verificare:** PHPUnit 82 teste și 471 aserțiuni (3 teste existente skipped); Playwright 28 teste pentru desktop/mobil și teme luminoasă/întunecată; testul suplimentar cu API-ul Laravel real a trecut în toate cele patru proiecte. Verificările Compose/Caddy, Ledger lint și `git diff --check` au trecut. Capturile desktop și mobil la 320×740 și 1600×900 au fost inspectate și salvate în `docs/design/screens/`.
+
+Un test real a găsit că `.dockerignore` excludea config-ul Vite și fonturile publice din imagine; am inclus acele intrări și am repetat build-ul și verificările. Tabela `sessions` exista deja în migrarea scaffold-ului, deci nu am adăugat o migrare duplicată. Utilizatoarea va revizui manual login/logout local; timpul Codex a fost aproximativ 1 h 15 min scurs, timpul activ nu a fost măsurat separat.
+
 ## 2026-11-17 · Interviu de clarificare (/grill-me), Scope și Deciziile D-007 – D-020
 **Unealta:** Antigravity CLI (agy) (`/grill-me` și generare `README.md`, `CONTEXT.md`, `OPEN-QUESTIONS.md`, `DECISIONS.md`).
 **Ce am cerut (pe scurt):** Interviu pas cu pas pentru a defini scope-ul aplicației în `README.md`, completarea termenilor în `CONTEXT.md`, marcarea punctelor neclare ca `Q-` în `OPEN-QUESTIONS.md` și propunerea deciziilor tehnice și de business (`D-007` – `D-020`).

@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 final class AuthController
@@ -41,15 +41,12 @@ final class AuthController
             ], 401);
         }
 
-        $token = $user->createToken(
-            'application-api',
-            ['*'],
-            now()->addHours(12),
-        );
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+        $request->session()->put('authentication_started_at', now()->timestamp);
+        $request->session()->put('authentication_last_activity_at', now()->timestamp);
 
         return response()->json([
-            'token' => $token->plainTextToken,
-            'token_type' => 'Bearer',
             'user' => [
                 'id' => $user->id,
                 'username' => $user->username,
@@ -60,12 +57,21 @@ final class AuthController
 
     public function logout(Request $request): Response
     {
-        $token = $request->user()?->currentAccessToken();
-
-        if ($token instanceof PersonalAccessToken) {
-            $token->delete();
-        }
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->noContent();
+    }
+
+    public function currentUser(Request $request): JsonResponse
+    {
+        $user = $request->user('web');
+
+        return response()->json([
+            'id' => $user->id,
+            'username' => $user->username,
+            'role' => $user->role,
+        ]);
     }
 }

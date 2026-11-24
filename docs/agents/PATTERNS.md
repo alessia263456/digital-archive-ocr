@@ -16,6 +16,7 @@
 - PATTERN-008 · Verify live Signed URLs with a disposable object · candidate
 - PATTERN-009 · Count only failed credential responses in login throttling · candidate
 - PATTERN-010 · Persist mixed intake items independently across database and storage · candidate
+- PATTERN-011 · Enforce both idle and absolute age for stateful sessions · candidate
 
 ---
 
@@ -76,3 +77,8 @@
 - **Status:** candidate
 - **How:** Persist each independent submission in its own database transaction. Track the private object keys created for that item and remove only those objects if its persistence fails. Return a result for each item so one failure does not discard valid siblings.
 - **Example:** [Draft intake service](../../backend/app/Services/DocumentDraftIntakeService.php) and [draft intake feature tests](../../backend/tests/Feature/DocumentDraftIntakeTest.php).
+
+## PATTERN-011 · Enforce both idle and absolute age for stateful sessions
+- **Status:** candidate
+- **How:** Store authentication start and last-activity timestamps in the server-side session. Check both before allowing each authenticated request, expire at either bound, and refresh only the idle timestamp after a valid request.
+- **Example:** [Session lifetime middleware](../../backend/app/Http/Middleware/EnforceSessionLifetime.php) and [authentication feature tests](../../backend/tests/Feature/AuthenticationAndRolesTest.php).

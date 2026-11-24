@@ -5,9 +5,9 @@ const colors = {
   dark: { background: 'rgb(30, 41, 59)', text: 'rgb(248, 250, 252)' },
 };
 
-test('mounts the Romanian scaffold with the requested theme', async ({ page, colorScheme }, testInfo) => {
+test('mounts the approved Romanian login screen with the requested theme', async ({ page, colorScheme }, testInfo) => {
   await page.goto('/');
-  const marker = page.getByRole('heading', { name: 'Arhivă digitală', exact: true });
+  const marker = page.getByRole('heading', { name: 'Autentificare', exact: true });
   await expect(marker).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
   await expect(page.locator('body')).toHaveCSS('background-color', colors[colorScheme].background);
