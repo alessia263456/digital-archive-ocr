@@ -8,3 +8,5 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: docker compose run --build --rm frontend-test
+        env:
+          DB_PASSWORD: ci-only-placeholder

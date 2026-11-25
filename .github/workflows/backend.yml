@@ -13,6 +13,7 @@ jobs:
         run: |
           export APP_KEY="base64:$(openssl rand -base64 32 | tr -d '\n')"
           export DB_PASSWORD="$(openssl rand -hex 32)"
+          export DOCUMENTS_DISK=local
           docker compose run --build --rm backend vendor/bin/phpunit
       - name: Lint the agent ledger
         run: python3 docs/agents/tools/ledger-lint.py
