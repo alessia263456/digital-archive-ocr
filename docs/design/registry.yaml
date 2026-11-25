@@ -9,7 +9,7 @@ designs:
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-033, D-042]
-    description: "M1a.1 implements the authenticated default home with the confirmed copy-only empty state for admin, arhivar and cititor. Search, filters, collection browsing, recent documents and dossier permission views remain within P22-34."
+    description: "M1a.1 implements the authenticated default home with the confirmed copy-only empty state for admin, arhivar and cititor. M1a.2 adds a DS-003 upload entry for admin and arhivar. Search, filters, collection browsing, recent documents and dossier permission views remain within P22-34."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
@@ -23,11 +23,11 @@ designs:
   - id: DS-003
     name: "Încărcare documente (Upload)"
     kind: screen
-    status: approved
+    status: implemented
     roles: [admin, arhivar]
     design_ref: mocks/DS-003.html
     decisions: [D-002, D-038, D-025, D-026, D-028, D-040, D-042]
-    description: "Încărcare independentă PDF și DOCX sau asamblarea unui document din imagini JPG și PNG ordonate. Previzualizarea ilustrează separat documentele în procesare, documentele gata de revizuit și ciornele de revizuire salvate explicit, cu o previzualizare a ultimelor trei ciorne. Revizuirea se deschide în DS-011, iar coada completă în DS-004."
+    description: "M1a.2 implementează încărcarea unui singur PDF/DOCX sau a unei colecții ordonate JPG/PNG, cu ciorne private și actualizare manuală a stării OCR pentru elementele încărcate în sesiunea curentă. Revizuirea, coada, ciornele salvate și funcțiile de duplicat rămân în afara acestei livrări."
 
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"

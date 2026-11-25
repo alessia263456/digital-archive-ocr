@@ -58,4 +58,11 @@ export const api = {
     body: JSON.stringify({ username, password }),
   }),
   logout: () => request('/api/logout', { method: 'POST' }),
+  uploadDraft: (files, kind) => {
+    const body = new FormData();
+    const field = kind === 'images' ? 'images[]' : 'documents[]';
+    files.forEach((file) => body.append(field, file, file.name));
+    return request('/api/drafts', { method: 'POST', body });
+  },
+  draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
 };
