@@ -14,7 +14,7 @@ Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs
 
 PHPUnit: 89 teste, 530 aserțiuni, 3 skipped. Build-ul frontend și Playwright: 64 trecute, 8 skipped; testul real separat: 1 trecut. Capturile existente DS-001, DS-003 și DS-011 au fost inspectate în teme și dimensiuni reprezentative.
 
-Prima probă izolată a identificat configurarea necesară a discului: `DOCUMENTS_DISK=documents` folosește volumul montat comun, iar volumul nou trebuie să aparțină utilizatorului `www-data`. Instrucțiunile README au fost corectate și fluxul a trecut la repetare. P22-36a rămâne deschis: inserarea evenimentelor este demonstrată, dar schema și testele actuale nu demonstrează interzicerea modificării sau ștergerii rândurilor. Proprietarul nu a confirmat încă acceptanța manuală a fluxului.
+Prima probă izolată a identificat configurarea necesară a discului: `DOCUMENTS_DISK=documents` folosește volumul montat comun, iar volumul nou trebuie să aparțină utilizatorului `www-data`. Instrucțiunile README au fost corectate și fluxul a trecut la repetare. Proprietarul a confirmat acceptanța fluxului real la 2026-11-25. P22-36a rămâne deschis: inserarea evenimentelor este demonstrată, dar schema și testele actuale nu demonstrează interzicerea modificării sau ștergerii rândurilor.
 
 ## 2026-11-24 · P22 M1a.1 · Autentificare și fundația aplicației
 
