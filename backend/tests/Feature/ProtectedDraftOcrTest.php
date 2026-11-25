@@ -7,6 +7,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -56,6 +57,19 @@ final class ProtectedDraftOcrTest extends TestCase
         self::assertSame((string) now()->addMinutes(5)->timestamp, $query['expires']);
         $this->get($url)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
         Carbon::setTestNow();
+    }
+
+    public function test_access_event_is_persisted_before_signed_url_creation(): void
+    {
+        $draft = $this->readyDraft();
+        URL::shouldReceive('temporarySignedRoute')->once()->andThrow(new \RuntimeException('Synthetic signing failure.'));
+
+        $this->asRole('admin')->postJson('/api/drafts/'.$draft->id.'/preview')->assertServerError();
+
+        $this->assertDatabaseHas('draft_access_events', [
+            'draft_id' => $draft->id,
+            'event' => 'preview_issued',
+        ]);
     }
 
     public function test_image_collection_preview_includes_every_ordered_page_without_storage_paths(): void
