@@ -174,6 +174,32 @@ The check logs in, uploads the repository's synthetic Romanian image, explicitly
 COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose down --volumes --remove-orphans
 ```
 
+### Isolated quarantine worker verification
+
+Run the corrupt-then-valid queue check only against its own disposable Compose project. It submits one synthetic malformed PDF and the repository's valid synthetic Romanian image together, then waits for the database queue worker to place the PDF in quarantine and the image in the review queue. It does not use the normal project database or storage volume.
+
+```bash
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose up --build -d postgres backend
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose exec --user root backend chown -R www-data:www-data /app/storage/app/private/documents
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose exec backend php artisan migrate
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose exec backend php artisan archive:admin:create
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose up -d ocr-queue-worker
+```
+
+Provision a synthetic Admin interactively. Then enter the synthetic credentials into hidden prompts and run the opt-in browser workflow once:
+
+```bash
+read -r -p 'Synthetic Admin username: ' M1A_TEST_USERNAME
+read -r -s -p 'Synthetic Admin password: ' M1A_TEST_PASSWORD
+printf '\n'
+export M1A_TEST_USERNAME M1A_TEST_PASSWORD
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose run --build --rm -e VITE_BACKEND_URL=http://backend:8000 -e M1A_TEST_USERNAME -e M1A_TEST_PASSWORD frontend-test npx playwright test tests/draft-quarantine-real-api.spec.js --project=desktop-light
+unset M1A_TEST_USERNAME M1A_TEST_PASSWORD
+COMPOSE_PROJECT_NAME=p22queue BACKEND_PORT=18015 DOCUMENTS_DISK=documents docker compose down --volumes --remove-orphans
+```
+
+The browser check asserts that the two drafts progress independently and appear in their respective protected DS-004 queues. On 2026-11-25, it passed against the isolated database and real worker: the malformed PDF exhausted the initial attempt plus three retries and reached `quarantined`, while the valid image reached `review_ready`. Inspect only the disposable project's synthetic draft rows if investigating a failure. Remove only the `p22queue` project and its volumes after the check.
+
 ---
 
 ## Key deliverables (Definition of Done)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentDraft;
+use App\Jobs\ProcessDocumentDraft;
 use App\Services\DocumentDraftIntakeService;
 use App\Services\DraftAccessLogger;
 use App\Services\DocumentStorageService;
@@ -53,6 +54,83 @@ final class DocumentDraftController
             'id' => $record->id,
             'status' => $record->status,
         ]);
+    }
+
+    public function queue(): JsonResponse
+    {
+        $drafts = DocumentDraft::query()
+            ->whereIn('status', ['review_ready', 'quarantined'])
+            ->orderByDesc('created_at')
+            ->get(['id', 'source_format', 'original_storage_keys', 'original_names', 'status', 'created_at']);
+
+        $format = static fn (DocumentDraft $record): array => [
+            'id' => $record->id,
+            'status' => $record->status,
+            'source_format' => $record->source_format,
+            'name' => implode(', ', $record->original_names ?? array_map('basename', $record->original_storage_keys ?? [])),
+            'created_at' => $record->created_at?->toIso8601String(),
+        ];
+
+        return response()->json([
+            'review' => $drafts->where('status', 'review_ready')->map($format)->values(),
+            'quarantine' => $drafts->where('status', 'quarantined')->map($format)->values(),
+        ]);
+    }
+
+    public function retry(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        [$record, $changed] = DB::transaction(function () use ($request, $draft, $audit): array {
+            $record = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if ($record === null) {
+                return [null, false];
+            }
+            if ($record->status !== 'quarantined') {
+                return [$record, false];
+            }
+
+            $record->status = 'queued';
+            $record->ocr_extraction_id = null;
+            $record->save();
+            $audit->record($request, $record, 'retry_requested');
+            ProcessDocumentDraft::dispatch($record->id);
+            return [$record, true];
+        });
+
+        if ($record === null) {
+            return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
+        }
+        if (!$changed) {
+            return response()->json(['eroare' => 'Documentul nu mai este în carantină. Reîncărcați coada.'], 409);
+        }
+
+        return response()->json(['id' => $record->id, 'status' => 'queued']);
+    }
+
+    public function permanentFailure(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        [$record, $changed] = DB::transaction(function () use ($request, $draft, $audit): array {
+            $record = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if ($record === null) {
+                return [null, false];
+            }
+            if ($record->status !== 'quarantined') {
+                return [$record, false];
+            }
+
+            $record->status = 'failed_permanently';
+            $record->save();
+            $audit->record($request, $record, 'permanently_failed');
+            return [$record, true];
+        });
+
+        if ($record === null) {
+            return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
+        }
+        if (!$changed) {
+            return response()->json(['eroare' => 'Documentul nu mai este în carantină. Reîncărcați coada.'], 409);
+        }
+
+        return response()->json(['id' => $record->id, 'status' => 'failed_permanently']);
     }
 
     public function ocr(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse

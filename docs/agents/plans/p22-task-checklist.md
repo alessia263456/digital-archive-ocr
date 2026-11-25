@@ -146,9 +146,12 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 
 - [ ] P22-49b · Finish the corpus inventory — owner task, proceeds in parallel
-- [ ] P22-14 · Exact SHA-256 duplicate detection
-- [ ] P22-13b · Prove corrupt-then-valid flow
-- [ ] P22-15 · Notifications and quarantine actions
+- [x] P22-14 · Exact SHA-256 duplicate detection
+  - Persisted SHA-256 for PDF/DOCX bytes and deterministic ordered image-collection digests with per-page digests; duplicate checker reports exact and reordered image matches. Save-time enforcement remains P22-21 scope because the official-save/version store is not implemented.
+- [x] P22-13b · Prove corrupt-then-valid flow
+  - On 2026-11-25, the opt-in browser check passed against an isolated disposable PostgreSQL database and real OCR queue worker: a synthetic malformed PDF reached `quarantined` after the initial attempt plus three retries, while its valid Romanian image sibling reached `review_ready`; both appeared in the protected DS-004 queue. The dedicated Compose project and volumes were removed afterward.
+- [x] P22-15 · Notifications and quarantine actions
+  - Preserved existing per-Arhivar failure notifications; added protected review/quarantine queue, retry and confirmed permanent-failure actions with actor/draft/time audit events. Permanent failure retains the draft and private objects but removes it from active queues. DS-004 hands review-ready drafts to protected OCR results until DS-011 exists; notification panel remains P22-48 scope.
 - [x] P22-23 · DS-003 upload
   - M1a.2 implemented the DS-001 staff upload entry and DS-003 single PDF/DOCX or ordered JPG/PNG collection flow with private draft feedback and user-triggered persisted status refresh. The Screen retains only current-session draft IDs and keeps approval, indexing, duplicate UI, preview and review actions out of scope.
   - Playwright production-build suite passed (56 tests, 4 skipped) in desktop/mobile light/dark projects; it covered staff/reader role access, multipart submissions, validation/API/network/session errors, queued/processing/failed/review-ready/quarantined states, no polling, keyboard navigation, loading, long names, multiple current-session drafts and 320px/1600px overflow checks. Screenshots were inspected and saved under `docs/design/screens/DS-003.*`; DS-001 captures were refreshed for the new staff upload entry point.

@@ -67,4 +67,7 @@ export const api = {
   draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
   draftOcr: (id) => request(`/api/drafts/${encodeURIComponent(id)}/ocr`),
   draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
+  draftQueue: () => request('/api/drafts/queue'),
+  retryDraft: (id) => request(`/api/drafts/${encodeURIComponent(id)}/retry`, { method: 'POST' }),
+  markDraftPermanentlyFailed: (id) => request(`/api/drafts/${encodeURIComponent(id)}/permanent-failure`, { method: 'POST' }),
 };

@@ -19,6 +19,7 @@
 - PATTERN-011 · Enforce both idle and absolute age for stateful sessions · candidate
 - PATTERN-012 · Record authorized draft access before issuing preview URLs · candidate
 - PATTERN-013 · Run a real draft OCR browser check in an isolated Compose project · candidate
+- PATTERN-014 · Verify mixed draft outcomes through an isolated database queue worker · candidate
 
 ---
 
@@ -95,3 +96,8 @@
 - **Status:** candidate
 - **How:** Use a separate Compose project and database, configure the shared `documents` disk, provision a synthetic Admin interactively, and run one opt-in Playwright project with synthetic content. Mount the fixture read-only, inspect only that run's access events and sanitized service logs, then remove the isolated project and its volumes.
 - **Example:** [Real draft OCR browser check](../../frontend/tests/draft-ocr-real-api.spec.js) and [local rehearsal procedure](../../README.md#local-admin-provisioning-and-m1a-workflow-check).
+
+## PATTERN-014 · Verify mixed draft outcomes through an isolated database queue worker
+- **Status:** candidate
+- **How:** Run malformed and valid synthetic siblings through authenticated intake in a disposable Compose project with its own PostgreSQL and private-storage volumes. Poll the protected persisted statuses and verify each sibling reaches its expected independent queue before removing that project.
+- **Example:** [Mixed corrupt-then-valid worker check](../../frontend/tests/draft-quarantine-real-api.spec.js) and [isolated rehearsal procedure](../../README.md#isolated-quarantine-worker-verification).

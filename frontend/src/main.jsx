@@ -89,13 +89,16 @@ function LoginScreen({ onLogin, busy, message, messageKind }) {
   );
 }
 
-function ArchiveHome({ user, onUpload }) {
+function ArchiveHome({ user, onUpload, onQueue }) {
   return (
     <main className="archive-wrap">
       <div className="page-intro">
         <h1>Căutare în arhivă</h1>
         {(user.role === 'admin' || user.role === 'arhivar') && (
-          <button className="button" type="button" onClick={onUpload}>Încarcă documente</button>
+          <div className="home-actions">
+            <button className="button secondary" type="button" onClick={onQueue}>Cozi de lucru</button>
+            <button className="button" type="button" onClick={onUpload}>Încarcă documente</button>
+          </div>
         )}
       </div>
       <section className="empty-archive" aria-labelledby="empty-title">
@@ -104,6 +107,126 @@ function ArchiveHome({ user, onUpload }) {
         <p>Documentele aprobate vor apărea aici după ce sunt adăugate în arhivă.</p>
       </section>
       <span className="screen-reader-only">Cont: {user.username}, rol {user.role}.</span>
+    </main>
+  );
+}
+
+function DraftQueue({ onReview, onUpload, onBack }) {
+  const [queue, setQueue] = useState({ review: [], quarantine: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const hasLoaded = useRef(false);
+  const [activeTab, setActiveTab] = useState('review');
+  const [status, setStatus] = useState('');
+  const [busyDraft, setBusyDraft] = useState(null);
+  const [confirming, setConfirming] = useState(null);
+  const dialogRef = useRef(null);
+  const reviewTabRef = useRef(null);
+  const quarantineTabRef = useRef(null);
+
+  async function loadQueue(showLoading = false) {
+    if (!hasLoaded.current || showLoading) setLoading(true);
+    setError('');
+    try {
+      const result = await api.draftQueue();
+      setQueue({ review: result.review || [], quarantine: result.quarantine || [] });
+    } catch (requestError) {
+      setError(requestError.message || 'Nu am putut încărca documentele.');
+    } finally {
+      hasLoaded.current = true;
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadQueue(); }, []);
+
+  async function retry(item) {
+    setBusyDraft(item.id);
+    setStatus('Se trimite documentul la procesare…');
+    setActionError('');
+    try {
+      await api.retryDraft(item.id);
+      setStatus('Documentul a fost trimis din nou la procesare.');
+      await loadQueue();
+      quarantineTabRef.current?.focus();
+    } catch (requestError) {
+      setStatus('');
+      setActionError(requestError.message || 'Nu am putut trimite documentul la procesare. Încearcă din nou.');
+    } finally {
+      setBusyDraft(null);
+    }
+  }
+
+  async function markPermanentlyFailed() {
+    if (!confirming) return;
+    const item = confirming;
+    setBusyDraft(item.id);
+    setActionError('');
+    try {
+      await api.markDraftPermanentlyFailed(item.id);
+      dialogRef.current?.close();
+      setConfirming(null);
+      setStatus('Stare actualizată: Eșuat definitiv. Fișierul rămâne păstrat.');
+      await loadQueue();
+      quarantineTabRef.current?.focus();
+    } catch (requestError) {
+      setActionError(requestError.message || 'Nu am putut actualiza starea documentului. Încercați din nou.');
+    } finally {
+      setBusyDraft(null);
+    }
+  }
+
+  function changeTab(next) {
+    setActiveTab(next);
+    setStatus('');
+    (next === 'review' ? reviewTabRef : quarantineTabRef).current?.focus();
+  }
+
+  function handleTabKey(event) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      changeTab(activeTab === 'review' ? 'quarantine' : 'review');
+    }
+  }
+
+  const rows = queue[activeTab];
+
+  return (
+    <main className="queue-wrap" aria-busy={loading}>
+      <div className="queue-heading">
+        <button className="button secondary" type="button" onClick={onBack}>Înapoi la arhivă</button>
+        <h1>Cozi de lucru</h1>
+      </div>
+      <div className="queue-tabs" role="tablist" aria-label="Cozi de lucru" onKeyDown={handleTabKey}>
+        <button ref={reviewTabRef} id="review-tab" className="queue-tab" type="button" role="tab" aria-controls="review-panel" aria-selected={activeTab === 'review'} tabIndex={activeTab === 'review' ? 0 : -1} onClick={() => setActiveTab('review')}>Revizuire ({queue.review.length})</button>
+        <button ref={quarantineTabRef} id="quarantine-tab" className="queue-tab" type="button" role="tab" aria-controls="quarantine-panel" aria-selected={activeTab === 'quarantine'} tabIndex={activeTab === 'quarantine' ? 0 : -1} onClick={() => setActiveTab('quarantine')}>Carantină ({queue.quarantine.length})</button>
+      </div>
+      <section id={`${activeTab}-panel`} className="queue-panel" role="tabpanel" aria-labelledby={`${activeTab}-tab`} tabIndex="0">
+        <h2>{activeTab === 'review' ? 'Documente pentru revizuire' : 'Documente în carantină'}</h2>
+        {loading ? <div className="queue-message" role="status"><p>Se încarcă documentele…</p><div className="queue-skeleton" aria-hidden="true" /></div>
+          : error ? <div className="queue-message queue-error"><p role="alert">{error}</p><button className="button secondary" type="button" onClick={() => loadQueue(true)}>Încearcă din nou</button></div>
+            : rows.length === 0 ? <div className="queue-message"><p>{activeTab === 'review' ? 'Nu sunt documente pentru revizuire.' : 'Nu sunt documente în carantină.'}</p><p className="muted">{activeTab === 'review' ? 'Documentele procesate care așteaptă revizuirea vor apărea aici.' : 'Documentele apar aici după încercarea inițială de OCR și 3 reîncercări eșuate.'}</p>{activeTab === 'review' && <button className="button secondary" type="button" onClick={onUpload}>Încarcă documente</button>}</div>
+              : <ul className="queue-rows">{rows.map((item) => (
+                <li className="queue-row" key={item.id}>
+                  <div className="queue-details">
+                    <strong className="queue-filename" title={item.name}>{item.name}</strong>
+                    <span className={`queue-badge${activeTab === 'quarantine' ? ' warning' : ''}`}>{activeTab === 'review' ? 'În așteptarea revizuirii' : 'În carantină'}</span>
+                    {activeTab === 'review'
+                      ? <><span className="muted">Revizuirea umană este obligatorie înainte de aprobare.</span><button className="queue-link" type="button" onClick={() => onReview(item)}>Începe revizuirea</button></>
+                      : <><span className="muted">4 încercări de OCR eșuate: încercarea inițială și 3 reîncercări.</span><div className="queue-actions"><button className="button secondary" type="button" onClick={() => retry(item)} disabled={busyDraft === item.id}>{busyDraft === item.id ? 'Se trimite…' : 'Reîncearcă procesarea'}</button><button className="button secondary" type="button" onClick={() => { setConfirming(item); setActionError(''); dialogRef.current?.showModal(); }} disabled={busyDraft === item.id}>Marchează ca eșuat definitiv</button></div></>}
+                  </div>
+                </li>
+              ))}</ul>}
+        {status && <p className="queue-message" role="status" aria-live="polite">{status}</p>}
+        {actionError && !confirming && <p className="queue-message queue-error" role="alert">{actionError}</p>}
+      </section>
+      <dialog ref={dialogRef} className="queue-dialog" aria-labelledby="queue-confirm-title" aria-describedby="queue-confirm-description" onClose={() => setConfirming(null)}>
+        <h2 id="queue-confirm-title">Marchezi documentul ca eșuat definitiv?</h2>
+        <p id="queue-confirm-description"><strong>{confirming?.name}</strong><br />Starea documentului devine „Eșuat definitiv”. Fișierul rămâne păstrat.</p>
+        {actionError && confirming && <p className="queue-error" role="alert">{actionError}</p>}
+        <div className="queue-actions"><button className="button secondary" type="button" onClick={() => dialogRef.current?.close()} disabled={busyDraft !== null}>Renunță</button><button className="button" type="button" onClick={markPermanentlyFailed} disabled={busyDraft !== null}>{busyDraft ? 'Se actualizează…' : 'Confirmă schimbarea stării'}</button></div>
+      </dialog>
     </main>
   );
 }
@@ -448,9 +571,13 @@ function Application() {
     <>
       <BrandHeader user={user} onLogout={logout} busy={busy} />
       {user
-        ? (screen === 'upload' && (user.role === 'admin' || user.role === 'arhivar')
+        ? ((user.role === 'admin' || user.role === 'arhivar') && screen === 'upload'
           ? <UploadScreen onBack={() => setScreen('home')} />
-          : <ArchiveHome user={user} onUpload={() => setScreen('upload')} />)
+          : (user.role === 'admin' || user.role === 'arhivar') && screen === 'queue'
+            ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`review:${item.id}`)} />
+            : screen.startsWith('review:')
+              ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
+              : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />)
         : <LoginScreen onLogin={login} busy={busy || checking} message={message} messageKind={messageKind} />}
     </>
   );

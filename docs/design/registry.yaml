@@ -32,11 +32,11 @@ designs:
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"
     kind: screen
-    status: approved
+    status: implemented
     design_ref: mocks/DS-004.html
     roles: [admin, arhivar]
     decisions: [D-019, D-038, D-022, D-026, D-042]
-    description: "File pentru revizuire și carantină, cu numărul de documente în fiecare coadă. Documentele procesate, inclusiv cele fără potriviri PII incerte, necesită revizuire umană în DS-011 înainte de aprobare. Carantină după patru încercări OCR eșuate (încercarea inițială și trei reîncercări), cu reîncercare manuală și confirmarea schimbării stării la eșuat definitiv."
+    description: "File pentru revizuire și carantină, cu numărul de documente în fiecare coadă. Documentele procesate, inclusiv cele fără potriviri PII incerte, necesită revizuire umană în DS-011 înainte de aprobare; până la implementarea DS-011, acțiunea deschide rezultatele OCR protejate existente. Carantină după patru încercări OCR eșuate (încercarea inițială și trei reîncercări), cu reîncercare manuală și confirmarea schimbării stării la eșuat definitiv. Capturile desktop/mobile în ambele teme sunt în docs/design/screens/DS-004.*.png."
 
   - id: DS-005
     name: "Retenție & Listă de casare (Retention & Destruction list)"

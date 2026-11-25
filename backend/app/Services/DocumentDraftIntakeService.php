@@ -77,13 +77,25 @@ final class DocumentDraftIntakeService
         $keys = [];
         $derivedKey = null;
         $stagePath = null;
+        $imageDigests = [];
+        $documentDigest = null;
+        $originalNames = array_map(fn (UploadedFile $file) => $file->getClientOriginalName(), $files);
 
         try {
-            DB::transaction(function () use ($id, $format, $files, &$keys, &$derivedKey, &$stagePath): void {
+            DB::transaction(function () use ($id, $format, $files, $originalNames, &$keys, &$derivedKey, &$stagePath, &$imageDigests, &$documentDigest): void {
                 foreach ($files as $index => $file) {
                     $extension = strtolower($file->getClientOriginalExtension());
                     $key = "drafts/{$id}/originals/".str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT).".{$extension}";
                     $keys[] = $key;
+                    $digest = hash_file('sha256', $file->getRealPath());
+                    if (!is_string($digest)) {
+                        throw new RuntimeException();
+                    }
+                    if ($format === 'image_collection') {
+                        $imageDigests[] = $digest;
+                    } else {
+                        $documentDigest = $digest;
+                    }
                     $stream = fopen($file->getRealPath(), 'rb');
                     try {
                         if (!is_resource($stream) || !$this->storage->put($key, $stream)) {
@@ -94,6 +106,11 @@ final class DocumentDraftIntakeService
                             fclose($stream);
                         }
                     }
+                }
+
+                if ($format === 'image_collection') {
+                    $documentDigest = hash('sha256', pack('N', count($imageDigests))
+                        .implode('', array_map(fn (string $digest) => hex2bin($digest), $imageDigests)));
                 }
 
                 if ($format === 'docx') {
@@ -132,6 +149,9 @@ final class DocumentDraftIntakeService
                     'id' => $id,
                     'source_format' => $format,
                     'original_storage_keys' => $keys,
+                    'original_names' => $originalNames,
+                    'document_sha256' => $documentDigest,
+                    'image_sha256s' => $format === 'image_collection' ? $imageDigests : null,
                     'derived_pdf_storage_key' => $derivedKey,
                     'status' => 'queued',
                 ]);

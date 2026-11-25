@@ -7,6 +7,7 @@ services:
     volumes:
       - ./frontend/test-results:/app/test-results
       - ./backend/tests/Fixtures/rendering/romanian.png:/app/fixtures/romanian.png:ro
+      - ./backend/tests/Fixtures/quarantine/synthetic-malformed.pdf:/app/fixtures/synthetic-malformed.pdf:ro
 
   ocr-worker:
     build:

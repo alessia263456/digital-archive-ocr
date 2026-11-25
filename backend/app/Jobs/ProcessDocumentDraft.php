@@ -24,9 +24,19 @@ final class ProcessDocumentDraft implements ShouldQueue
 
     public function handle(DocumentDraftProcessor $processor): void
     {
-        $draft = DocumentDraft::query()->findOrFail($this->draftId);
-        $draft->status = 'processing';
-        $draft->save();
+        $draft = DB::transaction(function (): ?DocumentDraft {
+            $draft = DocumentDraft::query()->whereKey($this->draftId)->lockForUpdate()->firstOrFail();
+            if (!in_array($draft->status, ['queued', 'failed'], true)) {
+                return null;
+            }
+            $draft->status = 'processing';
+            $draft->save();
+            return $draft;
+        });
+
+        if ($draft === null) {
+            return;
+        }
 
         try {
             DB::transaction(function () use ($processor, $draft): void {
@@ -35,8 +45,8 @@ final class ProcessDocumentDraft implements ShouldQueue
                 $draft->save();
             });
         } catch (Throwable $exception) {
-            $draft->status = 'failed';
-            $draft->save();
+            DocumentDraft::query()->whereKey($this->draftId)->where('status', 'processing')
+                ->update(['status' => 'failed', 'updated_at' => now()]);
             throw $exception;
         }
     }
@@ -44,7 +54,8 @@ final class ProcessDocumentDraft implements ShouldQueue
     public function failed(?Throwable $exception): void
     {
         DB::transaction(function (): void {
-            $updated = DocumentDraft::query()->whereKey($this->draftId)->update(['status' => 'quarantined']);
+            $updated = DocumentDraft::query()->whereKey($this->draftId)->where('status', 'failed')
+                ->update(['status' => 'quarantined', 'updated_at' => now()]);
             if ($updated === 0) {
                 return;
             }
