@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DS-005 — Retenție & listă de casare · Arhivă digitală</title>
+  <style>
+    @font-face{font-family:'Public Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url(./fonts/public-sans-latin-ext.woff2) format('woff2');unicode-range:U+0100-024F,U+1E00-1EFF}
+    @font-face{font-family:'Public Sans';font-style:normal;font-weight:400 700;font-display:swap;src:url(./fonts/public-sans-latin.woff2) format('woff2');unicode-range:U+0000-00FF}
+    :root{color-scheme:light;--color-bg-primary:#FAF8F5;--color-bg-surface:#FFFFFF;--color-bg-subtle:#F2EFE9;--color-text-primary:#072D5C;--color-text-secondary:#556070;--color-border:#E5E0D8;--color-primary:#072D5C;--color-accent-mid:#4683CF;--color-accent-teal:#46CFC3;--color-accent-amber:#CE8946;--color-version-navy:#072D5C;--color-focus-ring:#4683CF;--color-archival-label-bg:#F9F1E9;--color-archival-label-text:#79502A;--color-archival-label-border:#DEC09F;--color-danger:#C53030;--color-danger-bg:#FFF5F5;--color-danger-border:#FEB2B2;--font-body:'Public Sans',system-ui,sans-serif;--font-heading:var(--font-body);--text-h1:700 32px/40px var(--font-heading);--text-h2:600 24px/32px var(--font-heading);--text-h3:600 18px/26px var(--font-heading);--text-body:400 16px/24px var(--font-body);--text-small:400 14px/20px var(--font-body);--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px;--radius-none:0;--radius-sm:2px;--radius-md:4px;--shadow-card:0 1px 2px rgba(0,0,0,.05);--duration-fast:150ms ease;--duration-normal:250ms ease}
+    html[data-theme=dark]{color-scheme:dark;--color-bg-primary:#1E293B;--color-bg-surface:#283548;--color-bg-subtle:#16202E;--color-text-primary:#F8FAFC;--color-text-secondary:#94A3B8;--color-border:#334155;--color-primary:#4683CF;--color-accent-mid:#60A5FA;--color-focus-ring:#46CFC3;--color-accent-amber:#E59E5B;--color-archival-label-bg:#3A302A;--color-archival-label-text:#E7B587;--color-archival-label-border:#69503A;--color-danger:#F87171;--color-danger-bg:#451A1A;--color-danger-border:#7F1D1D}
+    *,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}
+    body{margin:0;background:var(--color-bg-primary);color:var(--color-text-primary);font:var(--text-small)}
+    h1,h2,h3,p,ul{margin:0}button,input,select{color:inherit;font:inherit}
+    :focus-visible{outline:var(--radius-sm) solid var(--color-focus-ring);outline-offset:var(--space-xs)}
+    .mock-tools{display:grid;gap:var(--space-xs);padding:var(--space-xs) var(--space-md);border-block-end:thin solid var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-secondary)}
+    .tool-top,.tool-row,.nav,.brand-copy,.heading,.section-head,.section-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-sm)}
+    .tool-top,.section-actions{justify-content:space-between}.mock-only{padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-accent-amber);border-radius:var(--radius-sm);color:var(--color-text-primary);font-weight:600}
+    .tool-row label{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-xs)}
+    .mock-tools select,.theme-button,.control{min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-text-secondary);border-radius:var(--radius-sm);background:var(--color-bg-surface)}
+    .viewer-header{display:flex;align-items:center;gap:var(--space-md);min-block-size:var(--space-2xl);padding:var(--space-sm) var(--space-lg);border-block-end:thin solid var(--color-border);background:var(--color-bg-surface)}
+    .brand-mark{display:grid;flex:none;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);border-radius:var(--radius-md);background:var(--color-accent-teal);color:var(--color-version-navy);font-weight:700}
+    .brand-copy{display:grid;gap:var(--space-xs)}.header-kicker{color:var(--color-text-secondary)}.header-title{font:var(--text-body);font-weight:600}
+    .nav{margin-inline-start:auto}.nav a{display:inline-flex;align-items:center;min-block-size:var(--space-2xl);padding-inline:var(--space-sm);color:var(--color-text-primary);text-decoration:none}
+    .nav a[aria-current=page]{border-block-end:var(--radius-sm) solid var(--color-accent-teal);font-weight:700}
+    .wrap{inline-size:min(100%,calc(var(--space-3xl)*20));margin-inline:auto;padding:var(--space-md) var(--space-lg) var(--space-lg)}
+    .heading{justify-content:space-between;margin-block-end:var(--space-md)}h1{font:var(--text-h2)}
+    .readonly{padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-secondary)}
+    .filters{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*3),2fr) minmax(calc(var(--space-3xl)*3),1fr);gap:var(--space-sm);margin-block-end:var(--space-sm)}
+    .field{display:grid;gap:var(--space-xs);min-inline-size:0}.field label{color:var(--color-text-secondary);font-weight:600}
+    .control{inline-size:100%;min-inline-size:0;min-block-size:calc(var(--space-2xl) - var(--space-xs))}
+    .notice{margin-block-end:var(--space-md);padding:var(--space-sm) var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-amber);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .message,.empty{padding:var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-mid);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .message.error,.op-error,.validation{border-color:var(--color-danger)}.message.success{border-color:var(--color-accent-teal)}
+    .message button,.empty button{margin-block-start:var(--space-sm)}
+    .sections{display:grid;gap:var(--space-sm)}.section{min-inline-size:0;border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);box-shadow:var(--shadow-card)}
+    .section>summary{list-style:none;cursor:pointer}.section>summary::-webkit-details-marker{display:none}
+    .section-head{justify-content:space-between;min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-md)}
+    .section-head h2{font:var(--text-h3)}.count{color:var(--color-text-secondary);font-variant-numeric:tabular-nums}
+    .expired .section-head{border-inline-start:var(--space-xs) solid var(--color-danger);background:var(--color-danger-bg)}.expired .section-head h2,.expired .count{color:var(--color-danger)}.upcoming .section-head{border-inline-start:var(--space-xs) solid var(--color-accent-amber)}
+    .chevron{inline-size:var(--space-sm);block-size:var(--space-sm);border-inline-end:thin solid currentColor;border-block-end:thin solid currentColor;transform:rotate(45deg);transition:transform var(--duration-fast)}
+    details[open] .chevron{transform:rotate(225deg)}.content{padding:0 var(--space-md) var(--space-md)}
+    .note{margin-block-end:var(--space-sm);color:var(--color-text-secondary)}.section-actions{margin-block-end:var(--space-sm)}
+    .selection-count{color:var(--color-text-secondary)}
+    .button,.quiet,.icon,.row-action{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xs);min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-md);border:thin solid var(--color-text-secondary);border-radius:var(--radius-md);background:var(--color-bg-surface);color:var(--color-text-primary);font-weight:600;cursor:pointer}
+    .button.primary{border-color:var(--color-accent-teal);background:var(--color-accent-teal);color:var(--color-version-navy)}
+    .button.danger{border-color:var(--color-danger);background:var(--color-danger-bg);color:var(--color-danger)}button:disabled{border-color:var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-secondary);cursor:not-allowed}
+    .table-wrap{max-inline-size:100%;overflow-x:auto}table{inline-size:100%;border-collapse:collapse;table-layout:fixed}
+    th{padding:var(--space-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font-weight:600;text-align:start}
+    td{padding:var(--space-sm);border-block-start:thin solid var(--color-border);vertical-align:middle;overflow-wrap:anywhere}
+    th:first-child,td:first-child{inline-size:44%}th:nth-child(2),td:nth-child(2){inline-size:23%}th:nth-child(3),td:nth-child(3){inline-size:20%}th:last-child,td:last-child{inline-size:13%;text-align:end}
+    .doc-name{display:block;font-weight:600}.meta{display:block;margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
+    .deadline{white-space:nowrap;font-variant-numeric:tabular-nums}.days{display:block;color:var(--color-text-primary);font-weight:600}
+    .group-row th{padding-block:var(--space-xs);background:var(--color-bg-surface);color:var(--color-text-secondary);font:var(--text-small);border-block-start:thin solid var(--color-border)}
+    .doc-entry{display:flex;align-items:flex-start;gap:var(--space-sm)}.selection-control{display:grid;flex:none;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);margin-block-start:calc(-1 * var(--space-xs))}.row-select{inline-size:var(--space-md);block-size:var(--space-md);accent-color:var(--color-primary)}
+    .row-menu{position:relative;display:inline-block}.row-menu summary{display:grid;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);border:thin solid transparent;border-radius:var(--radius-sm);cursor:pointer;list-style:none;font:var(--text-h3)}
+    .row-menu summary::-webkit-details-marker{display:none}.menu{position:absolute;z-index:5;inset-inline-end:0;min-inline-size:calc(var(--space-3xl)*3);padding:var(--space-xs);border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);box-shadow:var(--shadow-card)}
+    .menu button{inline-size:100%;justify-content:flex-start;border-color:transparent}.skeleton{display:block;inline-size:min(100%,calc(var(--space-3xl)*3));block-size:var(--space-md);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .group-empty{padding:var(--space-md);color:var(--color-text-secondary)}
+    dialog{inline-size:min(100%,calc(var(--space-3xl)*7));max-inline-size:calc(var(--space-3xl)*7);max-block-size:90vh;margin:auto;padding:0;overflow:auto;border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);color:var(--color-text-primary);box-shadow:var(--shadow-card)}
+.dialog-head,.dialog-body,.dialog-foot{padding:var(--space-md) var(--space-lg)}
+    .dialog-head,.dialog-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);border-block-end:thin solid var(--color-border)}
+    .dialog-head h2{font:var(--text-h3)}.dialog-body{display:grid;gap:var(--space-md)}.dialog-foot{justify-content:flex-end;flex-wrap:wrap;border-block:0;border-block-start:thin solid var(--color-border)}
+    .info{display:grid;gap:var(--space-xs);padding:var(--space-sm);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}.info span{color:var(--color-text-secondary)}
+    .op-error,.validation{border:thin solid var(--color-danger-border);padding:var(--space-sm);border-inline-start:var(--space-xs) solid var(--color-danger);border-radius:var(--radius-sm);background:var(--color-danger-bg);color:var(--color-danger)}
+    .batch{display:grid;gap:var(--space-xs);max-block-size:calc(var(--space-3xl)*3);overflow:auto;padding-inline-start:var(--space-lg)}.batch li{padding-block:var(--space-xs);border-block-end:thin solid var(--color-border)}
+    .consequence{padding:var(--space-sm);border-inline-start:var(--space-xs) solid var(--color-danger);background:var(--color-bg-subtle)}
+    .confirm{display:flex;align-items:flex-start;gap:var(--space-sm)}.confirm input{inline-size:var(--space-md);block-size:var(--space-md);margin-block-start:var(--space-xs)}
+    .feedback{position:fixed;inset-inline-end:var(--space-md);inset-block-end:var(--space-md);z-index:10;max-inline-size:min(calc(var(--space-3xl)*7),calc(100vw - var(--space-xl)));padding:var(--space-sm) var(--space-md);border:thin solid var(--color-border);border-inline-start:var(--space-xs) solid var(--color-accent-teal);border-radius:var(--radius-md);background:var(--color-bg-surface);box-shadow:var(--shadow-card)}
+    .sr-only{position:absolute;inline-size:var(--space-xs);block-size:var(--space-xs);padding:0;margin:calc(-1 * var(--space-xs));overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:639px){
+      .tool-top{align-items:flex-start}.tool-row{align-items:stretch}.tool-row label{flex:1 1 100%;justify-content:space-between}
+      .mock-tools select,.theme-button{inline-size:100%}.viewer-header{flex-wrap:wrap;padding-inline:var(--space-md)}.nav{inline-size:100%;margin:0;overflow-x:auto}
+      .wrap{padding:var(--space-sm)}.heading{align-items:flex-start}.filters{grid-template-columns:minmax(0,1fr)}
+      .content{padding-inline:var(--space-sm)}.section-head{padding-inline:var(--space-sm)}.section-actions{align-items:flex-start;flex-direction:column}
+      .table-wrap{overflow:visible}table,tbody,tr,td{display:block;inline-size:100%!important}thead{position:absolute;inline-size:var(--space-xs);block-size:var(--space-xs);overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+      .group-row th{inline-size:100%!important}tr:not(.group-row){display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding-block:var(--space-xs);border-block-start:thin solid var(--color-border)}
+      tr:not(.group-row) td{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*1.5),38%) minmax(0,1fr);gap:var(--space-sm);padding:var(--space-xs);border:0}
+      tr:not(.group-row) td::before{content:attr(data-label);color:var(--color-text-secondary);font-weight:600}
+      tr:not(.group-row) td:last-child{display:flex;justify-content:flex-end;grid-column:1;inline-size:100%!important}
+      tr:not(.group-row) td:last-child::before{content:''}
+      .deadline{white-space:normal}.dialog-head,.dialog-body,.dialog-foot{padding:var(--space-md)}.dialog-foot{flex-direction:column-reverse}.dialog-foot button{inline-size:100%}
+    }
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Bară de testare a machetei; nu face parte din aplicație">
+    <div class="tool-top"><strong>DS-005 · Bară de testare a machetei</strong><span class="mock-only">DEMO · nu face parte din aplicație</span></div>
+    <div class="tool-row">
+      <label for="preview-role">Rol<select id="preview-role"><option value="admin">Admin</option><option value="arhivar">Arhivar · doar citire</option></select></label>
+      <label for="preview-theme">Temă<select id="preview-theme"><option value="light">Luminos</option><option value="dark">Întunecat</option></select></label>
+      <label for="preview-state">Stare<select id="preview-state">
+        <option value="default">Implicit · documente</option><option value="loading">Se încarcă</option><option value="error">Eroare</option><option value="empty">Fără documente</option><option value="empty-section">Secțiune goală</option><option value="no-results">Fără rezultate</option><option value="one-selected">Un document selectat</option><option value="multiple-selected">Mai multe documente selectate</option><option value="extend-dialog">Dialog de prelungire</option><option value="destruction-dialog">Confirmare casare</option><option value="invalid-date">Dată invalidă</option><option value="submitting">Operațiune în curs</option><option value="success">Operațiune reușită</option><option value="failure">Operațiune eșuată</option>
+      </select></label>
+    </div>
+    <p>Datele sunt fictive. Rolul și starea modifică aceeași machetă.</p>
+  </aside>
+  <header class="viewer-header">
+    <div class="brand-mark" aria-hidden="true">AD</div><div class="brand-copy"><p class="header-kicker">Cabinet Individual Notarial</p><p class="header-title">Arhivă digitală</p></div>
+    <nav class="nav" aria-label="Navigare principală"><a href="./DS-001.html">Arhivă</a><a href="./DS-004.html">Revizuire</a><a href="./DS-005.html" aria-current="page">Retenție</a><a href="./DS-007.html">Statistici</a></nav>
+  </header>
+  <main class="wrap" id="screen">
+    <div class="heading"><h1>Retenție & listă de casare</h1><span class="readonly" id="readonly" hidden>Acces doar pentru citire</span></div>
+    <div class="filters" role="search" aria-label="Căutare și filtrare documente">
+      <div class="field"><label for="search">Caută document</label><input class="control" id="search" type="search" placeholder="Nume document sau dosar"></div>
+      <div class="field"><label for="category">Categorie</label><select class="control" id="category"><option value="all">Toate categoriile</option></select></div>
+    </div>
+    <p class="notice">Expirarea termenului de păstrare nu autorizează automat casarea.</p>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div><div class="sections" id="sections"></div>
+  </main>
+  <dialog id="extend-dialog" aria-labelledby="extend-title">
+    <form id="extend-form" novalidate><div class="dialog-head"><h2 id="extend-title">Prelungire termen</h2><button class="icon" type="button" data-close aria-label="Închide dialogul">×</button></div>
+      <div class="dialog-body"><div class="info"><span>Document</span><strong id="extend-name"></strong><span>Termen efectiv curent</span><strong id="extend-deadline"></strong></div>
+        <div class="field"><label for="new-deadline">Noul termen de păstrare</label><input class="control" id="new-deadline" type="date" required aria-describedby="date-error"></div>
+        <p id="date-error" class="validation" hidden>Selectați noul termen de păstrare.</p><p id="extend-error" class="op-error" role="alert" hidden>Prelungirea nu a putut fi salvată. Încercați din nou.</p>
+      </div><div class="dialog-foot"><button class="quiet" type="button" data-close>Anulează</button><button class="button primary" id="extend-submit">Salvează noul termen</button></div>
+    </form>
+  </dialog>
+  <dialog id="destruction-dialog" aria-labelledby="destroy-title">
+    <form id="destroy-form"><div class="dialog-head"><h2 id="destroy-title">Confirmare casare</h2><button class="icon" type="button" data-close aria-label="Închide dialogul">×</button></div>
+      <div class="dialog-body"><p>Documentele selectate:</p><ul id="batch-list" class="batch"></ul>
+        <p class="consequence">Confirmarea șterge definitiv scanurile și toate versiunile documentelor selectate și încheie accesul la acestea. Dovezile cerute se păstrează în jurnalul de audit.</p>
+        <p>Pentru documentele C.S., administratorul se asigură că procedurile necesare în afara aplicației au fost parcurse.</p>
+        <label class="confirm"><input id="offline-confirm" type="checkbox"><span>Confirm că procedurile aplicabile documentelor selectate au fost verificate și că solicit casarea acestora.</span></label>
+        <p id="destroy-error" class="op-error" role="alert" hidden>Casarea nu a putut fi confirmată. Încercați din nou.</p>
+      </div><div class="dialog-foot"><button class="quiet" type="button" data-close>Anulează</button><button class="button danger" id="destroy-submit" disabled>Confirmă casarea</button></div>
+    </form>
+  </dialog>
+  <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+  <script>
+    const TODAY='2026-11-25';
+    const seed=[
+      {id:'d1',name:'Procură specială de reprezentare imobiliară',category:'Procură',dossier:'Dosar nr. 184/2014',deadline:'2026-09-30',cs:false},
+      {id:'d2',name:'Contract de vânzare-cumpărare',category:'Contract',dossier:'Dosar nr. 052/2013',deadline:'2026-11-18',cs:true},
+      {id:'d3',name:'Declarație de acceptare a succesiunii',category:'Declarație',dossier:'Dosar nr. 091/2015',deadline:'2026-11-30',cs:false},
+      {id:'d4',name:'Contract de locațiune',category:'Contract',dossier:'Dosar nr. 126/2019',deadline:'2026-12-14',cs:true},
+      {id:'d5',name:'Încheiere de legalizare de semnătură',category:'Încheiere',dossier:'Dosar nr. 211/2022',deadline:'2027-04-12',cs:false},
+      {id:'d6',name:'Testament autentic',category:'Testament',dossier:'Dosar nr. 034/2020',deadline:'2028-01-01',cs:true}
+    ];
+    let docs=seed.map(x=>Object.assign({},x)), selected=new Set(), activeId='d1', state='default';
+    const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const date=s=>new Intl.DateTimeFormat('ro-RO').format(new Date(s+'T12:00:00'));
+    const group=d=>d<TODAY?'expired':d<='2026-12-25'?'upcoming':'in-term';
+    const canDestroy=x=>x.deadline<TODAY&&!x.permanent&&!x.destroyed;
+    const admin=()=>$('preview-role').value==='admin';
+    const categoryOptions=[...new Set(seed.map(x=>x.category))].map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+    $('category').insertAdjacentHTML('beforeend',categoryOptions);
+    function filtered(){
+      const q=$('search').value.trim().toLocaleLowerCase('ro');
+      return docs.filter(x=>(!q||(x.name+' '+x.dossier).toLocaleLowerCase('ro').includes(q))&&($('category').value==='all'||x.category===$('category').value));
+    }
+    function row(x,isExpired){
+      const can=canDestroy(x), checked=selected.has(x.id), remaining=Math.ceil((new Date(x.deadline+'T12:00:00')-new Date(TODAY+'T12:00:00'))/86400000);
+      const reason=x.permanent?'Nu poate fi casat: păstrare permanentă.':x.destroyed?'Nu poate fi selectat: document deja casat.':'';
+      const select=admin()&&isExpired?'<label class="selection-control"><input class="row-select" type="checkbox" data-select="'+x.id+'" aria-label="Selectează pentru casare: '+esc(x.name)+'" '+(checked?'checked':'')+' '+(can?'':'disabled aria-describedby="eligibility-'+x.id+'"')+'><span class="sr-only">Selectează pentru casare</span></label>':'';
+      const explanation=admin()&&isExpired&&!can?'<span class="meta" id="eligibility-'+x.id+'">'+reason+'</span>':'';
+      const menu=admin()?'<details class="row-menu"><summary aria-label="Acțiuni pentru '+esc(x.name)+'">⋯</summary><div class="menu"><button class="row-action" type="button" data-extend="'+x.id+'">Prelungește termenul</button></div></details>':'';
+      return '<tr><td class="document-cell" data-label="Document"><span class="doc-entry">'+select+'<span><span class="doc-name">'+esc(x.name)+'</span><span class="meta">'+esc(x.dossier)+(x.cs?' · C.S.':'')+'</span>'+explanation+'</span></span></td><td class="category-cell" data-label="Categorie">'+esc(x.category)+'</td><td class="deadline" data-label="Termen de păstrare"><time datetime="'+x.deadline+'">'+date(x.deadline)+'</time>'+(isExpired?'':'<span class="days">'+remaining+' zile rămase</span>')+'</td><td data-label="Acțiuni">'+menu+'</td></tr>';
+    }
+    function table(items,title,expired){
+      if(!items.length)return '<p class="group-empty">Nu există documente în această secțiune.</p>';
+      const col=4;
+      const heading='<thead><tr><th scope="col">Document</th><th scope="col">Categorie</th><th scope="col">Termen de păstrare</th><th scope="col">Acțiuni</th></tr></thead>';
+      if(!expired)return '<div class="table-wrap"><table aria-label="'+title+'">'+heading+'<tbody>'+items.map(x=>row(x,false,title==='Termen apropiat')).join('')+'</tbody></table></div>';
+      const ordinary=items.filter(x=>!x.cs), cs=items.filter(x=>x.cs);
+      const rows=(label,list)=>'<tbody><tr class="group-row"><th colspan="'+col+'" scope="rowgroup">'+label+'</th></tr>'+list.map(x=>row(x,true,false)).join('')+'</tbody>';
+      return '<div class="table-wrap"><table aria-label="'+title+'">'+heading+rows('Fără C.S.',ordinary)+rows('C.S.',cs)+'</table></div>';
+    }
+    function section(key,title,list){
+      const items=list.slice().sort((a,b)=>a.deadline.localeCompare(b.deadline)), count=state==='loading'?'—':items.length, expired=key==='expired';
+      const picked=items.filter(x=>selected.has(x.id)).length;
+      const note=expired?'<p class="note">Termenul afișat include prelungirile. Se pot selecta documentele expirate, fără păstrare permanentă și necasate.</p>':'';
+      const actions=admin()&&expired?'<div class="section-actions"><span class="selection-count" aria-live="polite">'+picked+' selectate</span><button class="button danger" id="batch" type="button" '+(picked?'':'disabled')+'>Confirmă casarea</button></div>':'';
+      return '<details class="section '+key+'" open><summary class="section-head"><span class="heading"><h2>'+title+'</h2><span class="count">('+count+')</span></span><span class="chevron" aria-hidden="true"></span></summary><div class="content">'+note+actions+table(items,title,expired)+'</div></details>';
+    }
+    function draw(){
+      $('readonly').hidden=admin();
+      if(state==='error'){ $('message').hidden=false;$('message').className='message error';$('message').innerHTML='Documentele nu au putut fi încărcate. Verificați conexiunea și încercați din nou.<br><button class="quiet" id="retry-load">Reîncearcă</button>'; $('sections').innerHTML='';$('retry-load').onclick=()=>{state='loading';draw();setTimeout(()=>{state='default';draw()},400)};return; }
+      $('message').hidden=state!=='success'&&state!=='failure';
+      if(state==='success'){$('message').className='message success';$('message').textContent='Operațiunea a fost finalizată. Lista a fost actualizată.'}
+      if(state==='failure'){$('message').className='message error';$('message').innerHTML='Operațiunea nu a putut fi finalizată. Încercați din nou.<br><button class="quiet" id="retry-op">Reîncearcă</button>'}
+      if(state==='empty'){$('sections').innerHTML='<p class="empty">Nu există documente cu termene de păstrare de afișat.</p>';return}
+      if(state==='loading'){$('sections').innerHTML=['Termen expirat','Termen apropiat','În termen'].map(t=>'<section class="section"><div class="section-head"><h2>'+t+'</h2><span>—</span></div><div class="content"><div class="table-wrap"><table aria-hidden="true"><thead><tr><th>Document</th><th>Categorie</th><th>Termen de păstrare</th><th>Acțiuni</th></tr></thead><tbody>'+[0,1].map(()=>'<tr><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>').join('')+'</tbody></table></div></div></section>').join('');return}
+      let list=filtered();
+      if(state==='success')list=list.filter(x=>!['d1','d2'].includes(x.id));
+      if(state!=='success'&&state!=='no-results'&&!list.length)state='no-results';
+      if(state==='empty-section')list=list.filter(x=>group(x.deadline)!=='upcoming');
+      if(state==='no-results')list=[];
+      if(state==='no-results'){$('sections').innerHTML='<p class="empty">Nu există documente care să corespundă căutării și filtrelor.<br><button class="quiet" id="clear">Șterge filtrele</button></p>';$('clear').onclick=()=>{$('search').value='';$('category').value='all';state='default';draw()};return}
+      const groups={expired:[],upcoming:[],'in-term':[]};list.forEach(x=>groups[group(x.deadline)].push(x));
+      $('sections').innerHTML=section('expired','Termen expirat',groups.expired)+section('upcoming','Termen apropiat',groups.upcoming)+section('in-term','În termen',groups['in-term']);
+      $('sections').querySelectorAll('[data-select]').forEach(el=>el.onchange=()=>{el.checked?selected.add(el.dataset.select):selected.delete(el.dataset.select);draw()});
+      $('sections').querySelectorAll('[data-extend]').forEach(el=>el.onclick=()=>openExtend(el.dataset.extend));
+      const batch=$('batch');if(batch)batch.onclick=openDestroy;
+      const retry=$('retry-op');if(retry)retry.onclick=()=>{state='submitting';draw();setTimeout(successDestroy,400)};
+    }
+    function openExtend(id){
+      activeId=id;const x=docs.find(d=>d.id===id);$('extend-name').textContent=x.name;$('extend-deadline').textContent=date(x.deadline);
+      $('new-deadline').value='';$('date-error').hidden=true;$('extend-error').hidden=true;$('extend-dialog').showModal();$('new-deadline').focus();
+    }
+    function openDestroy(){
+      $('batch-list').innerHTML=[...selected].map(id=>docs.find(x=>x.id===id)).filter(Boolean).map(x=>'<li><strong>'+esc(x.name)+'</strong> · termen '+date(x.deadline)+'</li>').join('');
+      $('offline-confirm').checked=false;$('destroy-submit').disabled=true;$('destroy-error').hidden=true;$('destruction-dialog').showModal();
+    }
+    function successDestroy(){
+      docs=docs.filter(x=>!selected.has(x.id));selected.clear();$('destruction-dialog').close();$('feedback').textContent='Casarea a fost confirmată. Documentele selectate nu mai apar în listă.';$('feedback').hidden=false;state='default';draw();
+    }
+    function submit(kind,fail){
+      const button=$(kind==='extend'?'extend-submit':'destroy-submit');button.disabled=true;button.textContent='Se procesează…';
+      setTimeout(()=>{
+        if(fail){state='default';const err=$(kind==='extend'?'extend-error':'destroy-error');err.hidden=false;button.disabled=kind==='destroy'&&!$('offline-confirm').checked;button.textContent='Reîncearcă';return}
+        if(kind==='destroy'){successDestroy();return}
+        const x=docs.find(d=>d.id===activeId);x.deadline=$('new-deadline').value;$('extend-dialog').close();$('feedback').textContent='Termenul de păstrare a fost actualizat.';$('feedback').hidden=false;state='default';draw();
+      },400);
+    }
+    $('extend-form').onsubmit=e=>{e.preventDefault();if(!$('new-deadline').value){$('date-error').hidden=false;$('new-deadline').setAttribute('aria-invalid','true');$('new-deadline').focus();return}$('new-deadline').removeAttribute('aria-invalid');submit('extend',state==='failure')};
+    $('destroy-form').onsubmit=e=>{e.preventDefault();if($('offline-confirm').checked&&selected.size)submit('destroy',state==='failure')};
+    $('offline-confirm').onchange=e=>$('destroy-submit').disabled=!e.target.checked;
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+    $('search').oninput=()=>{state='default';draw()};$('category').onchange=()=>{state='default';draw()};
+    $('preview-role').onchange=()=>{selected.clear();if(!admin()){state='default';$('preview-state').value='default'}document.querySelectorAll('dialog[open]').forEach(d=>d.close());draw()};
+    $('preview-theme').onchange=()=>document.documentElement.dataset.theme=$('preview-theme').value;
+    $('preview-state').onchange=()=>{
+      state=$('preview-state').value;selected.clear();document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+      if(!admin()&&['one-selected','multiple-selected','extend-dialog','destruction-dialog','invalid-date','submitting','success','failure'].includes(state)){state='default';$('preview-state').value='default'}
+      if(state==='one-selected')selected=new Set(['d1']);
+      if(state==='multiple-selected')selected=new Set(['d1','d2']);
+      if(state==='extend-dialog'||state==='invalid-date'){openExtend('d1');if(state==='invalid-date'){$('date-error').hidden=false;$('new-deadline').setAttribute('aria-invalid','true')}}
+      if(['destruction-dialog','submitting','failure'].includes(state)){selected=new Set(['d1']);openDestroy();$('offline-confirm').checked=state==='submitting'||state==='failure';$('destroy-submit').disabled=state==='submitting'||state==='destruction-dialog';if(state==='submitting')$('destroy-submit').textContent='Se procesează…';if(state==='failure'){$('destroy-error').hidden=false;$('destroy-submit').disabled=false;$('destroy-submit').textContent='Reîncearcă'}}
+      draw();
+    };
+    document.addEventListener('click',e=>{const target=e.target.closest('.row-menu');document.querySelectorAll('.row-menu[open]').forEach(m=>{if(m!==target)m.open=false})});
+    draw();
+  </script>
+</body>
+</html>
