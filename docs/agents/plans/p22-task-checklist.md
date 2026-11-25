@@ -133,7 +133,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [x] M1a.3 · Protected OCR results and preview
   - `admin` and `arhivar` can retrieve persisted OCR text, word confidence and Bounding Boxes, and request audited five-minute inline preview URLs for PDF, derived DOCX PDF, and ordered image pages. `cititor` and anonymous callers are denied. The DS-003 current-session flow displays read-only results, keeps preview URLs internal, and renews through the authenticated session API.
   - Full PHPUnit passed (89 tests, 530 assertions, 3 skipped). Frontend production build and Playwright passed (64 tests, 4 skipped) across desktop/mobile light/dark, including session expiry, preview renewal, long OCR text, and 320px overflow. Inspected screenshots are saved under `docs/design/screens/DS-003.ocr-results.*`.
-  - Ledger lint and `git diff --check` passed. Owner real upload-to-preview smoke with a synthetic document remains pending.
+  - Ledger lint and `git diff --check` passed. On 2026-11-25, the owner confirmed a local 285 KB PDF reached `review_ready` and displayed extracted text, confidence details, and the PDF preview. The check exposed a stale backend container; rebuilding the backend and worker and applying the access-event migration restored the protected OCR route.
 
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 

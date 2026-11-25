@@ -1,6 +1,6 @@
 # Plan — M1a.3 · Protected OCR results and preview
 
-**Status:** Approved by the repository owner on 2026-11-25. Implementation and automated verification completed on 2026-11-25; owner real upload-to-preview smoke remains pending.
+**Status:** Approved by the repository owner on 2026-11-25. Implementation, automated verification, and owner local upload-to-preview smoke completed on 2026-11-25.
 
 ## Size
 
@@ -36,7 +36,7 @@ No provided contract change is planned. C-001 governs delivery; C-003 governs au
 | 2 | Entering OCR results loads the inline preview through an authenticated request; renewal also uses an authenticated request, while the temporary URL remains invisible to the user. | Playwright with mocked API responses; PHPUnit feature tests for issuance and the five-minute expiry. | Owner’s browser workflow uses synthetic documents. |
 | 3 | A staff preview request authorizes the draft, records access, then issues a URL that delivers the private document with C-001 headers. | PHPUnit feature tests for audit ordering, signed delivery, and expiry. | None. |
 | 4 | Missing drafts and drafts without completed OCR or a previewable file return safe Romanian errors without leaking stored paths or content. | PHPUnit feature tests. | None. |
-| 5 | The browser displays persisted OCR results and preview; errors and expired sessions are actionable. | Playwright, followed by a local real-API smoke. | Owner manually completes the real upload-to-preview flow. |
+| 5 | The browser displays persisted OCR results and preview; errors and expired sessions are actionable. | Playwright and owner local real-API smoke, completed 2026-11-25. The owner confirmed extracted text, confidence details, and PDF preview display. | None. |
 | 6 | The changed screen works at mobile and desktop sizes, in light and dark themes, with keyboard focus and no horizontal overflow. | Playwright screenshots and inspection against `DESIGN.md`. | None. |
 | 7 | Backend, frontend, and ledger checks pass. | PHPUnit, frontend build/Playwright, Ledger lint, and `git diff --check`. | None. |
 
