@@ -44,7 +44,8 @@ designs:
     status: draft
     roles: [admin, arhivar]
     decisions: [D-002, D-035, D-042]
-    description: "Admin are permisiuni de gestionare a termenelor și casării, inclusiv prelungirea termenului și confirmarea casării pe loturi. Arhivar are acces doar la citire: poate consulta și filtra termenele de păstrare și documentele eligibile pentru casare, fără a modifica termenele, aproba casarea sau efectua alte operațiuni de gestionare. Restricțiile arhivarului sunt impuse și pe server. Termenele urmează regulile aprobate din D-035; atingerea unui termen nu autorizează automat casarea."
+    design_ref: mocks/DS-005.html
+    description: "Admin are permisiuni de gestionare a termenelor și casării, inclusiv prelungirea termenului și confirmarea casării pe loturi. Arhivar are acces doar la citire: poate consulta și filtra termenele de păstrare și documentele eligibile pentru casare, fără a modifica termenele, aproba casarea sau efectua alte operațiuni de gestionare. Restricțiile arhivarului sunt impuse și pe server. Termenele expirate sunt grupate după marcajul C.S., cu aceleași condiții de selecție. Termenele urmează regulile aprobate din D-035; atingerea unui termen nu autorizează automat casarea. Pragul de 30 de zile este doar o grupare vizuală."
 
   - id: DS-006
     name: "Panou administrare (Admin panel)"

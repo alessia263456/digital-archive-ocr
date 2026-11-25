@@ -104,6 +104,9 @@ them; a ticket with UI has a design subtask instead (team addon).
 | `--color-archival-label-text` | `#79502A` | `#E7B587` | Bronze text for archival identifiers |
 | `--color-archival-label-border` | `#DEC09F` | `#69503A` | Subtle bronze border for archival identifiers |
 | `--color-focus-ring` | `#4683CF` | `#46CFC3` | Accessible keyboard focus outline (contrast ≥ 3:1) |
+| `--color-danger` | `#C53030` | `#F87171` | Destructive actions and expired retention deadlines |
+| `--color-danger-bg` | `#FFF5F5` | `#451A1A` | Subtle background for destructive and error messages |
+| `--color-danger-border` | `#FEB2B2` | `#7F1D1D` | Border for destructive and error messages |
 
 ### Typography
 | Token | Family | Size / line height | Weight | Use |
