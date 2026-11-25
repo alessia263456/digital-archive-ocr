@@ -149,6 +149,92 @@ test('cititor has no upload entry point', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Încarcă documente' })).toHaveCount(0);
 });
 
+test('loads persisted OCR results and renews the private inline preview through the session API', async ({ page }, testInfo) => {
+  await authenticatedPage(page, 'arhivar');
+  const longOcrText = 'Știință în România. '.repeat(40);
+  await page.route('**/api/drafts', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ items: [{ group: 'documents', index: 0, id: 'draft-ocr', status: 'queued' }] }),
+  }));
+  await page.route('**/api/drafts/draft-ocr', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: 'draft-ocr', status: 'review_ready' }),
+  }));
+  await page.route('**/api/drafts/draft-ocr/ocr', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: 'draft-ocr', status: 'review_ready', pages: [{
+      page: 1, width: 100, height: 200, text: longOcrText,
+      words: [{ text: 'Știință', confidence: 96.5, left: 10, top: 20, width: 30, height: 10 }],
+    }] }),
+  }));
+  let previews = 0;
+  await page.route('**/api/drafts/draft-ocr/preview', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().headers()['x-xsrf-token']).toBe('synthetic-csrf-token');
+    previews += 1;
+    const expires = Math.floor(Date.now() / 1000) + 300;
+    await route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ pages: [{ page: 1, kind: 'document', url: `/api/documents/deliver/opaque-${previews}?expires=${expires}&signature=signed` }], expires_at: new Date(expires * 1000).toISOString() }),
+    });
+  });
+  await page.route('**/api/documents/deliver/opaque-*', (route) => route.fulfill({
+    status: 200, contentType: 'text/html',
+    body: '<!doctype html><html><head><style>body{margin:0;padding:10%;font:16px Georgia;color:#072D5C}article{border:1px solid #ddd;padding:10%}h1{font-size:24px}p{line-height:1.6}</style></head><body><article><h1>Contract de exemplu</h1><p>Previzualizare sintetică a documentului încărcat.</p><p>Act redactat pentru verificarea OCR.</p></article></body></html>',
+  }));
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByLabel('Document PDF sau DOCX').setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
+  await page.getByRole('button', { name: 'Încarcă documentul' }).click();
+  await page.getByRole('button', { name: 'Actualizează starea' }).click();
+  await page.getByRole('button', { name: 'Vezi rezultatele OCR' }).click();
+  await expect(page.getByRole('heading', { name: 'Rezultate OCR' })).toBeVisible();
+  await expect(page.getByText('Știință în România')).toBeVisible();
+  await expect(page.locator('.ocr-text')).toHaveText(longOcrText);
+  await expect(page.getByText(/Încredere medie 97%/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Aprobă|Indexează|Corectează/ })).toHaveCount(0);
+  await expect(page.locator('iframe[title="Previzualizare document · pagina 1"]')).toHaveAttribute('src', /opaque-1/);
+  await expect(page.frameLocator('iframe[title="Previzualizare document · pagina 1"]').getByRole('heading', { name: 'Contract de exemplu' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reîncarcă previzualizarea' }).click();
+  await expect(page.locator('iframe[title="Previzualizare document · pagina 1"]')).toHaveAttribute('src', /opaque-2/);
+  expect(previews).toBe(2);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: join(screenshotDir, `DS-003.ocr-results.${testInfo.project.name}.png`), fullPage: true });
+  if (testInfo.project.name.startsWith('desktop-')) {
+    await page.setViewportSize({ width: 320, height: 740 });
+    const fits = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+    expect(fits).toBe(true);
+    await page.screenshot({ path: join(screenshotDir, `DS-003.ocr-results.320x740.${testInfo.project.name}.png`), fullPage: true });
+  }
+});
+
+test('shows session expiry from OCR results as an actionable error', async ({ page }) => {
+  await authenticatedPage(page, 'admin');
+  await page.route('**/api/drafts', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ items: [{ group: 'documents', index: 0, id: 'draft-expired', status: 'queued' }] }),
+  }));
+  await page.route('**/api/drafts/draft-expired', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: 'draft-expired', status: 'review_ready' }),
+  }));
+  await page.route('**/api/drafts/draft-expired/ocr', (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: 'draft-expired', status: 'review_ready', pages: [] }),
+  }));
+  await page.route('**/api/drafts/draft-expired/preview', (route) => route.fulfill({
+    status: 419, contentType: 'application/json',
+    body: JSON.stringify({ eroare: 'Sesiunea a expirat. Reîncărcați pagina și încercați din nou.' }),
+  }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByLabel('Document PDF sau DOCX').setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
+  await page.getByRole('button', { name: 'Încarcă documentul' }).click();
+  await page.getByRole('button', { name: 'Actualizează starea' }).click();
+  await page.getByRole('button', { name: 'Vezi rezultatele OCR' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Sesiunea a expirat. Reîncărcați pagina și încercați din nou.');
+});
 test('rejects unsupported selections with a Romanian explanation', async ({ page }) => {
   await authenticatedPage(page, 'admin');
   await page.goto('/');
