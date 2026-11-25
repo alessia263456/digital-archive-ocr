@@ -41,7 +41,7 @@
 - **Why:** Keeps repeatedly failing Document Scans from blocking other work.
 - **Evidence:** Q-010 and owner confirmation in the requirements review
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-19
+- **Confirmed:** 2026-11-25
 
 ## D-027 · Retention, destruction, and retained audit evidence
 - **Status:** superseded-by D-035
@@ -154,4 +154,4 @@
 - **Why:** Define exact identity for ordered image documents and distinguish advisory OCR similarity from exact blocking and the existing metadata warning.
 - **Evidence:** Q-020 and owner approval in chat. The OCR similarity criterion remains open in Q-021. Q-011 records the earlier decision on the act-number and Act Date warning.
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-22
+- **Confirmed:** 2026-11-25
