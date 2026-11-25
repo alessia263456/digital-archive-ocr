@@ -116,6 +116,106 @@ const statusLabels = {
   quarantined: 'Trimisă în carantină',
 };
 
+function DraftOcrResults({ item, onBack }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [pages, setPages] = useState([]);
+  const [preview, setPreview] = useState(null);
+  const [previewError, setPreviewError] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [renewing, setRenewing] = useState(false);
+
+  async function renewPreview() {
+    setRenewing(true);
+    setPreviewError('');
+    try {
+      setPreview(await api.draftPreview(item.id));
+    } catch (requestError) {
+      setPreviewError(requestError.message || 'Previzualizarea nu a putut fi reîncărcată. Verificați sesiunea și încercați din nou.');
+    } finally {
+      setRenewing(false);
+    }
+  }
+
+  useEffect(() => {
+    let active = true;
+    api.draftOcr(item.id)
+      .then((result) => {
+        if (!active) return;
+        setPages(result.pages || []);
+        api.draftPreview(item.id)
+          .then((issuedPreview) => { if (active) setPreview(issuedPreview); })
+          .catch((requestError) => {
+            if (active) setPreviewError(requestError.message || 'Previzualizarea nu a putut fi încărcată. Verificați sesiunea și încercați din nou.');
+          })
+          .finally(() => { if (active) setPreviewLoading(false); });
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || 'Rezultatele OCR nu au putut fi încărcate. Verificați sesiunea și încercați din nou.');
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [item.id]);
+
+  useEffect(() => {
+    if (!preview?.expires_at) return undefined;
+    const remaining = new Date(preview.expires_at).getTime() - Date.now();
+    const delay = Math.max(0, Math.min(remaining - 15000, 2147483647));
+    const timeout = window.setTimeout(renewPreview, delay);
+    return () => window.clearTimeout(timeout);
+  }, [preview?.expires_at]);
+
+  if (loading) {
+    return <main className="ocr-results" aria-busy="true"><button className="button secondary" type="button" onClick={onBack}>Înapoi la încărcări</button><p className="state-message loading" role="status">Se încarcă rezultatele OCR și previzualizarea…</p></main>;
+  }
+  if (error) {
+    return <main className="ocr-results"><button className="button secondary" type="button" onClick={onBack}>Înapoi la încărcări</button><p className="state-message error" role="alert">{error}</p></main>;
+  }
+
+  return (
+    <main className="ocr-results" aria-busy={renewing}>
+      <div className="upload-heading">
+        <button className="button secondary" type="button" onClick={onBack}>Înapoi la încărcări</button>
+        <h1>Rezultate OCR</h1>
+      </div>
+      <p className="ocr-private-note">Ciornă privată · OCR finalizat. Documentul așteaptă revizuirea umană și nu este aprobat sau indexat.</p>
+      <div className="ocr-results-grid">
+        <section className="ocr-pages" aria-label="Text extras">
+          {pages.map((page) => {
+            const words = Array.isArray(page.words) ? page.words : [];
+            const confidence = words.length
+              ? Math.round(words.reduce((sum, word) => sum + Number(word.confidence || 0), 0) / words.length)
+              : null;
+            return (
+              <article className="ocr-page" key={page.page}>
+                <h2>Pagina {page.page}</h2>
+                <p className="ocr-page-meta">{page.width} × {page.height} px{confidence === null ? '' : ` · Încredere medie ${confidence}%`}</p>
+                <pre className="ocr-text">{page.text || 'Nu a fost extras text pentru această pagină.'}</pre>
+                <details className="ocr-boxes">
+                  <summary>Casete de delimitare · {words.length} cuvinte</summary>
+                  {words.length > 0 ? <ul>{words.map((word, index) => <li key={`${word.left}-${word.top}-${index}`}><span>{word.text}</span><code>{word.left}, {word.top} · {word.width} × {word.height} px · {word.confidence}%</code></li>)}</ul> : <p>Nu există casete de delimitare pentru această pagină.</p>}
+                </details>
+              </article>
+            );
+          })}
+        </section>
+        <section className="ocr-preview" aria-labelledby="ocr-preview-title">
+          <h2 id="ocr-preview-title">Previzualizare document</h2>
+          {previewError && <p className="state-message error" role="alert">{previewError}</p>}
+          {previewLoading && <p className="state-message loading" role="status">Se încarcă previzualizarea…</p>}
+          {preview?.pages?.length ? <div className="ocr-preview-pages">{preview.pages.map((page) => page.kind === 'image'
+            ? <img key={page.page} src={page.url} alt={`Pagina ${page.page} din document`} />
+            : <iframe key={page.page} title={`Previzualizare document · pagina ${page.page}`} src={page.url} />)}</div>
+            : <p className="muted">Previzualizarea nu este disponibilă.</p>}
+          <button className="button secondary" type="button" onClick={renewPreview} disabled={renewing}>
+            {renewing ? 'Se reîncarcă…' : 'Reîncarcă previzualizarea'}
+          </button>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function UploadScreen({ onBack }) {
   const fileInputRef = useRef(null);
   const [kind, setKind] = useState('documents');
@@ -125,6 +225,7 @@ function UploadScreen({ onBack }) {
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState('');
   const [refreshing, setRefreshing] = useState(null);
+  const [openedItem, setOpenedItem] = useState(null);
 
   function selectFiles(selection) {
     const selected = Array.from(selection || []);
@@ -213,6 +314,8 @@ function UploadScreen({ onBack }) {
     && !(kind === 'documents' && (files.length !== 1 || files.some((file) => !/\.(pdf|docx)$/i.test(file.name))))
     && !(kind === 'images' && files.some((file) => !/\.(jpe?g|png)$/i.test(file.name)));
 
+  if (openedItem) return <DraftOcrResults item={openedItem} onBack={() => setOpenedItem(null)} />;
+
   return (
     <main className="upload-wrap" aria-busy={busy}>
       <div className="upload-heading">
@@ -267,9 +370,12 @@ function UploadScreen({ onBack }) {
                 {item.error && <span className="draft-error">{item.error}</span>}
                 {item.refreshError && <span className="draft-error" role="alert">{item.refreshError}</span>}
               </div>
-              {item.id && <button className="button secondary" type="button" onClick={() => refresh(item)} disabled={refreshing === item.key}>
-                {refreshing === item.key ? 'Se actualizează…' : 'Actualizează starea'}
-              </button>}
+              {item.id && <div className="draft-actions">
+                {item.status === 'review_ready' && <button className="button" type="button" onClick={() => setOpenedItem(item)}>Vezi rezultatele OCR</button>}
+                <button className="button secondary" type="button" onClick={() => refresh(item)} disabled={refreshing === item.key}>
+                  {refreshing === item.key ? 'Se actualizează…' : 'Actualizează starea'}
+                </button>
+              </div>}
             </li>
           ))}</ul>}
       </section>

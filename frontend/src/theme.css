@@ -447,6 +447,111 @@ p {
   border-radius: var(--radius-md);
 }
 
+.draft-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.ocr-results {
+  width: min(100% - 2 * var(--space-lg), 1440px);
+  margin-inline: auto;
+  padding-block: var(--space-xl) var(--space-3xl);
+}
+
+.ocr-results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-lg);
+  margin-block-start: var(--space-lg);
+}
+
+.ocr-private-note,
+.ocr-page,
+.ocr-preview {
+  padding: var(--space-md);
+  border: thin solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
+
+.ocr-private-note {
+  margin-block-start: var(--space-md);
+  border-inline-start: var(--space-xs) solid var(--color-accent-amber);
+}
+
+.ocr-pages,
+.ocr-preview-pages {
+  display: grid;
+  gap: var(--space-md);
+  min-inline-size: 0;
+}
+
+.ocr-page h2,
+.ocr-preview h2 {
+  font: var(--text-h3);
+}
+
+.ocr-page-meta {
+  margin-block: var(--space-xs) var(--space-sm);
+  color: var(--color-text-secondary);
+  font: var(--text-small);
+}
+
+.ocr-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: var(--color-text-primary);
+  font: var(--text-body);
+}
+
+.ocr-boxes {
+  margin-block-start: var(--space-md);
+  border-block-start: thin solid var(--color-border);
+  padding-block-start: var(--space-sm);
+}
+
+.ocr-boxes summary {
+  min-block-size: 44px;
+  padding-block: var(--space-sm);
+  cursor: pointer;
+}
+
+.ocr-boxes ul {
+  display: grid;
+  gap: var(--space-xs);
+  padding-inline-start: var(--space-lg);
+}
+
+.ocr-boxes li code {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--color-text-secondary);
+  font: var(--text-mono-sm);
+}
+
+.ocr-preview {
+  display: grid;
+  gap: var(--space-md);
+  min-inline-size: 0;
+}
+
+.ocr-preview-pages iframe,
+.ocr-preview-pages img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 0.72;
+  border: thin solid var(--color-border);
+  background: var(--color-bg-subtle);
+  object-fit: contain;
+}
+
+.ocr-preview-pages img {
+  block-size: auto;
+}
+
 .draft-copy {
   display: grid;
   min-inline-size: 0;
@@ -541,6 +646,23 @@ p {
 
   .draft-item > .button {
     inline-size: 100%;
+  }
+
+  .draft-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .draft-actions > .button {
+    inline-size: 100%;
+  }
+
+  .ocr-results-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ocr-results {
+    width: min(100% - 2 * var(--space-md), 1440px);
   }
 }
 

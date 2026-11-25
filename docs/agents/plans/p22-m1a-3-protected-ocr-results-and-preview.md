@@ -1,6 +1,6 @@
 # Plan — M1a.3 · Protected OCR results and preview
 
-**Status:** Approved by the repository owner on 2026-11-25. Implementation not started.
+**Status:** Approved by the repository owner on 2026-11-25. Implementation and automated verification completed on 2026-11-25; owner real upload-to-preview smoke remains pending.
 
 ## Size
 

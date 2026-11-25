@@ -65,4 +65,6 @@ export const api = {
     return request('/api/drafts', { method: 'POST', body });
   },
   draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
+  draftOcr: (id) => request(`/api/drafts/${encodeURIComponent(id)}/ocr`),
+  draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
 };

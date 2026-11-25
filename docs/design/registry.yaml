@@ -27,7 +27,7 @@ designs:
     roles: [admin, arhivar]
     design_ref: mocks/DS-003.html
     decisions: [D-002, D-038, D-025, D-026, D-028, D-040, D-042]
-    description: "M1a.2 implementează încărcarea unui singur PDF/DOCX sau a unei colecții ordonate JPG/PNG, cu ciorne private și actualizare manuală a stării OCR pentru elementele încărcate în sesiunea curentă. Revizuirea, coada, ciornele salvate și funcțiile de duplicat rămân în afara acestei livrări."
+    description: "M1a.2 implementează încărcarea unui singur PDF/DOCX sau a unei colecții ordonate JPG/PNG, cu ciorne private și actualizare manuală a stării OCR pentru elementele încărcate în sesiunea curentă. M1a.3 adaugă rezultate OCR auditate, în regim de citire, și previzualizarea privată încărcată automat pentru admin și arhivar. Corectarea OCR, revizuirea PII, aprobarea și indexarea rămân în afara acestei livrări."
 
   - id: DS-004
     name: "Coadă revizuire PII & Carantină (Human Review & Quarantine Queue)"

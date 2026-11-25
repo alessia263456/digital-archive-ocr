@@ -19,4 +19,6 @@ Route::get('/user', [AuthController::class, 'currentUser'])
 Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group(function () {
     Route::post('/drafts', [DocumentDraftController::class, 'store'])->name('drafts.store');
     Route::get('/drafts/{draft}', [DocumentDraftController::class, 'show'])->name('drafts.show');
+    Route::get('/drafts/{draft}/ocr', [DocumentDraftController::class, 'ocr'])->name('drafts.ocr');
+    Route::post('/drafts/{draft}/preview', [DocumentDraftController::class, 'preview'])->name('drafts.preview');
 });

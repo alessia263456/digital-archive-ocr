@@ -17,6 +17,7 @@
 - PATTERN-009 · Count only failed credential responses in login throttling · candidate
 - PATTERN-010 · Persist mixed intake items independently across database and storage · candidate
 - PATTERN-011 · Enforce both idle and absolute age for stateful sessions · candidate
+- PATTERN-012 · Record authorized draft access before issuing preview URLs · candidate
 
 ---
 
@@ -82,3 +83,9 @@
 - **Status:** candidate
 - **How:** Store authentication start and last-activity timestamps in the server-side session. Check both before allowing each authenticated request, expire at either bound, and refresh only the idle timestamp after a valid request.
 - **Example:** [Session lifetime middleware](../../backend/app/Http/Middleware/EnforceSessionLifetime.php) and [authentication feature tests](../../backend/tests/Feature/AuthenticationAndRolesTest.php).
+
+## PATTERN-012 · Record authorized draft access before issuing preview URLs
+- **Status:** candidate
+- **How:** Resolve the private draft and verify every source object, write an access event for the authenticated staff member, then issue opaque short-lived Signed URLs. Keep URL values in authenticated response data and browser element sources only.
+- **Why:** The access record exists before the temporary capability is created, and the API never returns private storage keys.
+- **Example:** [Draft controller](../../backend/app/Http/Controllers/DocumentDraftController.php) and [protected OCR feature tests](../../backend/tests/Feature/ProtectedDraftOcrTest.php).

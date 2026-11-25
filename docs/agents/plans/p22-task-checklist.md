@@ -130,6 +130,11 @@ M1a also begins these later-completion tasks: P22-23 (single-document upload sli
 
 M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (implementation, automated checks, and owner review complete), M1a.2 Upload and OCR processing (implementation and automated verification complete; owner manual upload/refresh verification pending), M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md) and the [M1a.2 plan](p22-m1a-2-upload-and-ocr-processing.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
 
+- [x] M1a.3 · Protected OCR results and preview
+  - `admin` and `arhivar` can retrieve persisted OCR text, word confidence and Bounding Boxes, and request audited five-minute inline preview URLs for PDF, derived DOCX PDF, and ordered image pages. `cititor` and anonymous callers are denied. The DS-003 current-session flow displays read-only results, keeps preview URLs internal, and renews through the authenticated session API.
+  - Full PHPUnit passed (89 tests, 530 assertions, 3 skipped). Frontend production build and Playwright passed (64 tests, 4 skipped) across desktop/mobile light/dark, including session expiry, preview renewal, long OCR text, and 320px overflow. Inspected screenshots are saved under `docs/design/screens/DS-003.ocr-results.*`.
+  - Ledger lint and `git diff --check` passed. Owner real upload-to-preview smoke with a synthetic document remains pending.
+
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 
 - [ ] P22-49b · Finish the corpus inventory — owner task, proceeds in parallel
