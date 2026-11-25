@@ -22,40 +22,56 @@
     .brand-copy{display:grid;gap:var(--space-xs)}.header-kicker{color:var(--color-text-secondary)}.header-title{font:var(--text-body);font-weight:600}
     .nav{margin-inline-start:auto}.nav a{display:inline-flex;align-items:center;min-block-size:var(--space-2xl);padding-inline:var(--space-sm);color:var(--color-text-primary);text-decoration:none}
     .nav a[aria-current=page]{border-block-end:var(--radius-sm) solid var(--color-accent-teal);font-weight:700}
-    .wrap{inline-size:min(100%,calc(var(--space-3xl)*20));margin-inline:auto;padding:var(--space-md) var(--space-lg) var(--space-lg)}
-    .heading{justify-content:space-between;margin-block-end:var(--space-md)}h1{font:var(--text-h2)}
+    .wrap{inline-size:min(100%,calc(var(--space-3xl)*20));margin-inline:auto;padding:var(--space-sm) var(--space-lg) var(--space-md)}
+    .heading{justify-content:space-between;margin-block-end:var(--space-sm)}h1{font:var(--text-h2)}
     .readonly{padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-secondary)}
     .filters{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*3),2fr) minmax(calc(var(--space-3xl)*3),1fr);gap:var(--space-sm);margin-block-end:var(--space-sm)}
     .field{display:grid;gap:var(--space-xs);min-inline-size:0}.field label{color:var(--color-text-secondary);font-weight:600}
     .control{inline-size:100%;min-inline-size:0;min-block-size:calc(var(--space-2xl) - var(--space-xs))}
-    .notice{margin-block-end:var(--space-md);padding:var(--space-sm) var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-amber);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .notice{margin-block-end:var(--space-sm);padding:var(--space-xs) var(--space-sm);border-inline-start:var(--space-xs) solid var(--color-accent-amber);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
     .message,.empty{padding:var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-mid);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
     .message.error,.op-error,.validation{border-color:var(--color-danger)}.message.success{border-color:var(--color-accent-teal)}
     .message button,.empty button{margin-block-start:var(--space-sm)}
-    .sections{display:grid;gap:var(--space-sm)}.section{min-inline-size:0;border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);box-shadow:var(--shadow-card)}
-    .section>summary{list-style:none;cursor:pointer}.section>summary::-webkit-details-marker{display:none}
-    .section-head{justify-content:space-between;min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-md)}
-    .section-head h2{font:var(--text-h3)}.count{color:var(--color-text-secondary);font-variant-numeric:tabular-nums}
-    .expired .section-head{border-inline-start:var(--space-xs) solid var(--color-danger);background:var(--color-danger-bg)}.expired .section-head h2,.expired .count{color:var(--color-danger)}.upcoming .section-head{border-inline-start:var(--space-xs) solid var(--color-accent-amber)}
-    .chevron{inline-size:var(--space-sm);block-size:var(--space-sm);border-inline-end:thin solid currentColor;border-block-end:thin solid currentColor;transform:rotate(45deg);transition:transform var(--duration-fast)}
-    details[open] .chevron{transform:rotate(225deg)}.content{padding:0 var(--space-md) var(--space-md)}
-    .note{margin-block-end:var(--space-sm);color:var(--color-text-secondary)}.section-actions{margin-block-end:var(--space-sm)}
-    .selection-count{color:var(--color-text-secondary)}
-    .button,.quiet,.icon,.row-action{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xs);min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-md);border:thin solid var(--color-text-secondary);border-radius:var(--radius-md);background:var(--color-bg-surface);color:var(--color-text-primary);font-weight:600;cursor:pointer}
-    .button.primary{border-color:var(--color-accent-teal);background:var(--color-accent-teal);color:var(--color-version-navy)}
-    .button.danger{border-color:var(--color-danger);background:var(--color-danger-bg);color:var(--color-danger)}button:disabled{border-color:var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-secondary);cursor:not-allowed}
-    .table-wrap{max-inline-size:100%;overflow-x:auto}table{inline-size:100%;border-collapse:collapse;table-layout:fixed}
-    th{padding:var(--space-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font-weight:600;text-align:start}
-    td{padding:var(--space-sm);border-block-start:thin solid var(--color-border);vertical-align:middle;overflow-wrap:anywhere}
-    th:first-child,td:first-child{inline-size:44%}th:nth-child(2),td:nth-child(2){inline-size:23%}th:nth-child(3),td:nth-child(3){inline-size:20%}th:last-child,td:last-child{inline-size:13%;text-align:end}
-    .doc-name{display:block;font-weight:600}.meta{display:block;margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
+    .sections{min-inline-size:0}
+    .retention-table{overflow:hidden;border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface)}
+    table{inline-size:100%;border-collapse:collapse;table-layout:fixed}
+    th{padding:var(--space-xs) var(--space-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font-weight:600;text-align:start}
+    td{padding:var(--space-xs) var(--space-sm);border-block-start:thin solid var(--color-border);vertical-align:middle;overflow-wrap:anywhere}
+    th:first-child,td:first-child{inline-size:38%}th:nth-child(2),td:nth-child(2){inline-size:20%}th:nth-child(3),td:nth-child(3){inline-size:19%}th:last-child,td:last-child{inline-size:23%}
+    .shared-head th{block-size:var(--space-xl);font:var(--text-small);white-space:nowrap}
+    .group-heading th{padding:0;border-block-start:thin solid var(--color-border);background:var(--color-bg-surface)}
+    .group-heading:first-of-type th{border-block-start:0}
+    .group-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--space-sm);inline-size:100%;min-block-size:calc(var(--space-2xl) - var(--space-sm));padding:var(--space-xs) var(--space-sm);border:0;border-inline-start:var(--space-xs) solid transparent;background:transparent;color:var(--color-text-primary);text-align:start;cursor:pointer}
+    .group-toggle:hover{background:var(--color-bg-subtle)}
+    .group-toggle[aria-expanded=true] .chevron{transform:rotate(225deg)}
+    .group-heading.expired .group-toggle{border-inline-start-color:var(--color-danger);background:var(--color-danger-bg)}
+    .group-heading.expired .group-title,.group-heading.expired .count{color:var(--color-danger)}
+    .group-heading.upcoming .group-toggle{border-inline-start-color:var(--color-accent-amber)}
+    .group-heading-copy{display:flex;align-items:center;gap:var(--space-sm)}
+    .group-title{font:var(--text-body);font-weight:600}
+    .count{color:var(--color-text-secondary);font-variant-numeric:tabular-nums}
+    .chevron{inline-size:var(--space-sm);block-size:var(--space-sm);flex:none;border-inline-end:thin solid currentColor;border-block-end:thin solid currentColor;transform:rotate(45deg);transition:transform var(--duration-fast)}
+    .doc-cell{display:flex;align-items:flex-start;gap:var(--space-xs);min-inline-size:0}
+    .doc-copy{min-inline-size:0}.doc-name{display:block;font-weight:600}.meta{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-xs);margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
+    .cs-badge{display:inline-flex;align-items:center;min-block-size:var(--space-md);padding-inline:var(--space-xs);border:thin solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font:var(--text-small)}
     .deadline{white-space:nowrap;font-variant-numeric:tabular-nums}.days{display:block;color:var(--color-text-primary);font-weight:600}
-    .group-row th{padding-block:var(--space-xs);background:var(--color-bg-surface);color:var(--color-text-secondary);font:var(--text-small);border-block-start:thin solid var(--color-border)}
-    .doc-entry{display:flex;align-items:flex-start;gap:var(--space-sm)}.selection-control{display:grid;flex:none;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);margin-block-start:calc(-1 * var(--space-xs))}.row-select{inline-size:var(--space-md);block-size:var(--space-md);accent-color:var(--color-primary)}
-    .row-menu{position:relative;display:inline-block}.row-menu summary{display:grid;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);border:thin solid transparent;border-radius:var(--radius-sm);cursor:pointer;list-style:none;font:var(--text-h3)}
-    .row-menu summary::-webkit-details-marker{display:none}.menu{position:absolute;z-index:5;inset-inline-end:0;min-inline-size:calc(var(--space-3xl)*3);padding:var(--space-xs);border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);box-shadow:var(--shadow-card)}
-    .menu button{inline-size:100%;justify-content:flex-start;border-color:transparent}.skeleton{display:block;inline-size:min(100%,calc(var(--space-3xl)*3));block-size:var(--space-md);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
-    .group-empty{padding:var(--space-md);color:var(--color-text-secondary)}
+    .selection-control{display:grid;flex:none;place-items:center;inline-size:calc(var(--space-2xl) - var(--space-sm));block-size:calc(var(--space-2xl) - var(--space-sm));margin-inline-start:calc(-1 * var(--space-xs))}
+    .row-select{inline-size:var(--space-md);block-size:var(--space-md);accent-color:var(--color-primary)}
+    .eligibility{display:block;margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
+    .row-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:var(--space-xs)}
+    .row-action,.button,.quiet,.icon{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xs);min-block-size:calc(var(--space-xl) + var(--space-xs));padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-bg-surface);color:var(--color-text-primary);font:var(--text-small);font-weight:600;text-decoration:none;cursor:pointer}
+    .row-action:hover,.quiet:hover{background:var(--color-bg-subtle)}
+    .row-action.destroy{border-color:var(--color-danger);color:var(--color-danger)}
+    .row-action.destroy:hover{background:var(--color-danger-bg)}
+    .button.primary{border-color:var(--color-accent-teal);background:var(--color-accent-teal);color:var(--color-version-navy)}
+    .button.danger{border-color:var(--color-danger);color:var(--color-danger)}
+    button:disabled{border-color:var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-secondary);cursor:not-allowed}
+    .batch-row td{padding:var(--space-xs) var(--space-sm);background:var(--color-bg-subtle)}
+    .batch-bar{display:flex;align-items:center;justify-content:flex-end;gap:var(--space-sm);min-block-size:var(--space-xl)}
+    .selection-count{color:var(--color-text-secondary)}
+    .empty-row td{padding:var(--space-sm);color:var(--color-text-secondary)}
+    .skeleton{display:block;inline-size:min(100%,calc(var(--space-3xl)*3));block-size:var(--space-md);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .empty{padding:var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-mid);background:var(--color-bg-subtle)}
     dialog{inline-size:min(100%,calc(var(--space-3xl)*7));max-inline-size:calc(var(--space-3xl)*7);max-block-size:90vh;margin:auto;padding:0;overflow:auto;border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);color:var(--color-text-primary);box-shadow:var(--shadow-card)}
 .dialog-head,.dialog-body,.dialog-foot{padding:var(--space-md) var(--space-lg)}
     .dialog-head,.dialog-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);border-block-end:thin solid var(--color-border)}
@@ -71,13 +87,16 @@
       .tool-top{align-items:flex-start}.tool-row{align-items:stretch}.tool-row label{flex:1 1 100%;justify-content:space-between}
       .mock-tools select,.theme-button{inline-size:100%}.viewer-header{flex-wrap:wrap;padding-inline:var(--space-md)}.nav{inline-size:100%;margin:0;overflow-x:auto}
       .wrap{padding:var(--space-sm)}.heading{align-items:flex-start}.filters{grid-template-columns:minmax(0,1fr)}
-      .content{padding-inline:var(--space-sm)}.section-head{padding-inline:var(--space-sm)}.section-actions{align-items:flex-start;flex-direction:column}
-      .table-wrap{overflow:visible}table,tbody,tr,td{display:block;inline-size:100%!important}thead{position:absolute;inline-size:var(--space-xs);block-size:var(--space-xs);overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-      .group-row th{inline-size:100%!important}tr:not(.group-row){display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding-block:var(--space-xs);border-block-start:thin solid var(--color-border)}
-      tr:not(.group-row) td{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*1.5),38%) minmax(0,1fr);gap:var(--space-sm);padding:var(--space-xs);border:0}
-      tr:not(.group-row) td::before{content:attr(data-label);color:var(--color-text-secondary);font-weight:600}
-      tr:not(.group-row) td:last-child{display:flex;justify-content:flex-end;grid-column:1;inline-size:100%!important}
-      tr:not(.group-row) td:last-child::before{content:''}
+      .retention-table{overflow:visible}.shared-head{position:absolute;inline-size:var(--space-xs);block-size:var(--space-xs);overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+      table,tbody,tr,td{display:block;inline-size:100%!important}
+      .group-heading th{padding:0}.group-toggle{min-block-size:var(--space-2xl);padding-inline:var(--space-sm)}
+      tr.data-row{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding-block:var(--space-xs);border-block-start:thin solid var(--color-border)}
+      tr.data-row td{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*1.5),38%) minmax(0,1fr);gap:var(--space-sm);padding:var(--space-xs) var(--space-sm);border:0}
+      tr.data-row td::before{content:attr(data-label);color:var(--color-text-secondary);font-weight:600}
+      tr.data-row td.actions-cell{display:flex;justify-content:flex-end;grid-column:1;inline-size:100%!important}
+      tr.data-row td.actions-cell::before{content:''}
+      .doc-cell{align-items:flex-start}.row-actions{justify-content:flex-start}
+      .batch-row td{display:block}.batch-bar{justify-content:flex-start}
       .deadline{white-space:normal}.dialog-head,.dialog-body,.dialog-foot{padding:var(--space-md)}.dialog-foot{flex-direction:column-reverse}.dialog-foot button{inline-size:100%}
     }
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
@@ -149,61 +168,98 @@
       const q=$('search').value.trim().toLocaleLowerCase('ro');
       return docs.filter(x=>(!q||(x.name+' '+x.dossier).toLocaleLowerCase('ro').includes(q))&&($('category').value==='all'||x.category===$('category').value));
     }
-    function row(x,isExpired){
-      const can=canDestroy(x), checked=selected.has(x.id), remaining=Math.ceil((new Date(x.deadline+'T12:00:00')-new Date(TODAY+'T12:00:00'))/86400000);
-      const reason=x.permanent?'Nu poate fi casat: păstrare permanentă.':x.destroyed?'Nu poate fi selectat: document deja casat.':'';
-      const select=admin()&&isExpired?'<label class="selection-control"><input class="row-select" type="checkbox" data-select="'+x.id+'" aria-label="Selectează pentru casare: '+esc(x.name)+'" '+(checked?'checked':'')+' '+(can?'':'disabled aria-describedby="eligibility-'+x.id+'"')+'><span class="sr-only">Selectează pentru casare</span></label>':'';
-      const explanation=admin()&&isExpired&&!can?'<span class="meta" id="eligibility-'+x.id+'">'+reason+'</span>':'';
-      const menu=admin()?'<details class="row-menu"><summary aria-label="Acțiuni pentru '+esc(x.name)+'">⋯</summary><div class="menu"><button class="row-action" type="button" data-extend="'+x.id+'">Prelungește termenul</button></div></details>':'';
-      return '<tr><td class="document-cell" data-label="Document"><span class="doc-entry">'+select+'<span><span class="doc-name">'+esc(x.name)+'</span><span class="meta">'+esc(x.dossier)+(x.cs?' · C.S.':'')+'</span>'+explanation+'</span></span></td><td class="category-cell" data-label="Categorie">'+esc(x.category)+'</td><td class="deadline" data-label="Termen de păstrare"><time datetime="'+x.deadline+'">'+date(x.deadline)+'</time>'+(isExpired?'':'<span class="days">'+remaining+' zile rămase</span>')+'</td><td data-label="Acțiuni">'+menu+'</td></tr>';
+    const titles={expired:'Termen expirat',upcoming:'Termen apropiat','in-term':'În termen'};
+    const collapsedGroups=new Set();
+    let pendingIds=new Set();
+    function tableHead(){
+      return '<thead class="shared-head"><tr><th scope="col">Document</th><th scope="col">Categorie</th><th scope="col">Termen de păstrare</th><th scope="col">Acțiuni</th></tr></thead>';
     }
-    function table(items,title,expired){
-      if(!items.length)return '<p class="group-empty">Nu există documente în această secțiune.</p>';
-      const col=4;
-      const heading='<thead><tr><th scope="col">Document</th><th scope="col">Categorie</th><th scope="col">Termen de păstrare</th><th scope="col">Acțiuni</th></tr></thead>';
-      if(!expired)return '<div class="table-wrap"><table aria-label="'+title+'">'+heading+'<tbody>'+items.map(x=>row(x,false,title==='Termen apropiat')).join('')+'</tbody></table></div>';
-      const ordinary=items.filter(x=>!x.cs), cs=items.filter(x=>x.cs);
-      const rows=(label,list)=>'<tbody><tr class="group-row"><th colspan="'+col+'" scope="rowgroup">'+label+'</th></tr>'+list.map(x=>row(x,true,false)).join('')+'</tbody>';
-      return '<div class="table-wrap"><table aria-label="'+title+'">'+heading+rows('Fără C.S.',ordinary)+rows('C.S.',cs)+'</table></div>';
+    function row(x,key){
+      const expired=key==='expired', eligible=canDestroy(x), checked=selected.has(x.id), remaining=Math.ceil((new Date(x.deadline+'T12:00:00')-new Date(TODAY+'T12:00:00'))/86400000);
+      const reason=x.permanent?'Păstrare permanentă: casarea nu este permisă.':x.destroyed?'Documentul a fost deja casat.':'';
+      const checkbox=admin()&&expired?'<label class="selection-control"><input class="row-select" type="checkbox" data-select="'+x.id+'" aria-label="Selectează pentru casare: '+esc(x.name)+'" '+(checked?'checked':'')+' '+(eligible?'':'disabled aria-describedby="eligibility-'+x.id+'"')+'><span class="sr-only">Selectează pentru casare</span></label>':'';
+      const explanation=admin()&&expired&&!eligible?'<span class="eligibility" id="eligibility-'+x.id+'">'+reason+'</span>':'';
+      const csBadge=x.cs?'<span class="cs-badge">C.S.</span>':'';
+      const docDeadline=x.permanent?'Păstrare permanentă':x.deadline?date(x.deadline):'—';
+      let actions='';
+      if(admin()&&!x.permanent&&!x.destroyed){
+        if(expired&&eligible)actions='<button class="row-action" type="button" data-extend="'+x.id+'">Prelungește</button><button class="row-action destroy" type="button" data-destroy="'+x.id+'">Casează</button>';
+        else if(!expired)actions='<button class="row-action" type="button" data-extend="'+x.id+'">Prelungește</button>';
+      }
+      const remainingText=key==='upcoming'?'<span class="days">'+remaining+' zile rămase</span>':'';
+      return '<tr class="data-row"><td data-label="Document"><span class="doc-cell">'+checkbox+'<span class="doc-copy"><span class="doc-name">'+esc(x.name)+'</span><span class="meta"><span>'+esc(x.dossier)+'</span>'+csBadge+'</span>'+explanation+'</span></span></td><td data-label="Categorie">'+esc(x.category)+'</td><td class="deadline" data-label="Termen de păstrare">'+docDeadline+remainingText+'</td><td class="actions-cell" data-label="Acțiuni"><span class="row-actions">'+actions+'</span></td></tr>';
     }
-    function section(key,title,list){
-      const items=list.slice().sort((a,b)=>a.deadline.localeCompare(b.deadline)), count=state==='loading'?'—':items.length, expired=key==='expired';
-      const picked=items.filter(x=>selected.has(x.id)).length;
-      const note=expired?'<p class="note">Termenul afișat include prelungirile. Se pot selecta documentele expirate, fără păstrare permanentă și necasate.</p>':'';
-      const actions=admin()&&expired?'<div class="section-actions"><span class="selection-count" aria-live="polite">'+picked+' selectate</span><button class="button danger" id="batch" type="button" '+(picked?'':'disabled')+'>Confirmă casarea</button></div>':'';
-      return '<details class="section '+key+'" open><summary class="section-head"><span class="heading"><h2>'+title+'</h2><span class="count">('+count+')</span></span><span class="chevron" aria-hidden="true"></span></summary><div class="content">'+note+actions+table(items,title,expired)+'</div></details>';
+    function groupMarkup(key,items){
+      const sorted=items.slice().sort((a,b)=>(a.deadline||'9999-12-31').localeCompare(b.deadline||'9999-12-31'));
+      const visibleSelected=sorted.filter(x=>selected.has(x.id)&&canDestroy(x)).length;
+      const collapsed=collapsedGroups.has(key), bodyId='rows-'+key;
+      const heading='<tbody class="group-heading '+key+'"><tr><th colspan="4" scope="rowgroup"><button class="group-toggle" type="button" data-toggle="'+bodyId+'" aria-controls="'+bodyId+'" aria-expanded="'+(!collapsed)+'"><span class="group-heading-copy"><span class="group-title">'+titles[key]+'</span><span class="count">('+sorted.length+')</span></span><span class="chevron" aria-hidden="true"></span></button></th></tr></tbody>';
+      const batch=key==='expired'&&admin()&&visibleSelected?'<tr class="batch-row"><td colspan="4"><div class="batch-bar"><span class="selection-count">'+visibleSelected+' selectate</span><button class="button danger" id="batch" type="button">Confirmă casarea</button></div></td></tr>':'';
+      const content=sorted.length?sorted.map(x=>row(x,key)).join(''):'<tr class="empty-row"><td colspan="4">Nu există documente în această secțiune.</td></tr>';
+      return heading+'<tbody class="group-body" id="'+bodyId+'" '+(collapsed?'hidden':'')+'>'+batch+content+'</tbody>';
+    }
+    function tableMarkup(groups){
+      return '<div class="retention-table"><table aria-label="Documente după termenul de păstrare">'+tableHead()+groupMarkup('expired',groups.expired)+groupMarkup('upcoming',groups.upcoming)+groupMarkup('in-term',groups['in-term'])+'</table></div>';
+    }
+    function loadingMarkup(){
+      const parts=['expired','upcoming','in-term'].map(key=>'<tbody class="group-heading '+key+'"><tr><th colspan="4"><div class="group-toggle"><span class="group-heading-copy"><span class="group-title">'+titles[key]+'</span><span class="count">—</span></span></div></th></tr></tbody><tbody><tr class="data-row"><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr><tr class="data-row"><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr></tbody>').join('');
+      return '<div class="retention-table"><table aria-hidden="true">'+tableHead()+parts+'</table></div>';
     }
     function draw(){
-      $('readonly').hidden=admin();
-      if(state==='error'){ $('message').hidden=false;$('message').className='message error';$('message').innerHTML='Documentele nu au putut fi încărcate. Verificați conexiunea și încercați din nou.<br><button class="quiet" id="retry-load">Reîncearcă</button>'; $('sections').innerHTML='';$('retry-load').onclick=()=>{state='loading';draw();setTimeout(()=>{state='default';draw()},400)};return; }
+      const isAdmin=admin();
+      $('readonly').hidden=isAdmin;
+      if(state==='error'){
+        $('message').hidden=false;$('message').className='message error';
+        $('message').innerHTML='Documentele nu au putut fi încărcate. Verificați conexiunea și încercați din nou.<br><button class="quiet" id="retry-load">Reîncearcă</button>';
+        $('sections').innerHTML='';
+        $('retry-load').onclick=()=>{state='loading';draw();setTimeout(()=>{state='default';draw()},400)};
+        return;
+      }
       $('message').hidden=state!=='success'&&state!=='failure';
       if(state==='success'){$('message').className='message success';$('message').textContent='Operațiunea a fost finalizată. Lista a fost actualizată.'}
-      if(state==='failure'){$('message').className='message error';$('message').innerHTML='Operațiunea nu a putut fi finalizată. Încercați din nou.<br><button class="quiet" id="retry-op">Reîncearcă</button>'}
-      if(state==='empty'){$('sections').innerHTML='<p class="empty">Nu există documente cu termene de păstrare de afișat.</p>';return}
-      if(state==='loading'){$('sections').innerHTML=['Termen expirat','Termen apropiat','În termen'].map(t=>'<section class="section"><div class="section-head"><h2>'+t+'</h2><span>—</span></div><div class="content"><div class="table-wrap"><table aria-hidden="true"><thead><tr><th>Document</th><th>Categorie</th><th>Termen de păstrare</th><th>Acțiuni</th></tr></thead><tbody>'+[0,1].map(()=>'<tr><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>').join('')+'</tbody></table></div></div></section>').join('');return}
+      if(state==='failure'){$('message').className='message error';$('message').innerHTML='Operațiunea nu a putut fi finalizată. Încercați din nou.'}
+      if(state==='empty'){$('sections').innerHTML='<div class="retention-table"><p class="empty">Nu există documente cu termene de păstrare de afișat.</p></div>';return}
+      if(state==='loading'){$('sections').innerHTML=loadingMarkup();return}
       let list=filtered();
       if(state==='success')list=list.filter(x=>!['d1','d2'].includes(x.id));
-      if(state!=='success'&&state!=='no-results'&&!list.length)state='no-results';
       if(state==='empty-section')list=list.filter(x=>group(x.deadline)!=='upcoming');
       if(state==='no-results')list=[];
-      if(state==='no-results'){$('sections').innerHTML='<p class="empty">Nu există documente care să corespundă căutării și filtrelor.<br><button class="quiet" id="clear">Șterge filtrele</button></p>';$('clear').onclick=()=>{$('search').value='';$('category').value='all';state='default';draw()};return}
-      const groups={expired:[],upcoming:[],'in-term':[]};list.forEach(x=>groups[group(x.deadline)].push(x));
-      $('sections').innerHTML=section('expired','Termen expirat',groups.expired)+section('upcoming','Termen apropiat',groups.upcoming)+section('in-term','În termen',groups['in-term']);
-      $('sections').querySelectorAll('[data-select]').forEach(el=>el.onchange=()=>{el.checked?selected.add(el.dataset.select):selected.delete(el.dataset.select);draw()});
-      $('sections').querySelectorAll('[data-extend]').forEach(el=>el.onclick=()=>openExtend(el.dataset.extend));
-      const batch=$('batch');if(batch)batch.onclick=openDestroy;
-      const retry=$('retry-op');if(retry)retry.onclick=()=>{state='submitting';draw();setTimeout(successDestroy,400)};
+      if(state!=='success'&&state!=='no-results'&&!list.length)state='no-results';
+      if(state==='no-results'){
+        $('sections').innerHTML='<div class="retention-table"><p class="empty">Nu există documente care să corespundă căutării și filtrelor.<br><button class="quiet" id="clear">Șterge filtrele</button></p></div>';
+        $('clear').onclick=()=>{$('search').value='';$('category').value='all';selected.clear();state='default';draw()};
+        return;
+      }
+      const groups={expired:[],upcoming:[],'in-term':[]};
+      list.forEach(x=>groups[group(x.deadline)].push(x));
+      $('sections').innerHTML=tableMarkup(groups);
+      $('sections').querySelectorAll('[data-toggle]').forEach(button=>button.onclick=()=>{
+        const body=$(button.dataset.toggle), collapsed=!body.hidden;
+        body.hidden=collapsed;button.setAttribute('aria-expanded',String(!collapsed));
+        collapsed?collapsedGroups.add(button.dataset.toggle.replace('rows-','')):collapsedGroups.delete(button.dataset.toggle.replace('rows-',''));
+      });
+      $('sections').querySelectorAll('[data-select]').forEach(input=>input.onchange=()=>{
+        input.checked?selected.add(input.dataset.select):selected.delete(input.dataset.select);
+        draw();
+      });
+      $('sections').querySelectorAll('[data-extend]').forEach(button=>button.onclick=()=>openExtend(button.dataset.extend));
+      $('sections').querySelectorAll('[data-destroy]').forEach(button=>button.onclick=()=>openDestroy([button.dataset.destroy]));
+      const batch=$('batch');
+      if(batch)batch.onclick=()=>openDestroy([...selected].filter(id=>docs.some(x=>x.id===id&&canDestroy(x))));
+      const retry=$('retry-op');
+      if(retry)retry.onclick=()=>{state='submitting';draw();setTimeout(successDestroy,400)};
     }
     function openExtend(id){
       activeId=id;const x=docs.find(d=>d.id===id);$('extend-name').textContent=x.name;$('extend-deadline').textContent=date(x.deadline);
       $('new-deadline').value='';$('date-error').hidden=true;$('extend-error').hidden=true;$('extend-dialog').showModal();$('new-deadline').focus();
     }
-    function openDestroy(){
-      $('batch-list').innerHTML=[...selected].map(id=>docs.find(x=>x.id===id)).filter(Boolean).map(x=>'<li><strong>'+esc(x.name)+'</strong> · termen '+date(x.deadline)+'</li>').join('');
-      $('offline-confirm').checked=false;$('destroy-submit').disabled=true;$('destroy-error').hidden=true;$('destruction-dialog').showModal();
+    function openDestroy(ids){
+      pendingIds=new Set((ids||[...selected]).filter(id=>docs.some(x=>x.id===id&&canDestroy(x))));
+      $('batch-list').innerHTML=[...pendingIds].map(id=>docs.find(x=>x.id===id)).map(x=>'<li><strong>'+esc(x.name)+'</strong> · termen '+date(x.deadline)+'</li>').join('');
+      $('offline-confirm').checked=false;$('destroy-submit').disabled=!pendingIds.size;$('destroy-error').hidden=true;$('destruction-dialog').showModal();
     }
     function successDestroy(){
-      docs=docs.filter(x=>!selected.has(x.id));selected.clear();$('destruction-dialog').close();$('feedback').textContent='Casarea a fost confirmată. Documentele selectate nu mai apar în listă.';$('feedback').hidden=false;state='default';draw();
+      docs=docs.filter(x=>!pendingIds.has(x.id));pendingIds.forEach(id=>selected.delete(id));pendingIds.clear();$('destruction-dialog').close();$('feedback').textContent='Casarea a fost confirmată. Documentele selectate nu mai apar în listă.';$('feedback').hidden=false;state='default';draw();
     }
     function submit(kind,fail){
       const button=$(kind==='extend'?'extend-submit':'destroy-submit');button.disabled=true;button.textContent='Se procesează…';
@@ -214,10 +270,10 @@
       },400);
     }
     $('extend-form').onsubmit=e=>{e.preventDefault();if(!$('new-deadline').value){$('date-error').hidden=false;$('new-deadline').setAttribute('aria-invalid','true');$('new-deadline').focus();return}$('new-deadline').removeAttribute('aria-invalid');submit('extend',state==='failure')};
-    $('destroy-form').onsubmit=e=>{e.preventDefault();if($('offline-confirm').checked&&selected.size)submit('destroy',state==='failure')};
+    $('destroy-form').onsubmit=e=>{e.preventDefault();if($('offline-confirm').checked&&pendingIds.size)submit('destroy',state==='failure')};
     $('offline-confirm').onchange=e=>$('destroy-submit').disabled=!e.target.checked;
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-    $('search').oninput=()=>{state='default';draw()};$('category').onchange=()=>{state='default';draw()};
+    $('search').oninput=()=>{selected.clear();state='default';draw()};$('category').onchange=()=>{selected.clear();state='default';draw()};
     $('preview-role').onchange=()=>{selected.clear();if(!admin()){state='default';$('preview-state').value='default'}document.querySelectorAll('dialog[open]').forEach(d=>d.close());draw()};
     $('preview-theme').onchange=()=>document.documentElement.dataset.theme=$('preview-theme').value;
     $('preview-state').onchange=()=>{
@@ -229,7 +285,6 @@
       if(['destruction-dialog','submitting','failure'].includes(state)){selected=new Set(['d1']);openDestroy();$('offline-confirm').checked=state==='submitting'||state==='failure';$('destroy-submit').disabled=state==='submitting'||state==='destruction-dialog';if(state==='submitting')$('destroy-submit').textContent='Se procesează…';if(state==='failure'){$('destroy-error').hidden=false;$('destroy-submit').disabled=false;$('destroy-submit').textContent='Reîncearcă'}}
       draw();
     };
-    document.addEventListener('click',e=>{const target=e.target.closest('.row-menu');document.querySelectorAll('.row-menu[open]').forEach(m=>{if(m!==target)m.open=false})});
     draw();
   </script>
 </body>
