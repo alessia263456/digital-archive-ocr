@@ -30,7 +30,7 @@ Check off a task after verification. Record Codex active implementation/verifica
   - Verified 2026-11-20 at 18:06 EET after the owner added Allow-HTTP (310) and Allow-HTTPS (320). External HTTP returned 308 to HTTPS. Let’s Encrypt issued a trusted certificate. Anonymous requests on two paths and invalid credentials returned 401 with a Basic challenge. Chromium rendered exactly “Hello World” with valid credentials (200). Recreating only Caddy retained its TLS volume and certificate fingerprint. The same external checks passed after redeployment.
 - [x] P22-05 · Confirm the Screen approval route
   - The owner reviews each repository mock or its screenshots in chat and explicitly approves that Screen in chat before implementation. [Q-013](../OPEN-QUESTIONS.md#q-013--where-and-how-will-the-remaining-screen-designs-be-approved)
-  - At route confirmation, DS-002, DS-003 and DS-004 were approved. Subsequent approvals are recorded for DS-011 (P22-10c) and DS-007 (registry approval commit `34c1ed4`, 2026-11-24). Current registry status: approved — DS-002, DS-003, DS-004, DS-007, DS-011; draft — DS-001, DS-005, DS-006, DS-008, DS-009, DS-010, DS-012.
+  - At route confirmation, DS-002, DS-003 and DS-004 were approved. Subsequent approvals are recorded for DS-011 (P22-10c) and DS-007 (registry approval commit `34c1ed4`, 2026-11-24). Current registry status: implemented — DS-001, DS-003, DS-004, DS-010; approved — DS-002, DS-007, DS-011; draft — DS-005, DS-006, DS-008, DS-009, DS-012. Draft mock files exist for DS-005 and DS-006; DS-009 also has a draft mock but still needs its incorrect-password state. DS-008 has no mock file yet. Drafts remain unapproved until the owner explicitly approves each Screen.
 - [x] P22-49a · Inventory first corpus batch
   - Approved 2026-11-20. On 2026-11-21 the owner confirmed synthetic data for TEST-001 through TEST-010, identified the signatures as Signatory Party signatures and clarified the vehicle registration numbers. Exact review duration was not measured.
   - The [inventory](../../../CORPUS.md#inventory) records eight scanned PDFs, one original PDF and one DOCX, with fixtures selected for P22-06 through P22-09. Follow up on single-page PDF, JPG and PNG coverage and verify the text layer of TEST-003 before the dependent checks.
@@ -191,9 +191,13 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 ## M4 · Staff operations, sharing and retention · target Nov 29–Dec 1
 
 - [ ] P22-20c · Design DS-006
+  - Draft mock exists at [docs/design/mocks/DS-006.html](../../design/mocks/DS-006.html); registry status is `draft`. Owner approval is still required before implementation.
 - [ ] P22-30a · Design DS-005
+  - Draft mock exists at [docs/design/mocks/DS-005.html](../../design/mocks/DS-005.html); registry status is `draft`. Owner approval is still required before implementation.
 - [ ] P22-30c · Design DS-008
+  - No DS-008 mock exists yet. Owner approval is required before implementation.
 - [ ] P22-30d · Review DS-009 mock
+  - Draft mock exists at [docs/design/mocks/DS-009.html](../../design/mocks/DS-009.html), but [DESIGN.md](../../design/DESIGN.md#pending-mock-revisions) records the missing incorrect-password state. Review and owner approval remain pending.
 - [ ] Design and build DS-012 for Nomenclature browsing and CSV revisions
 - [ ] P22-40a · Implement account, dossier and permission Admin APIs
 - [ ] P22-40b · Build DS-006 Admin forms
