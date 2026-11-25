@@ -75,6 +75,14 @@ services:
     environment:
       APP_ENV: local
       APP_KEY: ${APP_KEY}
+      SANCTUM_STATEFUL_DOMAINS: 127.0.0.1:5173
+      SESSION_DRIVER: database
+      SESSION_LIFETIME: 30
+      SESSION_EXPIRE_ON_CLOSE: "true"
+      SESSION_ENCRYPT: "true"
+      SESSION_HTTP_ONLY: "true"
+      SESSION_SAME_SITE: lax
+      SESSION_SECURE_COOKIE: "false"
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_DATABASE: archive

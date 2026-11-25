@@ -20,6 +20,10 @@ final class DocumentDraftIntakeTest extends TestCase
         Storage::fake('documents');
         Queue::fake();
         config(['filesystems.default_document_disk' => 'documents']);
+        $this->withSession([
+            'authentication_started_at' => now()->timestamp,
+            'authentication_last_activity_at' => now()->timestamp,
+        ]);
         $this->artisan('migrate')->assertExitCode(0);
     }
 
@@ -27,7 +31,7 @@ final class DocumentDraftIntakeTest extends TestCase
     {
         $user = $this->user('arhivar');
         $initialDraftCount = DocumentDraft::query()->count();
-        $response = $this->actingAs($user, 'sanctum')->post('/api/drafts', [
+        $response = $this->actingAs($user, 'web')->post('/api/drafts', [
             'documents' => [
                 $this->upload('Fixtures/rendering/mark.pdf', 'act.pdf', 'application/pdf'),
                 $this->upload('Fixtures/conversion/two-pages.docx', 'act.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
@@ -61,7 +65,7 @@ final class DocumentDraftIntakeTest extends TestCase
     {
         $user = $this->user('admin');
         $initialDraftCount = DocumentDraft::query()->count();
-        $response = $this->actingAs($user, 'sanctum')->post('/api/drafts', [
+        $response = $this->actingAs($user, 'web')->post('/api/drafts', [
             'documents' => [
                 $this->upload('Fixtures/rendering/mark.pdf', 'valid.pdf', 'application/pdf'),
                 UploadedFile::fake()->createWithContent('bad.txt', 'not a supported document'),
@@ -84,7 +88,7 @@ final class DocumentDraftIntakeTest extends TestCase
         ]);
 
         foreach (['admin', 'arhivar'] as $role) {
-            $response = $this->actingAs($this->user($role), 'sanctum')
+            $response = $this->actingAs($this->user($role), 'web')
                 ->getJson('/api/drafts/'.$draft->id)->assertOk()
                 ->assertJsonPath('id', $draft->id)->assertJsonPath('status', 'processing')
                 ->assertExactJson(['id' => $draft->id, 'status' => 'processing']);
@@ -95,7 +99,7 @@ final class DocumentDraftIntakeTest extends TestCase
 
     public function test_resume_returns_romanian_not_found_for_a_missing_draft(): void
     {
-        $this->actingAs($this->user('admin'), 'sanctum')
+        $this->actingAs($this->user('admin'), 'web')
             ->getJson('/api/drafts/'.Str::uuid())
             ->assertNotFound()
             ->assertExactJson(['eroare' => 'Ciorna solicitată nu a fost găsită.']);
@@ -104,9 +108,9 @@ final class DocumentDraftIntakeTest extends TestCase
     public function test_anonymous_and_cititor_users_cannot_access_drafts(): void
     {
         $this->getJson('/api/drafts/1')->assertUnauthorized();
-        $this->actingAs($this->user('cititor'), 'sanctum')->getJson('/api/drafts/1')->assertForbidden();
-        $this->actingAs($this->user('cititor'), 'sanctum')->postJson('/api/drafts', [])->assertForbidden();
-        $this->actingAs($this->user('admin'), 'sanctum')->post('/api/drafts', [
+        $this->actingAs($this->user('cititor'), 'web')->getJson('/api/drafts/1')->assertForbidden();
+        $this->actingAs($this->user('cititor'), 'web')->postJson('/api/drafts', [])->assertForbidden();
+        $this->actingAs($this->user('admin'), 'web')->post('/api/drafts', [
             'documents' => [$this->upload('Fixtures/rendering/mark.pdf', 'valid.pdf', 'application/pdf')],
         ])->assertOk()->assertJsonPath('items.0.status', 'queued');
     }

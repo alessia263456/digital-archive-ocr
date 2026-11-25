@@ -17,7 +17,7 @@
 - D-018 · Romanian-only user interface and system errors
 - D-019 · In-app notifications
 - D-042 · Screen inventory, home screen, and role-based access control
-- D-041 · API bearer token lifetime and login throttling
+- D-043 · Browser session authentication lifetime and login throttling
 
 ### [Archive workflows](decisions/archive-workflows.md)
 - D-022 · PII detection and Redaction coverage
@@ -145,11 +145,11 @@
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-24
 
-## D-041 · API bearer token lifetime and login throttling
+## D-043 · Browser session authentication lifetime and login throttling
 - **Status:** approved
-- **Date:** 2026-11-23
-- **Rule:** Authenticate application API requests with Laravel Sanctum bearer tokens. Each token expires 12 hours after issuance; logout revokes the current token. Limit failed credential attempts to five per normalized username and client IP within one minute, then return HTTP 429 for further attempts during that window. Do not count credential-validation errors toward the limit.
-- **Why:** Defines a bounded exposure window for lost tokens and reduces password-guessing attempts while keeping the proposed lifetime inside the owner's preferred 8–24-hour range.
-- **Evidence:** Q-022 and [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md); Laravel 13 Sanctum supports per-token expiration, and Laravel's starter-kit guidance demonstrates a five-per-minute username/IP login limit.
+- **Date:** 2026-11-24
+- **Rule:** Authenticate first-party browser API requests with Laravel database-backed sessions and CSRF protection; do not accept bearer tokens on application routes. End a session after 30 minutes without activity or 12 hours after authentication, whichever comes first. Use encrypted, browser-close, host-only, HttpOnly, SameSite=Lax cookies; set Secure cookies in production. Limit failed credential attempts to five per normalized username and client IP within one minute, then return HTTP 429 for further attempts during that window. Do not count credential-validation errors toward the limit.
+- **Why:** Replaces browser bearer-token storage with same-origin session cookies and places fixed idle and maximum limits on each authenticated session while retaining the approved login-throttling behavior.
+- **Evidence:** [M1a.1 plan](plans/p22-m1a-1-login-and-application-foundation.md) and owner approval in chat on 2026-11-24.
 - **Source:** user · confidence high
-- **Confirmed:** 2026-11-23
+- **Confirmed:** 2026-11-24

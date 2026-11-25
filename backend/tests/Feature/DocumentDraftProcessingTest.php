@@ -75,7 +75,11 @@ final class DocumentDraftProcessingTest extends TestCase
             'role' => 'admin',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->post('/api/drafts', [
+        $this->withSession([
+            'authentication_started_at' => now()->timestamp,
+            'authentication_last_activity_at' => now()->timestamp,
+        ]);
+        $response = $this->actingAs($user, 'web')->post('/api/drafts', [
             'documents' => [
                 new \Illuminate\Http\UploadedFile(__DIR__.'/../Fixtures/rendering/mark.pdf', 'act.pdf', 'application/pdf', UPLOAD_ERR_OK, true),
             ],

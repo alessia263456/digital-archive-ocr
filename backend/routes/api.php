@@ -9,10 +9,14 @@ Route::post('/login', [AuthController::class, 'login'])
     ->name('auth.login');
 
 Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth:sanctum')
+    ->middleware('auth:web')
     ->name('auth.logout');
 
-Route::middleware(['auth:sanctum', 'role:admin,arhivar'])->group(function () {
+Route::get('/user', [AuthController::class, 'currentUser'])
+    ->middleware(['auth:web', 'session.lifetime'])
+    ->name('auth.user');
+
+Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group(function () {
     Route::post('/drafts', [DocumentDraftController::class, 'store'])->name('drafts.store');
     Route::get('/drafts/{draft}', [DocumentDraftController::class, 'show'])->name('drafts.show');
 });

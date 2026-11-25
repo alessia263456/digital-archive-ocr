@@ -60,6 +60,14 @@ class LiveConfig(unittest.TestCase):
                 self.assertNotIn(mount["target"], ("/data", "/run/secrets/placeholder-auth"))
         self.assertEqual(services["backend"]["environment"]["APP_ENV"], "production")
         backend_env = services["backend"]["environment"]
+        self.assertEqual(backend_env["SANCTUM_STATEFUL_DOMAINS"], "arhivar.swedencentral.cloudapp.azure.com")
+        self.assertEqual(backend_env["SESSION_DRIVER"], "database")
+        self.assertEqual(backend_env["SESSION_LIFETIME"], "30")
+        self.assertEqual(backend_env["SESSION_EXPIRE_ON_CLOSE"], "true")
+        self.assertEqual(backend_env["SESSION_ENCRYPT"], "true")
+        self.assertEqual(backend_env["SESSION_HTTP_ONLY"], "true")
+        self.assertEqual(backend_env["SESSION_SAME_SITE"], "lax")
+        self.assertEqual(backend_env["SESSION_SECURE_COOKIE"], "true")
         self.assertEqual(backend_env["DOCUMENTS_DISK"], "r2")
         self.assertEqual(backend_env["R2_DEFAULT_REGION"], "auto")
         self.assertEqual(backend_env["R2_USE_PATH_STYLE_ENDPOINT"], "false")
@@ -69,6 +77,12 @@ class LiveConfig(unittest.TestCase):
         self.assertEqual(worker_env["DB_QUEUE_RETRY_AFTER"], "8100")
         self.assertEqual(worker_env["DOCUMENTS_DISK"], backend_env["DOCUMENTS_DISK"])
         self.assertEqual(worker_env["R2_ENDPOINT"], backend_env["R2_ENDPOINT"])
+
+    def test_caddy_forwards_sanctum_without_access_logging_and_sets_a_restrictive_csp(self):
+        caddyfile = Path(__file__).with_name("Caddyfile").read_text()
+        self.assertIn("@laravel path /up /api /api/* /sanctum /sanctum/*", caddyfile)
+        self.assertIn("Content-Security-Policy \"default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'\"", caddyfile)
+        self.assertNotIn("log {", caddyfile)
 
 
 if __name__ == "__main__":

@@ -117,9 +117,15 @@ printf "ALTER ROLE archive WITH PASSWORD '%s';\n" "$escaped_db_password" | docke
 # Build/start the backend and worker, then apply pending application migrations.
 docker compose up --build -d backend ocr-queue-worker
 docker compose exec backend php artisan migrate
+docker compose exec backend php artisan archive:admin:create
 docker compose exec -T postgres psql -U archive -d archive -c "SELECT current_database() AS database, count(*) AS applied_migrations FROM migrations;"
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
 docker compose exec backend vendor/bin/phpunit
+
+# Start the React frontend at the trusted same-origin Vite address.
+cd frontend
+npm ci
+npm run dev
 
 # Romanian OCR smoke
 docker compose build ocr-worker
@@ -128,8 +134,9 @@ docker compose run --rm ocr-worker
 # lint / type-check
 python3 docs/agents/tools/ledger-lint.py
 
-# screenshot (visual apps)
-# not run: pending Playwright setup (see D-006)
+# Build the React frontend and run Playwright on desktop and mobile in light and dark modes.
+cd ..
+docker compose run --build --rm frontend-test
 ```
 
 ---

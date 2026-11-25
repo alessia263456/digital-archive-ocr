@@ -122,12 +122,13 @@ Check off a task after verification. Record Codex active implementation/verifica
   - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
 - [x] P22-20b · Design DS-001
   - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
-- [ ] P22-35 · DS-010 login
+- [x] P22-35 · DS-010 login
+  - Implementation and automated verification completed on 2026-11-24 with same-origin Vite/Sanctum session auth, Romanian login and expiry states, logout, protected-route enforcement and safe local admin provisioning. PHPUnit passed (82 tests, 471 assertions, 3 skipped); standard Playwright passed (28 tests) in desktop/mobile light/dark; the real-API proxy test passed in all four projects. DS-010 screenshots and DS-001's initial copy-only empty state are recorded in `docs/design/screens/`. Owner manually verified valid and invalid credentials, session persistence, logout, protected page access, and both Screens' appearance on 2026-11-24.
 - [ ] P22-36a · Write append-only audit events
 
 M1a also begins these later-completion tasks: P22-23 (single-document upload slice; completes M1b), P22-34 (DS-001 default home/empty state; completes M3), and P22-38 (audited staff-only draft preview; completes M3).
 
-M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (plan approved; implementation not started), M1a.2 Upload and OCR processing, M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
+M1a is split into separately planned and verified parts: M1a.1 Login and application foundation (implementation, automated checks, and owner review complete), M1a.2 Upload and OCR processing (implementation and automated verification complete; owner manual upload/refresh verification pending), M1a.3 Protected OCR results and preview, and M1a.4 Integration and milestone verification. See the [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md) and the [M1a.2 plan](p22-m1a-2-upload-and-ocr-processing.md). The approved browser auth policy uses server-side sessions with a 30-minute inactivity timeout and a 12-hour maximum; M1a.2 uses explicit status refresh rather than background polling.
 
 ## M1b · Intake, batch and quarantine · target Nov 25–26
 
@@ -135,7 +136,10 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [ ] P22-14 · Exact SHA-256 duplicate detection
 - [ ] P22-13b · Prove corrupt-then-valid flow
 - [ ] P22-15 · Notifications and quarantine actions
-- [ ] P22-23 · DS-003 upload
+- [x] P22-23 · DS-003 upload
+  - M1a.2 implemented the DS-001 staff upload entry and DS-003 single PDF/DOCX or ordered JPG/PNG collection flow with private draft feedback and user-triggered persisted status refresh. The Screen retains only current-session draft IDs and keeps approval, indexing, duplicate UI, preview and review actions out of scope.
+  - Playwright production-build suite passed (56 tests, 4 skipped) in desktop/mobile light/dark projects; it covered staff/reader role access, multipart submissions, validation/API/network/session errors, queued/processing/failed/review-ready/quarantined states, no polling, keyboard navigation, loading, long names, multiple current-session drafts and 320px/1600px overflow checks. Screenshots were inspected and saved under `docs/design/screens/DS-003.*`; DS-001 captures were refreshed for the new staff upload entry point.
+  - Full PHPUnit passed (82 tests, 471 assertions, 3 skipped) on the dedicated `archive_test` database. Frontend production build, Ledger lint and `git diff --check` passed. Owner manual upload and refresh against a running backend/worker remains pending.
 
 ## M2 · Safe review and immutable publication · target Nov 27–28
 
@@ -162,6 +166,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [ ] P22-32 · PostgreSQL Romanian search index
 - [ ] P22-33 · Browse and search API
 - [ ] P22-34 · DS-001 search and browse
+  - M1a.1 implements only the authenticated default home and the confirmed copy-only empty state. Search and browse remain pending.
 - [ ] P22-36b · Verify audit integrity
 - [ ] P22-37 · Metadata edits and dossier reassignment
 - [ ] P22-38 · Authorized viewer and export access
