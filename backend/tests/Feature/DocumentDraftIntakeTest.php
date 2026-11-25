@@ -48,17 +48,54 @@ final class DocumentDraftIntakeTest extends TestCase
             ->assertJsonPath('items.2.group', 'images');
         self::assertSame($initialDraftCount + 3, DocumentDraft::query()->count());
         $pdf = DocumentDraft::query()->findOrFail($response->json('items.0.id'));
+        self::assertSame(hash_file('sha256', __DIR__.'/../Fixtures/rendering/mark.pdf'), $pdf->document_sha256);
+        self::assertSame(['act.pdf'], $pdf->original_names);
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/mark.pdf'), Storage::disk('documents')->get($pdf->original_storage_keys[0]));
         $docx = DocumentDraft::query()->findOrFail($response->json('items.1.id'));
+        self::assertSame(hash_file('sha256', __DIR__.'/../Fixtures/conversion/two-pages.docx'), $docx->document_sha256);
         self::assertNotNull($docx->derived_pdf_storage_key);
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/conversion/two-pages.docx'), Storage::disk('documents')->get($docx->original_storage_keys[0]));
         self::assertTrue(Storage::disk('documents')->exists($docx->derived_pdf_storage_key));
         $imageDraft = DocumentDraft::query()->findOrFail($response->json('items.2.id'));
+        self::assertSame([
+            hash_file('sha256', __DIR__.'/../Fixtures/rendering/romanian.png'),
+            hash_file('sha256', __DIR__.'/../Fixtures/rendering/romanian.jpg'),
+        ], $imageDraft->image_sha256s);
+        self::assertSame(['page-1.png', 'page-2.jpg'], $imageDraft->original_names);
+        self::assertSame(hash('sha256', pack('N', 2)
+            .hex2bin($imageDraft->image_sha256s[0]).hex2bin($imageDraft->image_sha256s[1])), $imageDraft->document_sha256);
         self::assertCount(2, $imageDraft->original_storage_keys);
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/romanian.png'), Storage::disk('documents')->get($imageDraft->original_storage_keys[0]));
         self::assertSame(file_get_contents(__DIR__.'/../Fixtures/rendering/romanian.jpg'), Storage::disk('documents')->get($imageDraft->original_storage_keys[1]));
         self::assertCount(5, Storage::disk('documents')->allFiles('drafts'));
         Queue::assertPushed(ProcessDocumentDraft::class, 3);
+    }
+
+    public function test_reordering_images_changes_document_fingerprint_and_preserves_page_digests(): void
+    {
+        $user = $this->user('arhivar');
+        $first = $this->actingAs($user, 'web')->post('/api/drafts', [
+            'images' => [
+                $this->upload('Fixtures/rendering/romanian.png', 'page-a.png', 'image/png'),
+                $this->upload('Fixtures/rendering/romanian.jpg', 'page-b.jpg', 'image/jpeg'),
+            ],
+        ])->assertOk()->json('items.0.id');
+        $second = $this->actingAs($user, 'web')->post('/api/drafts', [
+            'images' => [
+                $this->upload('Fixtures/rendering/romanian.jpg', 'page-b.jpg', 'image/jpeg'),
+                $this->upload('Fixtures/rendering/romanian.png', 'page-a.png', 'image/png'),
+            ],
+        ])->assertOk()->json('items.0.id');
+
+        $firstDraft = DocumentDraft::query()->findOrFail($first);
+        $secondDraft = DocumentDraft::query()->findOrFail($second);
+        self::assertNotSame($firstDraft->document_sha256, $secondDraft->document_sha256);
+        $firstPages = $firstDraft->image_sha256s;
+        $secondPages = $secondDraft->image_sha256s;
+        sort($firstPages, SORT_STRING);
+        sort($secondPages, SORT_STRING);
+        self::assertSame($firstPages, $secondPages);
+        self::assertSame(2, count($firstDraft->image_sha256s));
     }
 
     public function test_invalid_document_item_does_not_discard_valid_siblings(): void

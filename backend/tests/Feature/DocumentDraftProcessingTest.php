@@ -89,6 +89,31 @@ final class DocumentDraftProcessingTest extends TestCase
         Queue::assertPushed(ProcessDocumentDraft::class, 1);
     }
 
+    public function test_stale_job_does_not_overwrite_a_permanent_failure(): void
+    {
+        $draft = $this->draft();
+        $draft->status = 'failed_permanently';
+        $draft->save();
+        $this->mock(DocumentDraftProcessor::class)->shouldNotReceive('process');
+
+        (new ProcessDocumentDraft($draft->id))->handle(app(DocumentDraftProcessor::class));
+
+        self::assertSame('failed_permanently', $draft->fresh()->status);
+    }
+
+    public function test_stale_final_failure_callback_does_not_quarantine_a_new_retry(): void
+    {
+        $draft = $this->draft();
+        $draft->status = 'queued';
+        $draft->save();
+        $job = new ProcessDocumentDraft($draft->id);
+
+        $job->failed(new RuntimeException('stale failure'));
+
+        self::assertSame('queued', $draft->fresh()->status);
+        self::assertSame(0, DB::table('notifications')->where('data', 'like', '%'.$draft->id.'%')->count());
+    }
+
     private function draft(): DocumentDraft
     {
         return DocumentDraft::query()->create([
