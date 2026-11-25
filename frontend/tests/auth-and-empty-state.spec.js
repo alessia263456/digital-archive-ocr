@@ -38,9 +38,14 @@ test('shows the approved Romanian login Screen and accepts keyboard input', asyn
 test('shows credential errors, disables fields while loading, and reveals the password', async ({ page }) => {
   await unauthenticatedPage(page);
   let releaseLogin;
+  let loginRequestStarted;
+  const requestStarted = new Promise((resolve) => { loginRequestStarted = resolve; });
   await page.route('**/api/login', async (route) => {
     expect(route.request().headers()['x-xsrf-token']).toBe('synthetic-csrf-token');
-    await new Promise((resolve) => { releaseLogin = resolve; });
+    await new Promise((resolve) => {
+      releaseLogin = resolve;
+      loginRequestStarted();
+    });
     await route.fulfill({
       status: 401,
       contentType: 'application/json',
@@ -55,6 +60,7 @@ test('shows credential errors, disables fields while loading, and reveals the pa
   await page.getByRole('button', { name: 'Autentificare' }).click();
   await expect(page.getByRole('button', { name: 'Se verifică…' })).toBeDisabled();
   await expect(page.getByLabel('Nume de utilizator')).toBeDisabled();
+  await requestStarted;
   releaseLogin();
   await expect(page.getByRole('status')).toHaveText('Nume de utilizator sau parolă incorecte.');
 });
