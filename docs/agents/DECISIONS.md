@@ -123,6 +123,7 @@
 - **Rejected:** Email notifications, SMS alerts, webhooks, or browser push services.
 - **Evidence:** README.md
 - **Source:** user · confidence high
+- **Confirmed:** 2026-11-25
 
 ## D-042 · Screen inventory, home screen, and role-based access control
 - **Status:** approved
