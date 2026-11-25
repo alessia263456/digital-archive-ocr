@@ -16,7 +16,7 @@
     .tool-top,.tool-row,.nav,.brand-copy,.heading,.section-head,.section-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-sm)}
     .tool-top,.section-actions{justify-content:space-between}.mock-only{padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-accent-amber);border-radius:var(--radius-sm);color:var(--color-text-primary);font-weight:600}
     .tool-row label{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-xs)}
-    .mock-tools select,.theme-button,.control{min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-text-secondary);border-radius:var(--radius-sm);background:var(--color-bg-surface)}
+    .mock-tools select,.theme-button,.control{min-block-size:var(--space-2xl);padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface)}
     .viewer-header{display:flex;align-items:center;gap:var(--space-md);min-block-size:var(--space-2xl);padding:var(--space-sm) var(--space-lg);border-block-end:thin solid var(--color-border);background:var(--color-bg-surface)}
     .brand-mark{display:grid;flex:none;place-items:center;inline-size:var(--space-2xl);block-size:var(--space-2xl);border-radius:var(--radius-md);background:var(--color-accent-teal);color:var(--color-version-navy);font-weight:700}
     .brand-copy{display:grid;gap:var(--space-xs)}.header-kicker{color:var(--color-text-secondary)}.header-title{font:var(--text-body);font-weight:600}
@@ -26,9 +26,9 @@
     .heading{justify-content:space-between;margin-block-end:var(--space-sm)}h1{font:var(--text-h2)}
     .readonly{padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-secondary)}
     .filters{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*3),2fr) minmax(calc(var(--space-3xl)*3),1fr);gap:var(--space-sm);margin-block-end:var(--space-sm)}
-    .field{display:grid;gap:var(--space-xs);min-inline-size:0}.field label{color:var(--color-text-secondary);font-weight:600}
+    .field{display:grid;gap:var(--space-xs);min-inline-size:0}.field label{color:var(--color-text-secondary);font:var(--text-small);font-weight:600}
     .control{inline-size:100%;min-inline-size:0;min-block-size:calc(var(--space-2xl) - var(--space-xs))}
-    .notice{margin-block-end:var(--space-sm);padding:var(--space-xs) var(--space-sm);border-inline-start:var(--space-xs) solid var(--color-accent-amber);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
+    .notice{margin-block-end:var(--space-sm);padding:var(--space-xs) var(--space-sm);border-inline-start:var(--space-xs) solid var(--color-accent-amber);border-radius:var(--radius-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary)}
     .message,.empty{padding:var(--space-md);border-inline-start:var(--space-xs) solid var(--color-accent-mid);border-radius:var(--radius-sm);background:var(--color-bg-subtle)}
     .message.error,.op-error,.validation{border-color:var(--color-danger)}.message.success{border-color:var(--color-accent-teal)}
     .message button,.empty button{margin-block-start:var(--space-sm)}
@@ -37,34 +37,35 @@
     table{inline-size:100%;border-collapse:collapse;table-layout:fixed}
     th{padding:var(--space-xs) var(--space-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font-weight:600;text-align:start}
     td{padding:var(--space-xs) var(--space-sm);border-block-start:thin solid var(--color-border);vertical-align:middle;overflow-wrap:anywhere}
-    th:first-child,td:first-child{inline-size:38%}th:nth-child(2),td:nth-child(2){inline-size:20%}th:nth-child(3),td:nth-child(3){inline-size:19%}th:last-child,td:last-child{inline-size:23%}
+    th:first-child,td:first-child{inline-size:40%}th:nth-child(2),td:nth-child(2){inline-size:18%}th:nth-child(3),td:nth-child(3){inline-size:19%}th:last-child,td:last-child{inline-size:23%}
     .shared-head th{block-size:var(--space-xl);font:var(--text-small);white-space:nowrap}
     .group-heading th{padding:0;border-block-start:thin solid var(--color-border);background:var(--color-bg-surface)}
     .group-heading:first-of-type th{border-block-start:0}
-    .group-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--space-sm);inline-size:100%;min-block-size:calc(var(--space-2xl) - var(--space-sm));padding:var(--space-xs) var(--space-sm);border:0;border-inline-start:var(--space-xs) solid transparent;background:transparent;color:var(--color-text-primary);text-align:start;cursor:pointer}
+    .group-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--space-sm);inline-size:100%;min-block-size:calc(var(--space-2xl) - var(--space-sm));padding:var(--space-xs) var(--space-sm);border:0;border-inline-start:var(--space-xs) solid var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-primary);text-align:start;cursor:pointer}
     .group-toggle:hover{background:var(--color-bg-subtle)}
     .group-toggle[aria-expanded=true] .chevron{transform:rotate(225deg)}
-    .group-heading.expired .group-toggle{border-inline-start-color:var(--color-danger);background:var(--color-danger-bg)}
-    .group-heading.expired .group-title,.group-heading.expired .count{color:var(--color-danger)}
+    .group-heading.expired .group-toggle{border-inline-start-color:var(--color-danger)}
+    .group-heading.expired .group-title{color:var(--color-danger)}
     .group-heading.upcoming .group-toggle{border-inline-start-color:var(--color-accent-amber)}
     .group-heading-copy{display:flex;align-items:center;gap:var(--space-sm)}
     .group-title{font:var(--text-body);font-weight:600}
     .count{color:var(--color-text-secondary);font-variant-numeric:tabular-nums}
     .chevron{inline-size:var(--space-sm);block-size:var(--space-sm);flex:none;border-inline-end:thin solid currentColor;border-block-end:thin solid currentColor;transform:rotate(45deg);transition:transform var(--duration-fast)}
     .doc-cell{display:flex;align-items:flex-start;gap:var(--space-xs);min-inline-size:0}
-    .doc-copy{min-inline-size:0}.doc-name{display:block;font-weight:600}.meta{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-xs);margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
-    .cs-badge{display:inline-flex;align-items:center;min-block-size:var(--space-md);padding-inline:var(--space-xs);border:thin solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-bg-subtle);color:var(--color-text-secondary);font:var(--text-small)}
-    .deadline{white-space:nowrap;font-variant-numeric:tabular-nums}.days{display:block;color:var(--color-text-primary);font-weight:600}
-    .selection-control{display:grid;flex:none;place-items:center;inline-size:calc(var(--space-2xl) - var(--space-sm));block-size:calc(var(--space-2xl) - var(--space-sm));margin-inline-start:calc(-1 * var(--space-xs))}
+    .selection-slot{display:grid;flex:none;place-items:start center;inline-size:calc(var(--space-2xl) - var(--space-xs));min-block-size:calc(var(--space-2xl) - var(--space-xs))}
+    .doc-copy{min-inline-size:0}.doc-name{display:block;color:var(--color-text-primary);font-weight:600}.meta{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-xs);margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
+    .cs-badge{display:inline-flex;align-items:center;min-block-size:calc(var(--space-xl) - var(--space-sm));padding-inline:var(--space-xs);border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-subtle);color:var(--color-text-secondary);font:var(--text-small)}
+    .category{color:var(--color-text-secondary)}.deadline{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--color-text-secondary)}.deadline-value{display:inline-flex;align-items:center;gap:var(--space-xs)}.deadline-marker{display:inline-block;flex:none;inline-size:var(--space-xs);block-size:var(--space-xs);border-radius:var(--radius-sm);background:var(--color-border)}.deadline.expired .deadline-marker{background:var(--color-danger)}.deadline.expired .date-value{color:var(--color-danger)}.deadline.upcoming .deadline-marker{background:var(--color-accent-amber)}.deadline.in-term .deadline-marker{display:none}.days{display:block;margin-block-start:var(--space-xs);color:var(--color-text-secondary);font-weight:600}
+    .selection-control{display:grid;place-items:center;inline-size:calc(var(--space-2xl) - var(--space-xs));block-size:calc(var(--space-2xl) - var(--space-xs));margin:0}
     .row-select{inline-size:var(--space-md);block-size:var(--space-md);accent-color:var(--color-primary)}
     .eligibility{display:block;margin-block-start:var(--space-xs);color:var(--color-text-secondary)}
-    .row-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:var(--space-xs)}
-    .row-action,.button,.quiet,.icon{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xs);min-block-size:calc(var(--space-xl) + var(--space-xs));padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-bg-surface);color:var(--color-text-primary);font:var(--text-small);font-weight:600;text-decoration:none;cursor:pointer}
-    .row-action:hover,.quiet:hover{background:var(--color-bg-subtle)}
-    .row-action.destroy{border-color:var(--color-danger);color:var(--color-danger)}
+    .row-actions{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:var(--space-xs)}
+    .row-action,.button,.quiet,.icon{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xs);min-block-size:calc(var(--space-2xl) - var(--space-xs));padding:var(--space-xs) var(--space-sm);border:thin solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg-surface);color:var(--color-text-secondary);font:var(--text-small);font-weight:600;text-decoration:none;cursor:pointer;transition:background-color var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
+    .row-action:hover,.quiet:hover{border-color:var(--color-text-secondary);background:var(--color-bg-subtle);color:var(--color-text-primary)}
+    .row-action.destroy{border-color:var(--color-danger-border);color:var(--color-danger)}
     .row-action.destroy:hover{background:var(--color-danger-bg)}
     .button.primary{border-color:var(--color-accent-teal);background:var(--color-accent-teal);color:var(--color-version-navy)}
-    .button.danger{border-color:var(--color-danger);color:var(--color-danger)}
+    .button.danger{border-color:var(--color-danger-border);color:var(--color-danger)}
     button:disabled{border-color:var(--color-border);background:var(--color-bg-subtle);color:var(--color-text-secondary);cursor:not-allowed}
     .batch-row td{padding:var(--space-xs) var(--space-sm);background:var(--color-bg-subtle)}
     .batch-bar{display:flex;align-items:center;justify-content:flex-end;gap:var(--space-sm);min-block-size:var(--space-xl)}
@@ -93,7 +94,7 @@
       tr.data-row{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding-block:var(--space-xs);border-block-start:thin solid var(--color-border)}
       tr.data-row td{display:grid;grid-template-columns:minmax(calc(var(--space-3xl)*1.5),38%) minmax(0,1fr);gap:var(--space-sm);padding:var(--space-xs) var(--space-sm);border:0}
       tr.data-row td::before{content:attr(data-label);color:var(--color-text-secondary);font-weight:600}
-      tr.data-row td.actions-cell{display:flex;justify-content:flex-end;grid-column:1;inline-size:100%!important}
+      tr.data-row td.actions-cell{display:flex;justify-content:flex-start;grid-column:1;inline-size:100%!important}
       tr.data-row td.actions-cell::before{content:''}
       .doc-cell{align-items:flex-start}.row-actions{justify-content:flex-start}
       .batch-row td{display:block}.batch-bar{justify-content:flex-start}
@@ -178,6 +179,7 @@
       const expired=key==='expired', eligible=canDestroy(x), checked=selected.has(x.id), remaining=Math.ceil((new Date(x.deadline+'T12:00:00')-new Date(TODAY+'T12:00:00'))/86400000);
       const reason=x.permanent?'Păstrare permanentă: casarea nu este permisă.':x.destroyed?'Documentul a fost deja casat.':'';
       const checkbox=admin()&&expired?'<label class="selection-control"><input class="row-select" type="checkbox" data-select="'+x.id+'" aria-label="Selectează pentru casare: '+esc(x.name)+'" '+(checked?'checked':'')+' '+(eligible?'':'disabled aria-describedby="eligibility-'+x.id+'"')+'><span class="sr-only">Selectează pentru casare</span></label>':'';
+      const selectionSlot='<span class="selection-slot" '+(checkbox?'':'aria-hidden="true"')+'>'+checkbox+'</span>';
       const explanation=admin()&&expired&&!eligible?'<span class="eligibility" id="eligibility-'+x.id+'">'+reason+'</span>':'';
       const csBadge=x.cs?'<span class="cs-badge">C.S.</span>':'';
       const docDeadline=x.permanent?'Păstrare permanentă':x.deadline?date(x.deadline):'—';
@@ -187,7 +189,7 @@
         else if(!expired)actions='<button class="row-action" type="button" data-extend="'+x.id+'">Prelungește</button>';
       }
       const remainingText=key==='upcoming'?'<span class="days">'+remaining+' zile rămase</span>':'';
-      return '<tr class="data-row"><td data-label="Document"><span class="doc-cell">'+checkbox+'<span class="doc-copy"><span class="doc-name">'+esc(x.name)+'</span><span class="meta"><span>'+esc(x.dossier)+'</span>'+csBadge+'</span>'+explanation+'</span></span></td><td data-label="Categorie">'+esc(x.category)+'</td><td class="deadline" data-label="Termen de păstrare">'+docDeadline+remainingText+'</td><td class="actions-cell" data-label="Acțiuni"><span class="row-actions">'+actions+'</span></td></tr>';
+      return '<tr class="data-row"><td data-label="Document"><span class="doc-cell">'+selectionSlot+'<span class="doc-copy"><span class="doc-name">'+esc(x.name)+'</span><span class="meta"><span>'+esc(x.dossier)+'</span>'+csBadge+'</span>'+explanation+'</span></span></td><td class="category" data-label="Categorie">'+esc(x.category)+'</td><td class="deadline '+key+'" data-label="Termen de păstrare"><span class="deadline-value"><span class="deadline-marker" aria-hidden="true"></span><span class="date-value">'+docDeadline+'</span></span>'+remainingText+'</td><td class="actions-cell" data-label="Acțiuni"><span class="row-actions">'+actions+'</span></td></tr>';
     }
     function groupMarkup(key,items){
       const sorted=items.slice().sort((a,b)=>(a.deadline||'9999-12-31').localeCompare(b.deadline||'9999-12-31'));
