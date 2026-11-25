@@ -139,6 +139,41 @@ cd ..
 docker compose run --build --rm frontend-test
 ```
 
+### Local Admin provisioning and M1a workflow check
+
+Create the first Admin only after the local database is ready, using a trusted terminal:
+
+```bash
+docker compose exec backend php artisan archive:admin:create
+```
+
+The command asks for the account details and reads the password twice without echoing it. Do not put a password in a command, shell history, tracked file, or default seed. For a new disposable rehearsal, use a separate Compose project name so its PostgreSQL and document volumes cannot touch the normal local data:
+
+```bash
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose up --build -d postgres backend
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose exec --user root backend chown -R www-data:www-data /app/storage/app/private/documents
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose exec backend php artisan migrate
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose exec backend php artisan archive:admin:create
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose up -d ocr-queue-worker
+```
+
+Use the interactive command to create a synthetic Admin in that disposable database. Then enter that account in shell prompts (the password input is hidden) and run the browser-to-worker check once, in the desktop-light project:
+
+```bash
+read -r -p 'Synthetic Admin username: ' M1A_TEST_USERNAME
+read -r -s -p 'Synthetic Admin password: ' M1A_TEST_PASSWORD
+printf '\n'
+export M1A_TEST_USERNAME M1A_TEST_PASSWORD
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose run --build --rm -e VITE_BACKEND_URL=http://backend:8000 -e M1A_TEST_USERNAME -e M1A_TEST_PASSWORD frontend-test npx playwright test tests/draft-ocr-real-api.spec.js --project=desktop-light
+unset M1A_TEST_USERNAME M1A_TEST_PASSWORD
+```
+
+The check logs in, uploads the repository's synthetic Romanian image, explicitly refreshes its persisted status, and opens the protected OCR results and preview. Inspect only the synthetic draft's `draft_access_events` rows in PostgreSQL to confirm `ocr_results_viewed` and `preview_issued`; inspect backend and worker logs for the synthetic username and other canaries without printing credentials or session values. When finished, remove only the rehearsal project's containers and volumes:
+
+```bash
+COMPOSE_PROJECT_NAME=m1a4 BACKEND_PORT=18001 DOCUMENTS_DISK=documents docker compose down --volumes --remove-orphans
+```
+
 ---
 
 ## Key deliverables (Definition of Done)

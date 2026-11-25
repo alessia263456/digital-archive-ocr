@@ -6,6 +6,7 @@ services:
       dockerfile: ../docker/frontend-test/Dockerfile
     volumes:
       - ./frontend/test-results:/app/test-results
+      - ./backend/tests/Fixtures/rendering/romanian.png:/app/fixtures/romanian.png:ro
 
   ocr-worker:
     build:

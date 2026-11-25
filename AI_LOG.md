@@ -2,6 +2,20 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-25 · P22 M1a.4 · Integrare și verificarea etapei
+
+**Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.
+
+**Ce am cerut:** Implementarea planului aprobat M1a.4, cu verificarea fluxului real upload–OCR–previzualizare, instrucțiuni de provisionare Admin fără parolă implicită și dovezi pentru checklist.
+
+**Ce am primit:** Workflow-ul frontend rulează acum și la pull request. Am adăugat un test Playwright opt-in pentru API-ul real și o procedură reproductibilă într-un proiect Compose izolat, cu volum propriu, cont Admin sintetic și fișier de test montat read-only. README-ul descrie comanda interactivă Admin și pașii de verificare și curățare. Descrierea din `ARCHITECTURE.md` era deja aliniată cu implementarea protejată OCR/preview, deci nu a fost modificată.
+
+**Verificare:** Fluxul real a autentificat Admin-ul sintetic, a încărcat imaginea românească, a citit starea salvată prin acțiunea explicită, a afișat textul „Știință și cultură în România”, încredere medie de 85% și cinci Bounding Boxes, apoi a livrat preview-ul. Baza izolată conține evenimentele `ocr_results_viewed` și `preview_issued`. Introducerea parolei în prompt, câmp cu câmp, nu a afișat-o; verificarea logurilor backend/worker nu a găsit username-ul sintetic, text OCR, indicatori de parolă, XSRF sau sesiune.
+
+PHPUnit: 89 teste, 530 aserțiuni, 3 skipped. Build-ul frontend și Playwright: 64 trecute, 8 skipped; testul real separat: 1 trecut. Capturile existente DS-001, DS-003 și DS-011 au fost inspectate în teme și dimensiuni reprezentative.
+
+Prima probă izolată a identificat configurarea necesară a discului: `DOCUMENTS_DISK=documents` folosește volumul montat comun, iar volumul nou trebuie să aparțină utilizatorului `www-data`. Instrucțiunile README au fost corectate și fluxul a trecut la repetare. P22-36a rămâne deschis: inserarea evenimentelor este demonstrată, dar schema și testele actuale nu demonstrează interzicerea modificării sau ștergerii rândurilor. Proprietarul nu a confirmat încă acceptanța manuală a fluxului.
+
 ## 2026-11-24 · P22 M1a.1 · Autentificare și fundația aplicației
 
 **Unealta:** OpenAI Codex, Docker Compose și Playwright.

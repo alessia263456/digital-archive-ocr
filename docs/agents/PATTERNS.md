@@ -18,6 +18,7 @@
 - PATTERN-010 · Persist mixed intake items independently across database and storage · candidate
 - PATTERN-011 · Enforce both idle and absolute age for stateful sessions · candidate
 - PATTERN-012 · Record authorized draft access before issuing preview URLs · candidate
+- PATTERN-013 · Run a real draft OCR browser check in an isolated Compose project · candidate
 
 ---
 
@@ -89,3 +90,8 @@
 - **How:** Resolve the private draft and verify every source object, write an access event for the authenticated staff member, then issue opaque short-lived Signed URLs. Keep URL values in authenticated response data and browser element sources only.
 - **Why:** The access record exists before the temporary capability is created, and the API never returns private storage keys.
 - **Example:** [Draft controller](../../backend/app/Http/Controllers/DocumentDraftController.php) and [protected OCR feature tests](../../backend/tests/Feature/ProtectedDraftOcrTest.php).
+
+## PATTERN-013 · Run a real draft OCR browser check in an isolated Compose project
+- **Status:** candidate
+- **How:** Use a separate Compose project and database, configure the shared `documents` disk, provision a synthetic Admin interactively, and run one opt-in Playwright project with synthetic content. Mount the fixture read-only, inspect only that run's access events and sanitized service logs, then remove the isolated project and its volumes.
+- **Example:** [Real draft OCR browser check](../../frontend/tests/draft-ocr-real-api.spec.js) and [local rehearsal procedure](../../README.md#local-admin-provisioning-and-m1a-workflow-check).
