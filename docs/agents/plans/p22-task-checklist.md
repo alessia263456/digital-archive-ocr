@@ -175,7 +175,9 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
   - The earlier raw-OCR corpus pass processed 17 supported synthetic references across 41 pages; one `.doc` was skipped. TEST-001 through TEST-010 had CNP labels and nearby digit-heavy text but no assembled 13-digit sequence; TEST-013 had one automatic CNP candidate. This is diagnostic raw-OCR data only, not corrected-text coverage validation. Six IBAN candidates were detected and routed to review; three had confidence at or above 80. P22-16/17 are complete within detector-rules scope; corrected-corpus coverage validation belongs to P22-24/DS-011 after OCR correction.
 - [ ] P22-21a · Generate reviewed Redaction PDF
 - [ ] P22-21b · Generate safe reader projections
-- [ ] P22-19 · Part 1 Notarial Nomenclature import
+- [x] P22-19 · Part 1 Notarial Nomenclature import
+  - Added the PostgreSQL classification table, model, and transactional CSV seeder. The backend images include the checked-in CSV; identical re-import preserves IDs, while duplicate source classifications and conflicting stored rules fail with source-row context.
+  - PHPUnit `NomenclatureImportTest.php`: 4 tests, 308 assertions passed, including all 49 source rows, all six Retention Computation Bases, repeated Archival Indicators, retention terms, C.S. flags, rollback, and re-import IDs.
 - [ ] P22-22 · Metadata suggestions and classification
 - [ ] P22-24a · Build DS-011 OCR editing
 - [ ] P22-24b · Build DS-011 candidate review

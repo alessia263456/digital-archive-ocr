@@ -22,6 +22,7 @@
 - PATTERN-014 · Verify mixed draft outcomes through an isolated database queue worker · candidate
 - PATTERN-015 · Validate multipart completeness against the selected file count · candidate
 - PATTERN-016 · Keep PII detector candidates geometry-only · candidate
+- PATTERN-017 · Import a checked-in CSV transactionally with row context · candidate
 
 ---
 
@@ -113,3 +114,8 @@
 - **Status:** candidate
 - **How:** Return the sensitive category, disposition, page, OCR confidence and Bounding Boxes without copying the matched OCR text into candidate records. Use the lowest confidence among the words covered by a candidate when one score is required.
 - **Example:** [PII detector](../../backend/app/Services/PiiDetector.php) and [PII detector tests](../../backend/tests/Unit/PiiDetectorTest.php).
+
+## PATTERN-017 · Import a checked-in CSV transactionally with row context
+- **Status:** candidate
+- **How:** Validate the source header and every row before commit. Track classification keys within the current source separately from persisted rows so duplicate source rows fail while an identical re-import preserves IDs. Include the CSV row number in validation errors.
+- **Example:** [Nomenclature seeder](../../backend/database/seeders/NomenclatureSeeder.php) and [import feature tests](../../backend/tests/Feature/Database/NomenclatureImportTest.php).

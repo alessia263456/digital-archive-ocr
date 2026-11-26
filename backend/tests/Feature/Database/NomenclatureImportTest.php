@@ -25,10 +25,24 @@ class NomenclatureImportTest extends TestCase
             ])
         )->unique()->count());
         self::assertSame(49, DB::table('nomenclature_entries')->count());
-        self::assertSame(49, NomenclatureEntry::query()->whereNotNull('source_rule')->count());
-        self::assertSame(49, NomenclatureEntry::query()->whereNotNull('retention_computation_base')->count());
-        self::assertSame(49, NomenclatureEntry::query()->whereNotNull('retention_term')->count());
-        self::assertSame(49, NomenclatureEntry::query()->whereNotNull('archival_indicator')->count());
+        $source = fopen(base_path('database/seeders/data/nomenclator_arhivistic.csv'), 'rb');
+        fgetcsv($source);
+        while (($row = fgetcsv($source)) !== false) {
+            [$type, $subtype, $context, $indicator, $term, $base, $rule] = array_map('trim', $row);
+            $entry = NomenclatureEntry::query()
+                ->where('document_type', $type)
+                ->where('subtype', $subtype)
+                ->where('storage_context', $context)
+                ->firstOrFail();
+            $years = $term === 'P' ? null : (int) $term;
+            self::assertSame($indicator, $entry->archival_indicator);
+            self::assertSame($term, $entry->retention_term);
+            self::assertSame($years, $entry->retention_years);
+            self::assertSame(str_ends_with($term, 'C.S.'), $entry->cs_flag);
+            self::assertSame($base, $entry->retention_computation_base);
+            self::assertSame($rule, $entry->source_rule);
+        }
+        fclose($source);
 
         $permanent = NomenclatureEntry::query()->where('retention_term', 'P')->firstOrFail();
         self::assertNull($permanent->retention_years);
@@ -37,7 +51,6 @@ class NomenclatureImportTest extends TestCase
 
         self::assertGreaterThan(1, NomenclatureEntry::query()->where('archival_indicator', 'IA 1')->count());
         self::assertSame(6, NomenclatureEntry::query()->distinct()->count('retention_computation_base'));
-        self::assertSame(49, NomenclatureEntry::query()->where('cs_flag', true)->count() + NomenclatureEntry::query()->where('cs_flag', false)->count());
     }
 
     public function test_identical_import_preserves_row_ids(): void

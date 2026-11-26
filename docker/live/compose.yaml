@@ -26,6 +26,8 @@ services:
       context: ../../backend
       dockerfile: ../docker/live/backend.Dockerfile
       target: live
+      additional_contexts:
+        repo: ../..
     restart: unless-stopped
     environment:
       APP_ENV: production
