@@ -1,27 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api, ApiError } from './api.js';
+import { AppShell } from './components/AppShell.jsx';
 import './theme.css';
-
-function BrandHeader({ user, onLogout, busy }) {
-  return (
-    <header className="viewer-header">
-      <div className="brand-mark" aria-hidden="true">AD</div>
-      <div className="header-copy">
-        <p className="header-kicker">Cabinet Individual Notarial</p>
-        {user && <p className="header-title">Arhivă digitală</p>}
-      </div>
-      {user && (
-        <div className="account-actions">
-          <span className="account-label">{user.username} · {user.role}</span>
-          <button className="button secondary" type="button" onClick={onLogout} disabled={busy}>
-            Deconectare
-          </button>
-        </div>
-      )}
-    </header>
-  );
-}
 
 function LoginScreen({ onLogin, busy, message, messageKind }) {
   const [username, setUsername] = useState('');
@@ -769,20 +750,18 @@ function Application() {
     }
   }
 
-  return (
-    <>
-      <BrandHeader user={user} onLogout={logout} busy={busy} />
-      {user
-        ? ((user.role === 'admin' || user.role === 'arhivar') && screen === 'upload'
-          ? <UploadScreen onBack={() => setScreen('home')} />
-          : (user.role === 'admin' || user.role === 'arhivar') && screen === 'queue'
-            ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`review:${item.id}`)} />
-            : screen.startsWith('review:')
-              ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
-              : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />)
-        : <LoginScreen onLogin={login} busy={busy || checking} message={message} messageKind={messageKind} />}
-    </>
-  );
+  if (!user) return <LoginScreen onLogin={login} busy={busy || checking} message={message} messageKind={messageKind} />;
+
+  const staffRole = user.role === 'admin' || user.role === 'arhivar';
+  const content = staffRole && screen === 'upload'
+    ? <UploadScreen onBack={() => setScreen('home')} />
+    : staffRole && screen === 'queue'
+      ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`review:${item.id}`)} />
+      : staffRole && screen.startsWith('review:')
+        ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
+        : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
+
+  return <AppShell user={user} screen={screen} onNavigate={setScreen} onLogout={logout} busy={busy}>{content}</AppShell>;
 }
 
 createRoot(document.getElementById('root')).render(<Application />);

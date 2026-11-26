@@ -111,7 +111,7 @@ designs:
   - id: DS-013
     name: "Navigare comună AppShell (Shared AppShell navigation)"
     kind: component
-    status: approved
+    status: implemented
     roles: [admin, arhivar, cititor]
     decisions: [D-018, D-019, D-042]
     design_ref: mocks/DS-013.html

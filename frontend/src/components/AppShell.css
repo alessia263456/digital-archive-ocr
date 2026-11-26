@@ -1,0 +1,91 @@
+.app-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  block-size: 100vh;
+  block-size: 100dvh;
+  min-block-size: 100dvh;
+  max-inline-size: 1600px;
+  margin-inline: auto;
+  overflow: hidden;
+  border: thin solid var(--color-border);
+  border-block-start: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-block-size: var(--space-3xl);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-shell-brand);
+  color: var(--color-shell-text);
+}
+
+.app-brand-icon { display: grid; flex: none; place-items: center; inline-size: var(--space-xl); block-size: var(--space-xl); }
+.app-brand-icon svg { inline-size: 100%; block-size: 100%; }
+.app-brand-divider { inline-size: 1px; block-size: var(--space-xl); background: rgb(255 255 255 / 65%); }
+.app-brand-name { flex: none; font: var(--text-body); font-weight: 600; }
+.app-cabinet-name { overflow: hidden; color: rgb(255 255 255 / 88%); font: var(--text-small); text-overflow: ellipsis; white-space: nowrap; }
+.app-icon-button { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border: 0; border-radius: var(--radius-md); background: transparent; color: inherit; }
+.app-icon-button:hover { background: rgb(255 255 255 / 14%); }
+.app-icon-button svg { inline-size: var(--space-md); block-size: var(--space-md); }
+.desktop-sidebar-toggle { display: none; }
+.mobile-menu-button { display: none; }
+.app-account-actions { display: flex; align-items: center; gap: var(--space-sm); margin-inline-start: auto; }
+.app-account-label { color: rgb(255 255 255 / 88%); font: var(--text-small); }
+.app-logout { display: flex; align-items: center; justify-content: center; gap: var(--space-xs); min-block-size: var(--space-2xl); padding-inline: var(--space-sm); border: 1px solid rgb(255 255 255 / 50%); border-radius: var(--radius-md); background: transparent; color: inherit; font: var(--text-small); }
+.app-logout:hover { background: rgb(255 255 255 / 14%); }
+.app-logout svg { display: none; inline-size: var(--space-md); block-size: var(--space-md); }
+.app-shell-body { display: grid; grid-template-columns: calc(var(--space-3xl) * 3 + var(--space-md)) minmax(0, 1fr); min-block-size: 0; }
+.app-shell[data-sidebar="minimized"] .app-shell-body { grid-template-columns: calc(var(--space-3xl) + var(--space-sm)) minmax(0, 1fr); }
+.app-sidebar { display: flex; flex-direction: column; min-inline-size: 0; overflow-y: auto; padding: var(--space-md); border-inline-end: thin solid var(--color-border); background: var(--color-bg-surface); }
+.app-sidebar[hidden] { display: flex; }
+.app-nav-toggle { display: none; align-items: center; justify-content: flex-end; min-block-size: var(--space-2xl); margin-block-end: var(--space-sm); }
+.app-nav-toggle button { display: grid; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-primary); }
+.app-nav-toggle svg { inline-size: var(--space-md); block-size: var(--space-md); }
+.app-mobile-close { display: none !important; }
+.app-nav-list { display: grid; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
+.app-nav-link { display: flex; align-items: center; gap: var(--space-sm); inline-size: 100%; min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-primary); font-weight: 600; text-align: start; text-decoration: none; transition: background-color var(--duration-fast), color var(--duration-fast); }
+.app-nav-link:hover { background: var(--color-bg-subtle); }
+.app-nav-link[aria-current="page"] { background: var(--color-navigation-active-bg); color: var(--color-navigation-active-text); }
+.app-nav-icon { display: grid; flex: none; place-items: center; inline-size: var(--space-lg); block-size: var(--space-lg); color: var(--color-primary); }
+.app-nav-icon svg { inline-size: var(--space-md); block-size: var(--space-md); }
+.app-nav-label { min-inline-size: 0; overflow-wrap: anywhere; }
+.app-shell[data-sidebar="minimized"] .app-sidebar { padding-inline: var(--space-sm); }
+.app-shell[data-sidebar="minimized"] .app-nav-link { justify-content: center; padding-inline: var(--space-xs); }
+.app-shell[data-sidebar="minimized"] .app-nav-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.app-workspace { min-inline-size: 0; overflow: auto; overscroll-behavior: contain; padding: var(--space-md); }
+.app-mobile-backdrop { display: none; }
+
+@media (min-width: 640px) {
+  .desktop-sidebar-toggle { display: grid; }
+}
+
+@media (max-width: 639px) {
+  .app-shell { min-block-size: 100vh; border-inline: 0; border-radius: 0; }
+  .app-header { gap: var(--space-sm); padding-inline: var(--space-sm); }
+  .mobile-menu-button { display: grid; }
+  .app-brand-icon { inline-size: var(--space-lg); block-size: var(--space-lg); }
+  .app-brand-divider { block-size: var(--space-lg); }
+  .app-brand-name { font: var(--text-small); font-weight: 600; }
+  .app-cabinet-name { display: none; }
+  .app-account-actions { gap: 0; }
+  .app-account-label { display: none; }
+  .app-logout { inline-size: var(--space-2xl); padding-inline: var(--space-xs); }
+  .app-logout svg { display: block; }
+  .app-logout-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .app-shell-body { display: block; }
+  .app-sidebar[hidden] { display: none; }
+  .app-sidebar:not([hidden]) { position: fixed; z-index: 3; inset-block: 0; inset-inline-start: 0; inline-size: min(84vw, calc(var(--space-3xl) * 4)); padding: var(--space-md); box-shadow: var(--shadow-card); }
+  .app-sidebar:not([hidden]) .app-nav-toggle { display: flex; }
+  .app-sidebar:not([hidden]) .app-mobile-close { display: grid !important; }
+  .app-mobile-backdrop { position: fixed; z-index: 2; inset: 0; display: block; inline-size: 100%; block-size: 100%; border: 0; background: color-mix(in srgb, var(--color-shell-brand) 35%, transparent); }
+  .app-workspace { padding: var(--space-sm); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-link { transition-duration: 0.01ms; }
+}

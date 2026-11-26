@@ -2,6 +2,8 @@
 
 DS-013 is a shared authenticated shell component mock. This mapping presents the approved role access from D-042; it is not an authorization boundary.
 
+The local implementation currently renders permanent navigation only for implemented Screens (DS-001, DS-003, and DS-004). Add each remaining destination here when its Screen is implemented; do not link to placeholder pages.
+
 ## Permanent navigation
 
 | Order | Label | Destination | admin | arhivar | cititor | Notes |

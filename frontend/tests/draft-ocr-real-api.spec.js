@@ -20,7 +20,7 @@ test('uploads a synthetic page, refreshes persisted OCR status, and opens audite
   await page.getByRole('button', { name: 'Autentificare' }).click();
   await expect(page.getByRole('heading', { name: 'Căutare în arhivă' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
   await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
   await page.locator('#draft-files').setInputFiles(path.resolve('fixtures/romanian.png'));
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();

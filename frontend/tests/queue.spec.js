@@ -18,7 +18,7 @@ async function openQueue(page, response = { review: [reviewDraft], quarantine: [
   }));
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Cozi de lucru' }).click();
+  await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
   await expect(page.getByRole('heading', { name: 'Cozi de lucru' })).toBeVisible();
   return queueState;
 }
@@ -93,7 +93,7 @@ test('recovers from a queue loading error', async ({ page }) => {
       : { status: 200, contentType: 'application/json', body: JSON.stringify({ review: [], quarantine: [] }) });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Cozi de lucru' }).click();
+  await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
   await expect(page.getByRole('alert')).toHaveText('Nu am putut încărca documentele.');
   await page.getByRole('button', { name: 'Încearcă din nou' }).click();
   await expect(page.getByText('Nu sunt documente pentru revizuire.')).toBeVisible();

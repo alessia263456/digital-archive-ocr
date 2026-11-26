@@ -40,7 +40,7 @@ test('intakes independent documents and recovers persisted OCR after reload', as
   test.setTimeout(120_000);
   await signIn(page);
 
-  const openUpload = () => page.getByRole('button', { name: 'Încarcă documente' }).click();
+  const openUpload = () => page.getByRole('button', { name: 'Încarcă documente' }).first().click();
   await openUpload();
   await page.getByLabel('Document PDF sau DOCX').setInputFiles([
     { name: 'batch-valid-one.pdf', mimeType: 'application/pdf', buffer: syntheticPdf() },

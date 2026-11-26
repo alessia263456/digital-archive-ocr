@@ -132,7 +132,7 @@ test('wraps a long account name on a narrow authenticated header', async ({ page
   await page.getByLabel('Nume de utilizator').fill(username);
   await page.getByLabel('Parolă').fill('parola-test');
   await page.getByRole('button', { name: 'Autentificare' }).click();
-  await expect(page.getByText(`${username} · arhivar`)).toBeVisible();
+  await expect(page.locator('.app-account-actions .screen-reader-only')).toHaveText(`Cont: ${username}, rol arhivar.`);
   const fits = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
   expect(fits).toBe(true);
 });
