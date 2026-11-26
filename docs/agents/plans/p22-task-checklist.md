@@ -124,8 +124,9 @@ Check off a task after verification. Record Codex active implementation/verifica
   - Owner approved the repository mock for implementation on 2026-11-24. Implementation is covered by the approved [M1a.1 plan](p22-m1a-1-login-and-application-foundation.md).
 - [x] P22-35 · DS-010 login
   - Implementation and automated verification completed on 2026-11-24 with same-origin Vite/Sanctum session auth, Romanian login and expiry states, logout, protected-route enforcement and safe local admin provisioning. PHPUnit passed (82 tests, 471 assertions, 3 skipped); standard Playwright passed (28 tests) in desktop/mobile light/dark; the real-API proxy test passed in all four projects. DS-010 screenshots and DS-001's initial copy-only empty state are recorded in `docs/design/screens/`. Owner manually verified valid and invalid credentials, session persistence, logout, protected page access, and both Screens' appearance on 2026-11-24.
-- [ ] P22-36a · Write append-only audit events
-  - The real M1a.4 browser run observed `ocr_results_viewed` and `preview_issued` rows in the isolated database. Keep this item open: current tests confirm event insertion, but the schema has no update/delete guard and the tests do not demonstrate append-only enforcement.
+- [ ] P22-36a · Enforce append-only audit events
+  - The real M1a.4 browser run observed `ocr_results_viewed` and `preview_issued` rows in the isolated database. Current tests confirm event insertion, but the schema has no update/delete guard and the tests do not demonstrate append-only enforcement.
+  - Remaining: prepare a separately approved implementation plan for database-level protection against updating or deleting audit rows, then add tests proving both operations are rejected. Select the enforcement mechanism in that plan. Complete this before M3's Append-Only Audit Log integrity verification; the roadmap does not assign a start date.
 
 M1a also begins these later-completion tasks: P22-23 (single-document upload slice; completes M1b), P22-34 (DS-001 default home/empty state; completes M3), and P22-38 (audited staff-only draft preview; completes M3).
 
