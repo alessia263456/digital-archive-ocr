@@ -4,6 +4,7 @@ namespace Tests\Feature\Database;
 
 use App\Models\NomenclatureEntry;
 use Database\Seeders\NomenclatureSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -64,8 +65,33 @@ class NomenclatureImportTest extends TestCase
         self::assertSame(49, NomenclatureEntry::count());
     }
 
+    public function test_database_seeder_loads_the_initial_nomenclature(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        self::assertSame(49, NomenclatureEntry::count());
+    }
+
+    public function test_conflicting_existing_rule_is_rejected_without_partial_import(): void
+    {
+        $this->seed(NomenclatureSeeder::class);
+        $first = NomenclatureEntry::query()->firstOrFail();
+        DB::table('nomenclature_entries')->where('id', $first->id)->update(['source_rule' => 'Regulă incompatibilă']);
+
+        try {
+            app(NomenclatureSeeder::class)->import(base_path('database/seeders/data/nomenclator_arhivistic.csv'));
+            self::fail('Importul trebuia să respingă regula existentă incompatibilă.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString('rândul 2', $exception->getMessage());
+        }
+
+        self::assertSame(49, NomenclatureEntry::count());
+        self::assertSame('Regulă incompatibilă', $first->fresh()->source_rule);
+    }
+
     public function test_invalid_source_row_rolls_back_and_reports_its_line(): void
     {
+        NomenclatureEntry::query()->delete();
         $source = tempnam(sys_get_temp_dir(), 'nomenclature-');
         $rows = file(base_path('database/seeders/data/nomenclator_arhivistic.csv'));
         $rows[1] = "invalid,row\n";
@@ -85,6 +111,7 @@ class NomenclatureImportTest extends TestCase
 
     public function test_duplicate_classification_is_rejected_with_source_line_and_rollback(): void
     {
+        NomenclatureEntry::query()->delete();
         $source = tempnam(sys_get_temp_dir(), 'nomenclature-');
         $input = fopen(base_path('database/seeders/data/nomenclator_arhivistic.csv'), 'rb');
         $output = fopen($source, 'wb');
