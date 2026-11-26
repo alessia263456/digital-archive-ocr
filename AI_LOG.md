@@ -2,6 +2,18 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-26 · P22-24a, P22-24b și P22-45 · Editor OCR și cozi DS-004
+
+**Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.
+
+**Ce am cerut:** Implementarea planului aprobat `p22-24a-24b-45-ds011-editor-queue.md`, verificare manuală, apoi integrarea și publicarea modificărilor.
+
+**Ce am primit:** DS-011 permite corectarea OCR păstrată separat de rezultatul sursă, detectarea PII pe textul corectat și revizuirea protejată a candidaților cu verificări de revizie. DS-004 deschide sau reia ciorna selectată în editor. Potrivirile cu localizare nesigură cer verificare manuală și nu primesc casete pentru anonimizare automată. Etapele ulterioare DS-011 pentru metadate, desenarea și previzualizarea anonimizării, aprobarea finală și publicarea versiunii imuabile rămân deschise.
+
+**Verificare:** PHPUnit a trecut cu 142 teste, 1.083 aserțiuni și 3 teste OCR-only skipped. Playwright a trecut cu 132 teste și 24 verificări opt-in ale API-ului real skipped în rularea implicită. Ledger lint și `git diff --check` au trecut. Capturile DS-011 desktop și mobil la 320px, în temă luminoasă și întunecată, au fost salvate în `docs/design/screens/`.
+
+La testarea aplicației pornite, jurnalul backend a identificat lipsa coloanei `corrected_ocr`; migrarea editorului și cele două migrații additive pendinte anterior au fost aplicate în ordine cu `php artisan migrate --force`, apoi starea a fost verificată cu `migrate:status`. Modificările au fost înregistrate în commiturile `1f5dbfb` și `73ba25c`; checklist-ul marchează P22-24a, P22-24b și P22-45 complete. Ramura a fost integrată în `main` și publicată pe `origin` la cererea proprietarului.
+
 ## 2026-11-25 · P22 M1a.4 · Integrare și verificarea etapei
 
 **Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.
