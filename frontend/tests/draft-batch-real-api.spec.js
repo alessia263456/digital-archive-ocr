@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 test.skip(
   !process.env.M1A_TEST_USERNAME || !process.env.M1A_TEST_PASSWORD,
@@ -26,13 +27,18 @@ function syntheticPdf() {
   return Buffer.from(pdf + `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
 }
 
-test('intakes independent documents and recovers persisted OCR after reload', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop-light', 'Run this real worker workflow once.');
-  test.setTimeout(120_000);
+async function signIn(page) {
   await page.goto('/');
   await page.getByLabel('Nume de utilizator').fill(process.env.M1A_TEST_USERNAME);
   await page.getByLabel('Parolă').fill(process.env.M1A_TEST_PASSWORD);
   await page.getByRole('button', { name: 'Autentificare' }).click();
+  await expect(page.getByRole('heading', { name: 'Căutare în arhivă' })).toBeVisible();
+}
+
+test('intakes independent documents and recovers persisted OCR after reload', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-light', 'Run this real worker workflow once.');
+  test.setTimeout(120_000);
+  await signIn(page);
 
   const openUpload = () => page.getByRole('button', { name: 'Încarcă documente' }).click();
   await openUpload();
@@ -41,7 +47,7 @@ test('intakes independent documents and recovers persisted OCR after reload', as
     { name: 'batch-invalid.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: Buffer.from('invalid') },
     { name: 'batch-valid-two.pdf', mimeType: 'application/pdf', buffer: syntheticPdf() },
   ]);
-  await page.getByRole('button', { name: 'Încarcă documentul', exact: true }).click();
+  await page.getByRole('button', { name: 'Încarcă documentele', exact: true }).click();
   const row = (name) => page.locator('.draft-item').filter({ hasText: name });
   await expect(row('batch-invalid.docx')).toContainText('Încărcarea nu a reușit');
   const idOne = await row('batch-valid-one.pdf').locator('.draft-id').textContent();
@@ -64,4 +70,47 @@ test('intakes independent documents and recovers persisted OCR after reload', as
   await row('batch-valid-one.pdf').getByRole('button', { name: 'Vezi rezultatele OCR' }).click();
   await expect(page.getByRole('heading', { name: 'Rezultate OCR' })).toBeVisible();
   await expect(page.locator('.ocr-text')).toContainText(/Document sintetic pentru arhiv/i);
+});
+
+test('returns JSON for multipart requests truncated by the Compose backend', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-light', 'Run this real API workflow once.');
+  await signIn(page);
+  const png = await readFile('fixtures/romanian.png');
+  const { documents, images } = await page.evaluate(async ({ pdfBytes, pngBytes }) => {
+    await fetch('/sanctum/csrf-cookie');
+    const cookie = document.cookie.split('; ').find((part) => part.startsWith('XSRF-TOKEN='));
+    const headers = { Accept: 'application/json', 'X-XSRF-TOKEN': decodeURIComponent(cookie.slice('XSRF-TOKEN='.length)) };
+    async function submit(body) {
+      const response = await fetch('/api/drafts', { method: 'POST', headers, body });
+      const data = await response.json().catch(() => null);
+      return { status: response.status, data };
+    }
+
+    // The unmodified PHP upload-count limit in the Compose backend is 20.
+    const fileCount = 21;
+    const documentForm = new FormData();
+    documentForm.append('document_count', String(fileCount));
+    documentForm.append('documents[]', new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }), 'transport-valid.pdf');
+    for (let index = 1; index < fileCount; index++) {
+      documentForm.append('documents[]', new Blob(['unsupported']), `transport-${index}.txt`);
+    }
+
+    const imageForm = new FormData();
+    imageForm.append('image_count', String(fileCount));
+    const image = new Blob([new Uint8Array(pngBytes)], { type: 'image/png' });
+    for (let index = 0; index < fileCount; index++) {
+      imageForm.append('images[]', image, `transport-${index}.png`);
+    }
+
+    return { documents: await submit(documentForm), images: await submit(imageForm) };
+  }, { pdfBytes: [...syntheticPdf()], pngBytes: [...png] });
+
+  expect(documents.status).toBe(422);
+  expect(documents.data.eroare).toContain('Unele documente nu au ajuns la server');
+  expect(documents.data.items).toHaveLength(20);
+  expect(documents.data.items[0]).toMatchObject({ group: 'documents', index: 0, status: 'queued' });
+  expect(documents.data.items[19]).toMatchObject({ group: 'documents', index: 19, status: 'invalid' });
+  expect(images.status).toBe(422);
+  expect(images.data.eroare).toContain('Colecția de imagini este incompletă');
+  expect(images.data.items).toEqual([]);
 });
