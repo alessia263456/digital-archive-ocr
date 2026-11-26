@@ -23,9 +23,10 @@ final class PiiDetectorTest extends TestCase
         self::assertSame('redact', $candidates[0]['disposition']);
         self::assertSame(4, $candidates[0]['page']);
         self::assertSame(91.0, $candidates[0]['confidence']);
-        self::assertSame([$words[1], $words[2]], $candidates[0]['bounding_boxes']);
+        self::assertSame([$this->box($words[1]), $this->box($words[2])], $candidates[0]['bounding_boxes']);
         self::assertArrayNotHasKey('text', $candidates[0]);
         self::assertArrayNotHasKey('value', $candidates[0]);
+        self::assertStringNotContainsString($digits, json_encode($candidates, JSON_THROW_ON_ERROR));
     }
 
     public function test_invalid_cnp_and_cnp_without_preceding_anchor_go_to_review(): void
@@ -113,5 +114,10 @@ final class PiiDetectorTest extends TestCase
         }
         $control = $sum % 11;
         return $firstTwelve.($control === 10 ? '1' : (string) $control);
+    }
+
+    private function box(array $word): array
+    {
+        return array_intersect_key($word, array_flip(['left', 'top', 'width', 'height']));
     }
 }
