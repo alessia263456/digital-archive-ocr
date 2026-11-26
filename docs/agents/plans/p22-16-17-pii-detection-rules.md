@@ -1,6 +1,6 @@
 # Plan — P22-16, P22-17a and P22-17b · PII detection rules
 
-**Status:** Implementation completed on 2026-11-26. Automated checks passed. The read-only Document Corpus baseline exposed a CNP OCR coverage gap; the review-only cue was added and corpus revalidation is pending. Corpus files remain locally excluded from Git.
+**Status:** Detector rules implemented on 2026-11-26 and automated checks passed. PII detection is to run in DS-011 after OCR corrections; the earlier raw-OCR corpus run is diagnostic only and does not validate corrected-text coverage. Corpus files remain locally excluded from Git.
 
 ## Size
 
@@ -78,5 +78,6 @@ DS-011 review UI, manual Bounding Box drawing, applying Redaction to PDFs, safe 
 - Fallback anchor proximity: immediately following OCR line within the same OCR block, at most 5 intervening words.
 - The anchor must precede the identifier and be appropriate for its PII type. Conflicting or ambiguous associations go to human review.
 - When a preceding CNP anchor is within the configured proximity and adjacent OCR digit tokens contain at least 10 digits without forming a valid 13-digit CNP, emit one review-only cue over those digit tokens. Keep valid 13-digit CNP routing unchanged.
+- Run PII detection after inline OCR corrections in DS-011. Use the corrected OCR words and their Bounding Boxes for candidate review and any subsequent Redaction; upload remains OCR extraction only. **Confirmed:** 2026-11-26
 - Keep proximity thresholds configurable and validate them against the Document Corpus.
 - Do not treat an OCR signature label box as the actual handwritten signature. Return a review cue; manual Bounding Box drawing handles the signature region.
