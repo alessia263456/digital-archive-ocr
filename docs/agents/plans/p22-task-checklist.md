@@ -179,6 +179,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
   - Added the PostgreSQL classification table, model, and transactional CSV seeder. The backend images include the checked-in CSV; identical re-import preserves IDs, while duplicate source classifications and conflicting stored rules fail with source-row context.
   - PHPUnit `NomenclatureImportTest.php`: 4 tests, 308 assertions passed, including all 49 source rows, all six Retention Computation Bases, repeated Archival Indicators, retention terms, C.S. flags, rollback, and re-import IDs.
 - [ ] P22-22 · Metadata suggestions and classification
+  - Backend extraction, draft persistence, role-protected metadata endpoints, and derived classification are implemented and tested. Production DS-011 UI wiring remains for the later DS-011 tasks, as requested by the owner; this item stays open until that work is complete.
 - [ ] P22-24a · Build DS-011 OCR editing
 - [ ] P22-24b · Build DS-011 candidate review
 - [ ] P22-26 · Retention calculation and validation

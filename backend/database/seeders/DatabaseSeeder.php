@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(NomenclatureSeeder::class);
         // Production accounts are created explicitly with the provisioning command.
     }
 }

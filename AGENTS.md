@@ -95,6 +95,7 @@ export DB_PASSWORD="$(openssl rand -hex 32)"
 # Reuse the same values on subsequent starts with the same database volume.
 docker compose up --build -d backend ocr-queue-worker
 docker compose exec backend php artisan migrate
+docker compose exec backend php artisan db:seed
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
 docker compose exec backend vendor/bin/phpunit
 

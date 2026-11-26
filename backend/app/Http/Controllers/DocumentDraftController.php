@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentDraft;
+use App\Models\NomenclatureEntry;
 use App\Jobs\ProcessDocumentDraft;
+use App\Services\MetadataSuggestionExtractor;
 use App\Services\DocumentDraftIntakeService;
 use App\Services\DraftAccessLogger;
 use App\Services\DocumentStorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 final class DocumentDraftController
 {
@@ -207,6 +211,127 @@ final class DocumentDraftController
                 'words' => json_decode($page->words, true, flags: JSON_THROW_ON_ERROR),
             ])->values(),
         ]);
+    }
+
+    public function metadata(Request $request, string $draft, MetadataSuggestionExtractor $extractor, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->metadataDraft($draft);
+        if ($record instanceof JsonResponse) {
+            return $record;
+        }
+
+        if ($record->metadata_suggestions === null) {
+            $pages = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)
+                ->orderBy('page')->get(['page', 'text'])
+                ->map(static fn ($page) => ['page' => (int) $page->page, 'text' => $page->text])->all();
+            $record->metadata_suggestions = $extractor->extract($pages);
+            $record->save();
+        }
+
+        $audit->record($request, $record, 'metadata_viewed');
+
+        return response()->json([
+            'id' => $record->id,
+            'suggestions' => $record->metadata_suggestions,
+            'metadata' => $record->metadata ?? [],
+            'metadata_confirmed' => $record->metadata_confirmed_at !== null,
+            'classification' => $this->classificationData($record->nomenclatureEntry),
+            'classification_options' => NomenclatureEntry::query()
+                ->orderBy('document_type')->orderBy('subtype')->orderBy('storage_context')->get()
+                ->map(fn (NomenclatureEntry $entry) => $this->classificationData($entry))->values(),
+        ]);
+    }
+
+    public function updateMetadata(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->metadataDraft($draft);
+        if ($record instanceof JsonResponse) {
+            return $record;
+        }
+
+        $types = NomenclatureEntry::query()->distinct()->pluck('document_type')->all();
+        $validator = Validator::make($request->all(), [
+            'metadata' => 'required|array:act_date,act_number,physical_dossier_number,inventory_number,amount,contract_expiry,tags',
+            'metadata.act_date' => 'sometimes|nullable|date_format:Y-m-d',
+            'metadata.act_number' => 'sometimes|nullable|string|max:255',
+            'metadata.physical_dossier_number' => 'sometimes|nullable|string|max:255',
+            'metadata.inventory_number' => 'sometimes|nullable|string|max:255',
+            'metadata.amount' => 'sometimes|nullable|string|max:255',
+            'metadata.contract_expiry' => 'sometimes|nullable|date_format:Y-m-d',
+            'metadata.tags' => 'sometimes|array',
+            'metadata.tags.*' => ['string', 'max:255', Rule::in($types)],
+            'nomenclature_entry_id' => 'sometimes|nullable|integer|exists:nomenclature_entries,id',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['eroare' => 'Metadatele sau clasificarea selectată nu sunt valide.'], 422);
+        }
+
+        $values = $validator->validated();
+        $record->metadata = array_replace($record->metadata ?? [], $values['metadata']);
+        if (array_key_exists('nomenclature_entry_id', $values)) {
+            $record->nomenclature_entry_id = $values['nomenclature_entry_id'];
+        }
+        $record->metadata_confirmed_at = null;
+        $record->save();
+        $audit->record($request, $record, 'metadata_updated');
+
+        return response()->json([
+            'metadata' => $record->metadata,
+            'metadata_confirmed' => false,
+            'classification' => $this->classificationData($record->nomenclatureEntry),
+        ]);
+    }
+
+    public function confirmMetadata(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->metadataDraft($draft);
+        if ($record instanceof JsonResponse) {
+            return $record;
+        }
+
+        $metadata = $record->metadata ?? [];
+        foreach (['act_date', 'act_number', 'physical_dossier_number', 'inventory_number'] as $required) {
+            if (! is_string($metadata[$required] ?? null) || trim($metadata[$required]) === '') {
+                return response()->json([
+                    'eroare' => 'Completați data actului, numărul actului, numărul dosarului fizic și numărul de inventar înainte de confirmare.',
+                ], 422);
+            }
+        }
+        if (! $record->nomenclature_entry_id || ! $record->nomenclatureEntry()->exists()) {
+            return response()->json(['eroare' => 'Alegeți tipul, subtipul și contextul de arhivare înainte de confirmare.'], 422);
+        }
+
+        $record->metadata_confirmed_at = now();
+        $record->save();
+        $audit->record($request, $record, 'metadata_confirmed');
+
+        return response()->json(['metadata_confirmed' => true]);
+    }
+
+    private function metadataDraft(string $id): DocumentDraft|JsonResponse
+    {
+        $record = DocumentDraft::query()->find($id);
+        if ($record === null) {
+            return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
+        }
+        if ($record->status !== 'review_ready' || ! $record->ocr_extraction_id) {
+            return response()->json(['eroare' => 'Metadatele nu sunt disponibile înainte de finalizarea OCR.'], 409);
+        }
+        return $record;
+    }
+
+    private function classificationData(?NomenclatureEntry $entry): ?array
+    {
+        if ($entry === null) {
+            return null;
+        }
+        return [
+            'id' => $entry->id,
+            'document_type' => $entry->document_type,
+            'subtype' => $entry->subtype,
+            'storage_context' => $entry->storage_context,
+            'archival_indicator' => $entry->archival_indicator,
+        ];
     }
 
     public function preview(Request $request, string $draft, DocumentStorageService $storage, DraftAccessLogger $audit): JsonResponse
