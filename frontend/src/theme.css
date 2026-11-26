@@ -334,6 +334,20 @@ p {
 .editor-preview-pages { display: grid; gap: var(--space-sm); padding: var(--space-sm); }
 .editor-preview-pages iframe { inline-size: 100%; min-block-size: min(75vh, calc(var(--space-3xl) * 12)); border: 0; background: var(--color-bg-subtle); }
 .editor-preview-pages img { display: block; max-inline-size: 100%; margin-inline: auto; }
+.editor-source-page { display: grid; gap: var(--space-sm); min-inline-size: 0; }
+.editor-source-page h3 { font: var(--text-small); font-weight: 600; }
+.editor-page-canvas { position: relative; inline-size: 100%; overflow: hidden; background: var(--color-bg-subtle); border: thin solid var(--color-border); }
+.editor-page-canvas img, .editor-page-canvas svg { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; }
+.editor-page-canvas img { object-fit: fill; user-select: none; }
+.editor-page-canvas svg { pointer-events: none; overflow: visible; }
+.editor-page-canvas.drawing svg { pointer-events: auto; cursor: crosshair; touch-action: none; }
+.editor-mark-rect { fill: transparent; stroke: var(--color-text-primary); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.editor-mark-rect.manual { stroke-dasharray: 6 3; }
+.editor-mark-rect.preview { stroke: var(--color-focus-ring); stroke-width: 3; }
+.editor-mark-cursor { fill: var(--color-accent-teal); stroke: var(--color-version-navy); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.editor-mark-count { color: var(--color-text-secondary); font: var(--text-small); }
+.editor-manual-mark-list { display: grid; gap: var(--space-sm); margin: 0; padding: var(--space-md); list-style: none; }
+.editor-manual-mark-list li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); border-block-end: thin solid var(--color-border); padding-block: var(--space-xs); }
 .editor-pages { display: grid; gap: var(--space-md); padding: var(--space-md); }
 .editor-page { display: grid; gap: var(--space-sm); min-inline-size: 0; }
 .editor-page label { font-weight: 600; }

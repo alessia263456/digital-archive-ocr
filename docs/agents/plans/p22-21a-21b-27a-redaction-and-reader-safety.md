@@ -1,6 +1,6 @@
 # Plan — Redaction and reader safety: P22-21a/b, then P22-27a
 
-**Status:** Approved for implementation; implementation not started.
+**Status:** Implemented and verified.
 
 ## Size and sequencing
 

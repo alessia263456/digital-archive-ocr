@@ -401,10 +401,12 @@ final class DocumentDraftController
             return response()->json(['eroare' => 'Revizuirea anonimizării este incompletă sau neactualizată. Reîncărcați editorul.'], 409);
         }
         $boxes = [];
+        $manualPages = array_fill_keys(array_map(static fn (array $mark): int => (int) $mark['page'], $record->redaction_marks ?? []), true);
         foreach ($record->pii_candidates ?? [] as $candidate) {
             if (($candidate['review_status'] ?? null) !== 'accepted') continue;
             if (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes'])) {
-                return response()->json(['eroare' => 'O potrivire acceptată nu are o localizare sigură. Adăugați un marcaj manual.'], 422);
+                if (!isset($manualPages[(int) ($candidate['page'] ?? 0)])) return response()->json(['eroare' => 'O potrivire acceptată nu are un marcaj manual pe pagina sa. Adăugați un marcaj manual.'], 422);
+                continue;
             }
             foreach ($candidate['bounding_boxes'] as $box) $boxes[$candidate['page']][] = $box;
         }
@@ -468,6 +470,59 @@ final class DocumentDraftController
             $stream = $storage->readStream($record->redacted_pdf_storage_key);
             if ($stream) { fpassthru($stream); fclose($stream); }
         }, 200, ['Content-Type' => 'application/pdf', 'Cache-Control' => 'private, no-store, max-age=0', 'X-Content-Type-Options' => 'nosniff', 'Content-Disposition' => 'inline; filename="anonimizat.pdf"']);
+    }
+
+    public function editorPageImage(Request $request, string $draft, int $page, DocumentStorageService $storage, DraftAccessLogger $audit)
+    {
+        $record = $this->editorDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $ocrPage = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)->where('page', $page)->first();
+        if (!$ocrPage) return response()->json(['eroare' => 'Pagina solicitată nu a fost găsită.'], 404);
+
+        $work = sys_get_temp_dir().'/editor-page-'.Str::uuid(); mkdir($work, 0700);
+        try {
+            $source = "$work/source.pdf";
+            $sourceKey = match ($record->source_format) {
+                'docx' => $record->derived_pdf_storage_key,
+                'pdf' => ($record->original_storage_keys[0] ?? null),
+                default => null,
+            };
+            if ($record->source_format === 'image_collection') {
+                $images = [];
+                foreach ($record->original_storage_keys ?? [] as $index => $key) {
+                    if (!$storage->exists($key)) throw new \RuntimeException('Sursă indisponibilă.');
+                    $stream = $storage->readStream($key);
+                    if (!$stream) throw new \RuntimeException('Sursă indisponibilă.');
+                    $path = "$work/".sprintf('%04d', $index).'.'.(strtolower(pathinfo($key, PATHINFO_EXTENSION)) === 'png' ? 'png' : 'jpg');
+                    $output = fopen($path, 'wb');
+                    if (!$output) { fclose($stream); throw new \RuntimeException('Sursa nu poate fi pregătită.'); }
+                    try { if (stream_copy_to_stream($stream, $output) === false) throw new \RuntimeException('Sursa nu poate fi pregătită.'); }
+                    finally { fclose($stream); fclose($output); }
+                    $images[] = $path;
+                }
+                if ($images === []) throw new \RuntimeException('Colecția de imagini este goală.');
+                (new Process(['img2pdf', '--output', $source, ...$images]))->mustRun();
+            } else {
+                if (!$sourceKey || !$storage->exists($sourceKey)) throw new \RuntimeException('Sursă indisponibilă.');
+                $stream = $storage->readStream($sourceKey); if (!$stream) throw new \RuntimeException('Sursă indisponibilă.');
+                $output = fopen($source, 'wb');
+                if (!$output) { fclose($stream); throw new \RuntimeException('Sursa nu poate fi pregătită.'); }
+                try { if (stream_copy_to_stream($stream, $output) === false) throw new \RuntimeException('Sursa nu poate fi pregătită.'); }
+                finally { fclose($stream); fclose($output); }
+            }
+            $rendered = (new \App\Services\DocumentPageRenderer)->render($source, "$work/rendered");
+            $image = collect($rendered)->firstWhere('page', $page);
+            if (!$image || $image['width'] !== (int) $ocrPage->width || $image['height'] !== (int) $ocrPage->height) throw new \RuntimeException('Geometria paginii nu se potrivește cu OCR.');
+            $audit->record($request, $record, 'editor_page_image_viewed');
+            return response()->stream(function () use ($image, $work): void {
+                try { readfile($image['path']); }
+                finally { \Illuminate\Support\Facades\File::deleteDirectory($work); }
+            }, 200, ['Content-Type' => 'image/png', 'Cache-Control' => 'private, no-store, max-age=0', 'X-Content-Type-Options' => 'nosniff']);
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\File::deleteDirectory($work);
+            report($exception);
+            return response()->json(['eroare' => 'Imaginea paginii nu a putut fi pregătită pentru revizuire.'], 500);
+        }
     }
 
     private function editorDraft(string $id): DocumentDraft|JsonResponse

@@ -187,7 +187,8 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [x] P22-24b · Build DS-011 candidate review
   - Added protected editor load, correction and PII review endpoints under C-004. Candidate values are absent from records and audits; stale/failed results invalidate review. Manual-location candidates have no boxes and cannot be automatically redacted. Reviewer decisions persist under OCR and detection revision guards. Frontend Playwright passed: 132 passed, 24 opt-in real API checks skipped. Desktop and 320px mobile screenshots in light and dark are saved under `docs/design/screens/DS-011*`.
 - [ ] P22-26 · Retention calculation and validation
-- [ ] P22-27a · Draw and preview manual Redaction
+- [x] P22-27a · Draw and preview manual Redaction
+  - DS-011 now draws revision-bound manual marks over private original page rasters, supports pointer and keyboard placement, rescales coordinates across viewport changes, lists and removes marks with undo, and invalidates stale previews. The staff-only raster endpoint checks renderer/OCR dimensions, audits access, and uses private no-store delivery. Backend PHPUnit passed (149 tests, 1,117 assertions, 3 OCR-only skips); frontend Playwright passed (140 tests, 24 opt-in real-API checks skipped). Screenshots at 1600×900 and 320×740 in light and dark were inspected and saved under `docs/design/screens/DS-011.*.png`.
 - [ ] P22-27b · Capture metadata and review confirmation
 - [ ] P22-28a · Implement immutable version publication
 - [ ] P22-28b · Wire Editor publication and verify

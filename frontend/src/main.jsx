@@ -331,7 +331,13 @@ const piiCategoryLabels = {
 function DraftEditor({ item, onBack }) {
   const [editor, setEditor] = useState(null);
   const [pages, setPages] = useState([]);
-  const [preview, setPreview] = useState(null);
+  const [manualMarks, setManualMarks] = useState([]);
+  const [drawing, setDrawing] = useState(false);
+  const [anchor, setAnchor] = useState(null);
+  const [cursor, setCursor] = useState(null);
+  const [undoMarks, setUndoMarks] = useState(null);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [markSaving, setMarkSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -347,9 +353,13 @@ function DraftEditor({ item, onBack }) {
       const result = await api.draftEditor(item.id);
       setEditor(result);
       setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setManualMarks(result.manual_marks || []);
+      setUndoMarks(null);
+      setDrawing(false);
+      setAnchor(null);
+      setPreviewReady(false);
       setFeedback('');
       setReloadRequired(false);
-      try { setPreview(await api.draftPreview(item.id)); } catch { setPreview(null); }
     } catch (requestError) {
       setError(requestError.message || 'Editorul nu a putut fi încărcat. Verificați sesiunea și încercați din nou.');
     } finally {
@@ -368,10 +378,16 @@ function DraftEditor({ item, onBack }) {
       const result = await api.saveDraftEditorOcr(item.id, editor.ocr_revision, pages);
       setEditor(result);
       setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setManualMarks(result.manual_marks || []);
+      setUndoMarks(null);
+      setPreviewReady(false);
       setFeedback('Corecturile au fost salvate. Rezultatele PII sunt actualizate.');
     } catch (requestError) {
       if (requestError.body?.detection_status === 'failed') {
         setEditor((current) => ({ ...current, ocr_revision: requestError.body.ocr_revision, detection_status: 'failed', candidates: [] }));
+        setManualMarks([]);
+        setUndoMarks(null);
+        setPreviewReady(false);
         setReloadRequired(true);
         setFeedback('Textul a fost salvat, dar detectarea PII a eșuat. Revizuirea este dezactivată.');
       } else {
@@ -393,6 +409,7 @@ function DraftEditor({ item, onBack }) {
     try {
       const result = await api.reviewDraftEditorPii(item.id, editor.ocr_revision, editor.detection_revision, [{ id: candidate.id, review_status: reviewStatus }]);
       setEditor((current) => ({ ...current, candidates: result.candidates }));
+      setPreviewReady(false);
       setFeedback('Decizia de revizuire a fost salvată.');
     } catch (requestError) {
       if (requestError.status === 409) {
@@ -400,6 +417,52 @@ function DraftEditor({ item, onBack }) {
         setReloadRequired(true);
       }
       setError(requestError.message || 'Decizia nu a putut fi salvată. Reîncărcați editorul și încercați din nou.');
+    }
+  }
+
+  async function saveMarks(next, undo = null) {
+    if (!editor || stale || markSaving) return;
+    setMarkSaving(true);
+    setError('');
+    try {
+      const result = await api.saveDraftRedactionMarks(item.id, editor.ocr_revision, editor.detection_revision, next);
+      setManualMarks(result.marks);
+      setUndoMarks(undo);
+      setPreviewReady(false);
+      setFeedback('Marcajele au fost salvate. Previzualizarea anterioară a fost invalidată.');
+    } catch (requestError) {
+      if (requestError.status === 409) { setReloadRequired(true); setEditor((current) => ({ ...current, detection_status: 'stale' })); }
+      setError(requestError.message || 'Marcajele nu au putut fi salvate. Reîncărcați editorul și încercați din nou.');
+    } finally { setMarkSaving(false); }
+  }
+
+  function pointFor(event, page) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(page.width - 1, Math.round((event.clientX - bounds.left) * page.width / bounds.width))),
+      y: Math.max(0, Math.min(page.height - 1, Math.round((event.clientY - bounds.top) * page.height / bounds.height))),
+    };
+  }
+
+  function completeMark(page, first, second) {
+    if (!first || !second) return;
+    const left = Math.min(first.x, second.x), top = Math.min(first.y, second.y);
+    const width = Math.max(1, Math.min(page.width - left, Math.abs(first.x - second.x))), height = Math.max(1, Math.min(page.height - top, Math.abs(first.y - second.y)));
+    const mark = { page: page.page, box: { left, top, width, height } };
+    setDrawing(false); setAnchor(null); setCursor(null);
+    saveMarks([...manualMarks, mark], manualMarks);
+  }
+
+  async function generatePreview() {
+    if (stale || dirty || markSaving) return;
+    setError(''); setPreviewReady(false);
+    try {
+      await api.generateDraftRedaction(item.id);
+      setPreviewReady(true);
+      setFeedback('Previzualizarea anonimizării a fost generată. Verificați toate paginile.');
+    } catch (requestError) {
+      if (requestError.status === 409) { setReloadRequired(true); setEditor((current) => ({ ...current, detection_status: 'stale' })); }
+      setError(requestError.message || 'Previzualizarea nu a putut fi generată. Verificați marcajele și încercați din nou.');
     }
   }
 
@@ -425,11 +488,40 @@ function DraftEditor({ item, onBack }) {
             {feedback && <p className="editor-feedback" role="status" aria-live="polite">{feedback}</p>}
             <div className="editor-grid">
               <section className="editor-card" aria-labelledby="editor-preview-title">
-                <header><h2 id="editor-preview-title">Document original</h2><p className="muted">Previzualizare privată · paginile nu sunt modificate.</p></header>
-                {preview?.pages?.length ? <div className="editor-preview-pages">{preview.pages.map((page) => page.kind === 'image'
-                  ? <img key={page.page} src={page.url} alt={`Pagina ${page.page} din document`} />
-                  : <iframe key={page.page} title={`Document original · pagina ${page.page}`} src={page.url} />)}</div>
-                  : <p className="editor-state">Previzualizarea documentului nu este disponibilă.</p>}
+                <header><h2 id="editor-preview-title">Document original</h2><p className="muted">Trasați peste fiecare zonă care trebuie anonimizată. Marcajele sunt în coordonatele paginii originale.</p></header>
+                <div className="editor-actions">
+                  <button className="button secondary" type="button" aria-pressed={drawing} onClick={() => { setDrawing((value) => !value); setAnchor(null); setCursor(null); }} disabled={stale || saving || markSaving}>{drawing ? 'Renunță la marcaj' : 'Marchează o zonă'}</button>
+                  <span className="editor-mark-count" aria-live="polite">Total: {manualMarks.length + editor.candidates.filter((candidate) => candidate.review_status === 'accepted').reduce((count, candidate) => count + candidate.bounding_boxes.length, 0)} marcaje · Automate: {editor.candidates.filter((candidate) => candidate.review_status === 'accepted').reduce((count, candidate) => count + candidate.bounding_boxes.length, 0)} · Manuale: {manualMarks.length}</span>
+                  {undoMarks && <button className="button secondary" type="button" onClick={() => saveMarks(undoMarks, null)} disabled={markSaving}>Anulează eliminarea</button>}
+                </div>
+                {drawing && <p className="editor-warning" id="editor-drawing-help" role="status">Trasați zona pe pagină. De la tastatură, mutați cursorul cu săgețile și apăsați Enter pentru fiecare colț. Escape renunță.</p>}
+                <div className="editor-preview-pages">
+                  {editor.pages.map((page) => {
+                    const boxes = [
+                      ...editor.candidates.filter((candidate) => candidate.page === page.page && candidate.review_status === 'accepted').flatMap((candidate) => candidate.bounding_boxes.map((box) => ({ ...box, kind: 'automatic' }))),
+                      ...manualMarks.filter((mark) => mark.page === page.page).map((mark) => ({ ...mark.box, kind: 'manual' })),
+                    ];
+                    const active = anchor?.page === page.page ? { left: Math.min(anchor.point.x, (cursor?.page === page.page ? cursor.point.x : anchor.point.x)), top: Math.min(anchor.point.y, (cursor?.page === page.page ? cursor.point.y : anchor.point.y)), width: Math.abs((cursor?.page === page.page ? cursor.point.x : anchor.point.x) - anchor.point.x), height: Math.abs((cursor?.page === page.page ? cursor.point.y : anchor.point.y) - anchor.point.y) } : null;
+                    return <div className="editor-source-page" key={page.page}>
+                      <h3>Pagina {page.page}</h3>
+                      <div className={`editor-page-canvas${drawing ? ' drawing' : ''}`} style={{ aspectRatio: `${page.width} / ${page.height}` }}>
+                        <img src={api.draftEditorPageImage(item.id, page.page)} alt={`Document original, pagina ${page.page}`} draggable="false" onError={() => setError('Imaginea paginii nu a putut fi încărcată. Reîncărcați editorul.')} />
+                        <svg viewBox={`0 0 ${page.width} ${page.height}`} role="application" aria-label={`Document original, pagina ${page.page}`} aria-describedby={drawing ? 'editor-drawing-help' : undefined} tabIndex="0"
+                          onPointerDown={(event) => { if (!drawing || stale || event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const point = pointFor(event, page); if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } }}
+                          onPointerMove={(event) => { if (drawing && anchor?.page === page.page) setCursor({ page: page.page, point: pointFor(event, page) }); }}
+                          onPointerUp={(event) => { if (!drawing || !anchor || anchor.page !== page.page) return; const point = pointFor(event, page); if (anchor.point.x !== point.x || anchor.point.y !== point.y) completeMark(page, anchor.point, point); }}
+                          onKeyDown={(event) => { if (!drawing) return; if (event.key === 'Escape') { setDrawing(false); setAnchor(null); setCursor(null); event.preventDefault(); return; } if (event.key.startsWith('Arrow')) { const step = Math.max(1, Math.round(Math.min(page.width, page.height) / 100)); const current = cursor?.page === page.page ? cursor.point : { x: Math.round(page.width / 2), y: Math.round(page.height / 2) }; const next = { x: Math.max(0, Math.min(page.width - 1, current.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0))), y: Math.max(0, Math.min(page.height - 1, current.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0))) }; setCursor({ page: page.page, point: next }); event.preventDefault(); } else if (event.key === 'Enter') { event.preventDefault(); const point = cursor?.page === page.page ? cursor.point : { x: Math.round(page.width / 2), y: Math.round(page.height / 2) }; if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } } }}>
+                          {boxes.map((box, index) => <rect key={`${box.kind}-${index}`} className={`editor-mark-rect ${box.kind}`} x={box.left} y={box.top} width={box.width} height={box.height} />)}
+                          {active && <rect className="editor-mark-rect preview" x={active.left} y={active.top} width={Math.max(active.width, 1)} height={Math.max(active.height, 1)} />}
+                          {cursor?.page === page.page && drawing && <circle className="editor-mark-cursor" cx={cursor.point.x} cy={cursor.point.y} r={Math.max(2, Math.round(Math.min(page.width, page.height) / 100))} />}
+                        </svg>
+                      </div>
+                    </div>;
+                  })}
+                </div>
+                {manualMarks.length > 0 && <ul className="editor-manual-mark-list" aria-label="Marcaje manuale">{manualMarks.map((mark, index) => <li key={`${mark.page}-${mark.box.left}-${mark.box.top}-${index}`}><span>Manual · Pagina {mark.page} · {mark.box.left}, {mark.box.top} · {mark.box.width} × {mark.box.height} px</span><button className="button secondary" type="button" aria-label={`Elimină marcajul manual ${index + 1}`} onClick={() => saveMarks(manualMarks.filter((_, position) => position !== index), manualMarks)} disabled={markSaving}>Elimină</button></li>)}</ul>}
+                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : 'Previzualizează anonimizarea'}</button></div>
+                {previewReady && <div className="editor-preview-pages"><h3>Previzualizare PDF anonimizat</h3><iframe title="Previzualizare PDF anonimizat" src={api.draftRedactedPdf(item.id)} /></div>}
               </section>
               <section className="editor-card" aria-labelledby="ocr-edit-title">
                 <header><h2 id="ocr-edit-title">Corectare OCR</h2><p className="muted">Textul extras rămâne păstrat separat. Corectați textul folosind documentul original.</p></header>

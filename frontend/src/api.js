@@ -83,6 +83,7 @@ export const api = {
   }),
   generateDraftRedaction: (id) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`, { method: 'POST' }),
   draftRedactedPdf: (id) => `/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`,
+  draftEditorPageImage: (id, page) => `/api/drafts/${encodeURIComponent(id)}/editor/pages/${encodeURIComponent(page)}/image`,
   draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
   draftQueue: () => request('/api/drafts/queue'),
   retryDraft: (id) => request(`/api/drafts/${encodeURIComponent(id)}/retry`, { method: 'POST' }),

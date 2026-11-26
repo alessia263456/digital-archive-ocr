@@ -30,6 +30,7 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
     Route::patch('/drafts/{draft}/editor/redaction-marks', [DocumentDraftController::class, 'saveRedactionMarks'])->name('drafts.editor.redaction-marks');
     Route::post('/drafts/{draft}/editor/redaction-preview', [DocumentDraftController::class, 'generateRedaction'])->name('drafts.editor.redaction-preview');
     Route::get('/drafts/{draft}/editor/redaction-preview', [DocumentDraftController::class, 'redactedPdf'])->name('drafts.editor.redaction-preview.show');
+    Route::get('/drafts/{draft}/editor/pages/{page}/image', [DocumentDraftController::class, 'editorPageImage'])->whereNumber('page')->name('drafts.editor.page-image');
     Route::get('/drafts/{draft}/metadata', [DocumentDraftController::class, 'metadata'])->name('drafts.metadata');
     Route::patch('/drafts/{draft}/metadata', [DocumentDraftController::class, 'updateMetadata'])->name('drafts.metadata.update');
     Route::post('/drafts/{draft}/metadata/confirm', [DocumentDraftController::class, 'confirmMetadata'])->name('drafts.metadata.confirm');

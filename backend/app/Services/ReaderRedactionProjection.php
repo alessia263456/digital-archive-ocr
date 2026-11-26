@@ -8,11 +8,9 @@ final class ReaderRedactionProjection
     {
         $byPage = [];
         foreach ($pages as $page) {
-            foreach (['page', 'width', 'height', 'text', 'words'] as $field) {
-                if (!array_key_exists($field, $page) || !is_int($page[$field]) && !is_string($page[$field]) && !is_array($page[$field])) {
-                    throw new \RuntimeException('Datele OCR nu permit filtrarea sigură.');
-                }
-            }
+            if (!is_int($page['page'] ?? null) || !is_int($page['width'] ?? null) || !is_int($page['height'] ?? null)
+                || !is_string($page['text'] ?? null) || !is_array($page['words'] ?? null)
+                || $page['page'] < 1 || $page['width'] < 1 || $page['height'] < 1) throw new \RuntimeException('Datele OCR nu permit filtrarea sigură.');
             $byPage[(int) $page['page']] = $page;
         }
         if ($byPage === []) throw new \RuntimeException('Nu există pagini OCR pentru filtrare.');
@@ -21,7 +19,7 @@ final class ReaderRedactionProjection
         $phrases = [];
         foreach ($candidates as $candidate) {
             if (($candidate['review_status'] ?? null) !== 'accepted') continue;
-            if (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes'])
+            if (($candidate['location_status'] ?? null) !== 'reliable' || !is_array($candidate['bounding_boxes'] ?? null) || $candidate['bounding_boxes'] === []
                 || !isset($candidate['page'], $candidate['corrected_text_span']['start'], $candidate['corrected_text_span']['length'])) {
                 throw new \RuntimeException('O anonimizare acceptată nu are o localizare sigură.');
             }
@@ -49,7 +47,10 @@ final class ReaderRedactionProjection
             if (count($tokens) !== count($words)) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
             $spans = [];
             foreach ($words as $index => $word) {
-                if (!isset($word['text'], $word['left'], $word['top'], $word['width'], $word['height'])) {
+                if (!is_string($word['text'] ?? null) || !is_int($word['left'] ?? null) || !is_int($word['top'] ?? null)
+                    || !is_int($word['width'] ?? null) || !is_int($word['height'] ?? null)
+                    || $word['left'] < 0 || $word['top'] < 0 || $word['width'] < 1 || $word['height'] < 1
+                    || $word['left'] + $word['width'] > $page['width'] || $word['top'] + $word['height'] > $page['height']) {
                     throw new \RuntimeException('Geometria OCR nu este completă.');
                 }
                 if ($tokens[$index]['text'] !== (string) $word['text']) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
