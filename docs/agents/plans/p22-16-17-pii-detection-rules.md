@@ -1,6 +1,6 @@
 # Plan — P22-16, P22-17a and P22-17b · PII detection rules
 
-**Status:** Detector rules implemented on 2026-11-26 and automated checks passed. PII detection is to run in DS-011 after OCR corrections; the earlier raw-OCR corpus run is diagnostic only and does not validate corrected-text coverage. Corpus files remain locally excluded from Git.
+**Status:** Complete for the P22-16/17 detector-rules scope. Automated tests, including synthetic corrected-OCR TSV, pass. PII detection is to run in DS-011 after OCR corrections; end-to-end validation on corrected corpus text belongs to that later roadmap work. The earlier raw-OCR corpus run is diagnostic only. Corpus files remain locally excluded from Git.
 
 ## Size
 
@@ -37,7 +37,7 @@ No database migration is planned: OCR word data is stored as JSON, so the detect
 | 5 | Below-cutoff candidates, invalid or uncertain matches, and conflicting or ambiguous anchor associations go to human review. | PHPUnit unit tests | — |
 | 6 | Names and contact data are detected for review; the other D-022 text-label categories are flagged; OCR signature labels cue manual Bounding Box review; Notary Public name, title and signature are exempt. | PHPUnit unit and feature tests | Handwritten or difficult visual cases require corpus review. |
 | 7 | Candidate Bounding Boxes map to the correct page and OCR words. | PHPUnit feature tests | — |
-| 8 | Provisional cutoff and proximity configuration are exercised against the Document Corpus and results recorded without including personal data in logs. | Corpus validation using synthetic test documents | Depends on access to the available corpus; report any unavailable cases. |
+| 8 | Inspect provisional cutoff and proximity behavior without including personal data in logs. | Synthetic corrected-OCR TSV PHPUnit case; raw-OCR corpus probe is diagnostic. End-to-end corrected-corpus validation belongs to P22-24/DS-011. | Corrected OCR does not exist until the later review step. |
 
 ## Design (UI only)
 
