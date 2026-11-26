@@ -154,6 +154,64 @@ final class DocumentDraftOcrReviewTest extends TestCase
         self::assertDatabaseHas('draft_access_events', ['draft_id' => $draft->id, 'event' => 'editor_page_image_viewed']);
     }
 
+    public function test_three_jpg_collection_keeps_page_geometry_in_original_and_redacted_previews(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        $work = sys_get_temp_dir().'/image-collection-'.Str::uuid();
+        mkdir($work, 0700);
+        $jpeg = "$work/page.jpg";
+        $sourceImage = imagecreatetruecolor(100, 50);
+        $white = imagecolorallocate($sourceImage, 255, 255, 255);
+        imagefill($sourceImage, 0, 0, $white);
+        imagejpeg($sourceImage, $jpeg, 100);
+        imagedestroy($sourceImage);
+        try {
+            $keys = [];
+            for ($page = 1; $page <= 3; $page++) {
+                $key = "private/images/page-$page.jpg";
+                Storage::disk('documents')->put($key, file_get_contents($jpeg));
+                $keys[] = $key;
+            }
+            $draft = DocumentDraft::query()->create([
+                'id' => (string) Str::uuid(), 'source_format' => 'image_collection',
+                'original_storage_keys' => $keys, 'status' => 'review_ready',
+            ]);
+            $extraction = (string) Str::uuid();
+            for ($page = 1; $page <= 3; $page++) {
+                DB::table('ocr_pages')->insert([
+                    'extraction' => $extraction, 'source_sha256' => str_repeat((string) $page, 64), 'page' => $page,
+                    'width' => 100, 'height' => 50, 'text' => '', 'tsv' => '', 'words' => '[]',
+                ]);
+            }
+            $draft->ocr_extraction_id = $extraction;
+            $draft->save();
+
+            $editor = $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk();
+            $imageResponse = $this->get('/api/drafts/'.$draft->id.'/editor/pages/3/image')->assertOk();
+            $pageImage = imagecreatefromstring($imageResponse->streamedContent());
+            self::assertSame([100, 50], [imagesx($pageImage), imagesy($pageImage)]);
+            imagedestroy($pageImage);
+
+            $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', [
+                'ocr_revision' => $editor->json('ocr_revision'), 'detection_revision' => $editor->json('detection_revision'),
+                'marks' => [['page' => 3, 'box' => ['left' => 20, 'top' => 10, 'width' => 20, 'height' => 10]]],
+            ])->assertOk();
+            $this->postJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk();
+            $pdf = "$work/redacted.pdf";
+            file_put_contents($pdf, $this->get('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk()->streamedContent());
+            $rendered = (new DocumentPageRenderer)->render($pdf, "$work/rendered");
+            self::assertCount(3, $rendered);
+            self::assertSame([100, 50], [$rendered[2]['width'], $rendered[2]['height']]);
+            $redactedPage = imagecreatefrompng($rendered[2]['path']);
+            self::assertSame(0, imagecolorat($redactedPage, 25, 15) & 0xffffff);
+            self::assertNotSame(0, imagecolorat($redactedPage, 5, 5) & 0xffffff);
+            imagedestroy($redactedPage);
+        } finally {
+            \Illuminate\Support\Facades\File::deleteDirectory($work);
+        }
+    }
+
     public function test_redaction_generation_publishes_a_private_image_only_derivative(): void
     {
         Storage::fake('documents');
