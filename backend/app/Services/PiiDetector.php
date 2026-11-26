@@ -35,19 +35,21 @@ final class PiiDetector
     private function detectIdentifiers(array $words, int $start, int $page, array &$candidates): void
     {
         $digitParts = [];
+        $digitValues = [];
         $digitCount = 0;
         for ($end = $start; $end < min(count($words), $start + 13); $end++) {
             if ($end > $start && !$this->adjacent($words[$end - 1], $words[$end])) {
                 break;
             }
-            $part = (string) ($words[$end]['text'] ?? '');
-            if (!preg_match('/^\d+$/', $part)) {
+            $part = $this->numericPart((string) ($words[$end]['text'] ?? ''));
+            if ($part === null) {
                 break;
             }
             $digitParts[] = $words[$end];
+            $digitValues[] = $part;
             $digitCount += strlen($part);
         }
-        $digitSequence = implode('', array_map(static fn (array $word): string => (string) $word['text'], $digitParts));
+        $digitSequence = implode('', $digitValues);
         $cnpAnchors = ['cnp', 'cod numeric personal', 'codul numeric personal'];
         $continuesDigitRun = $start > 0 && $this->adjacent($words[$start - 1], $words[$start])
             && preg_match('/^\d+$/', (string) ($words[$start - 1]['text'] ?? ''));
@@ -65,8 +67,8 @@ final class PiiDetector
             if ($end > $start && !$this->adjacent($words[$end - 1], $words[$end])) {
                 break;
             }
-            $part = (string) ($words[$end]['text'] ?? '');
-            if (!preg_match('/^\d+$/', $part) || strlen($digits) + strlen($part) > 13) {
+            $part = $this->numericPart((string) ($words[$end]['text'] ?? ''));
+            if ($part === null || strlen($digits) + strlen($part) > 13) {
                 break;
             }
             $digits .= $part;
@@ -346,6 +348,14 @@ final class PiiDetector
         }
         $control = $sum % 11;
         return ($control === 10 ? 1 : $control) === (int) $value[12];
+    }
+
+    private function numericPart(string $text): ?string
+    {
+        if (str_ends_with($text, ',')) {
+            $text = substr($text, 0, -1);
+        }
+        return preg_match('/^\d+$/', $text) ? $text : null;
     }
 
     private function validIban(string $value): bool
