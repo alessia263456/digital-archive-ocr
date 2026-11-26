@@ -69,6 +69,15 @@ export const api = {
   recentDrafts: () => request('/api/drafts/recent'),
   draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
   draftOcr: (id) => request(`/api/drafts/${encodeURIComponent(id)}/ocr`),
+  draftEditor: (id) => request(`/api/drafts/${encodeURIComponent(id)}/editor`),
+  saveDraftEditorOcr: (id, ocrRevision, pages) => request(`/api/drafts/${encodeURIComponent(id)}/editor/ocr`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ocr_revision: ocrRevision, pages }),
+  }),
+  reviewDraftEditorPii: (id, ocrRevision, detectionRevision, decisions) => request(`/api/drafts/${encodeURIComponent(id)}/editor/pii-review`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, decisions }),
+  }),
   draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
   draftQueue: () => request('/api/drafts/queue'),
   retryDraft: (id) => request(`/api/drafts/${encodeURIComponent(id)}/retry`, { method: 'POST' }),

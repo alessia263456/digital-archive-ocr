@@ -6,8 +6,26 @@ use Illuminate\Support\Str;
 
 final class PiiDetector
 {
+    private bool $includeWordIndexes = false;
+
     /** @param list<array<string, mixed>> $words @return list<array{category:string, disposition:string, page:int, confidence:float, bounding_boxes:list<array{left:int,top:int,width:int,height:int}>}> */
     public function detect(array $words, int $page): array
+    {
+        return $this->detectCandidates($words, $page);
+    }
+
+    /** @param list<array<string, mixed>> $words @return list<array<string, mixed>> */
+    public function detectWithWordIndexes(array $words, int $page): array
+    {
+        $this->includeWordIndexes = true;
+        try {
+            return $this->detectCandidates($words, $page);
+        } finally {
+            $this->includeWordIndexes = false;
+        }
+    }
+
+    private function detectCandidates(array $words, int $page): array
     {
         $candidates = [];
         $ordered = array_values($words);
@@ -24,7 +42,8 @@ final class PiiDetector
 
         $unique = [];
         foreach ($candidates as $candidate) {
-            $key = $candidate['category'].'|'.json_encode($candidate['bounding_boxes'], JSON_THROW_ON_ERROR);
+            $key = $candidate['category'].'|'.json_encode($candidate['bounding_boxes'], JSON_THROW_ON_ERROR)
+                .'|'.($this->includeWordIndexes ? json_encode($candidate['word_indexes'] ?? [], JSON_THROW_ON_ERROR) : '');
             if (!isset($unique[$key]) || $candidate['disposition'] === 'review') {
                 $unique[$key] = $candidate;
             }
@@ -403,7 +422,7 @@ final class PiiDetector
                 ];
             }
         }
-        if ($boxes === []) {
+        if ($boxes === [] && !$this->includeWordIndexes) {
             return;
         }
         $candidates[] = [
@@ -412,6 +431,10 @@ final class PiiDetector
             'page' => $page,
             'confidence' => $this->score($words),
             'bounding_boxes' => $boxes,
+            ...($this->includeWordIndexes ? ['word_indexes' => array_values(array_map(
+                static fn (array $word): int => (int) ($word['_review_index'] ?? -1),
+                array_filter($words, static fn (array $word): bool => isset($word['_review_index']))
+            ))] : []),
         ];
     }
 }

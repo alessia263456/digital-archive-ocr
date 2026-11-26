@@ -8,6 +8,7 @@ use App\Jobs\ProcessDocumentDraft;
 use App\Services\MetadataSuggestionExtractor;
 use App\Services\DocumentDraftIntakeService;
 use App\Services\DraftAccessLogger;
+use App\Services\DocumentDraftPiiReview;
 use App\Services\DocumentStorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -211,6 +212,168 @@ final class DocumentDraftController
                 'words' => json_decode($page->words, true, flags: JSON_THROW_ON_ERROR),
             ])->values(),
         ]);
+    }
+
+    public function editor(Request $request, string $draft, DocumentDraftPiiReview $review, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->editorDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $pages = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)->orderBy('page')->get();
+        if ($pages->isEmpty()) return response()->json(['eroare' => 'Editorul nu este disponibil înainte de finalizarea OCR.'], 409);
+        if ($record->corrected_ocr === null) {
+            $record->corrected_ocr = $pages->map(fn ($page) => ['page' => (int) $page->page, 'text' => $page->text])->values()->all();
+        }
+        if ($record->detection_status !== 'ready' || (int) $record->detection_revision !== (int) $record->ocr_revision) {
+            try {
+                $record->pii_candidates = $review->detect($pages->all(), $record->corrected_ocr);
+                $record->detection_revision = (int) $record->ocr_revision;
+                $record->detection_status = 'ready';
+                $record->save();
+                $audit->record($request, $record, 'pii_detection_run');
+            } catch (\Throwable $exception) {
+                $record->pii_candidates = [];
+                $record->detection_status = 'failed';
+                $record->save();
+                $audit->record($request, $record, 'pii_detection_failed');
+            }
+        } else {
+            $record->save();
+        }
+        $audit->record($request, $record, 'editor_opened');
+        return response()->json($this->editorPayload($record, $pages));
+    }
+
+    public function saveEditorOcr(Request $request, string $draft, DocumentDraftPiiReview $review, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->editorDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $validator = Validator::make($request->all(), [
+            'ocr_revision' => 'required|integer|min:1',
+            'pages' => 'required|array|min:1',
+            'pages.*.page' => 'required|integer|min:1|distinct',
+            'pages.*.text' => 'required|string|max:1000000',
+        ]);
+        if ($validator->fails()) return response()->json(['eroare' => 'Textul OCR sau versiunea trimisă nu sunt valide.'], 422);
+        $inputPages = $validator->validated()['pages'];
+        $pages = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)->orderBy('page')->get();
+        if ($pages->count() !== count($inputPages) || array_column($inputPages, 'page') !== $pages->pluck('page')->map(fn ($page) => (int) $page)->all()) {
+            return response()->json(['eroare' => 'Trimiteți textul corectat pentru toate paginile, în ordinea documentului.'], 422);
+        }
+        [$record, $pages, $stale] = DB::transaction(function () use ($draft, $request, $inputPages, $audit): array {
+            $record = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if ($record === null || $record->status !== 'review_ready' || !$record->ocr_extraction_id) return [null, collect(), true];
+            if ((int) $request->input('ocr_revision') !== (int) $record->ocr_revision) return [$record, collect(), true];
+            $pages = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)->orderBy('page')->get();
+            if ($pages->count() !== count($inputPages) || array_column($inputPages, 'page') !== $pages->pluck('page')->map(fn ($page) => (int) $page)->all()) return [$record, collect(), true];
+            $record->corrected_ocr = array_map(static fn (array $page): array => ['page' => (int) $page['page'], 'text' => $page['text']], $inputPages);
+            $record->ocr_revision = (int) $record->ocr_revision + 1;
+            $record->detection_status = 'pending';
+            $record->detection_revision = 0;
+            $record->pii_candidates = [];
+            $record->save();
+            $audit->record($request, $record, 'ocr_corrections_saved');
+            return [$record, $pages, false];
+        });
+        if ($stale || $record === null) return response()->json(['eroare' => 'Textul OCR sau ordinea paginilor s-au modificat. Reîncărcați editorul.'], 409);
+        try {
+            $record->pii_candidates = $review->detect($pages->all(), $record->corrected_ocr);
+            $record->detection_revision = (int) $record->ocr_revision;
+            $record->detection_status = 'ready';
+            $current = DB::transaction(function () use ($draft, $record, $request, $audit): bool {
+                $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+                if ($locked === null || (int) $locked->ocr_revision !== (int) $record->ocr_revision) return false;
+                $locked->pii_candidates = $record->pii_candidates;
+                $locked->detection_revision = $record->detection_revision;
+                $locked->detection_status = 'ready';
+                $locked->save();
+                $audit->record($request, $locked, 'pii_detection_run');
+                return true;
+            });
+            if (!$current) return response()->json(['eroare' => 'Textul OCR s-a modificat între timp. Reîncărcați editorul.'], 409);
+            $record->refresh();
+        } catch (\Throwable $exception) {
+            $failedCurrent = DB::transaction(function () use ($draft, $record, $request, $audit): bool {
+                $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+                if ($locked === null || (int) $locked->ocr_revision !== (int) $record->ocr_revision) return false;
+                $locked->detection_status = 'failed';
+                $locked->pii_candidates = [];
+                $locked->save();
+                $audit->record($request, $locked, 'pii_detection_failed');
+                return true;
+            });
+            if (!$failedCurrent) return response()->json(['eroare' => 'Textul OCR s-a modificat între timp. Reîncărcați editorul.'], 409);
+            return response()->json([
+                'eroare' => 'Detectarea datelor personale a eșuat. Textul a fost salvat, dar rezultatele trebuie regenerate.',
+                'detection_status' => 'failed', 'ocr_revision' => $record->ocr_revision,
+            ], 500);
+        }
+        return response()->json($this->editorPayload($record, $pages));
+    }
+
+    public function reviewEditorPii(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->editorDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $validator = Validator::make($request->all(), [
+            'ocr_revision' => 'required|integer|min:1',
+            'detection_revision' => 'required|integer|min:0',
+            'decisions' => 'required|array|min:1',
+            'decisions.*.id' => 'required|uuid|distinct',
+            'decisions.*.review_status' => 'required|in:accepted,rejected',
+        ]);
+        if ($validator->fails()) return response()->json(['eroare' => 'Deciziile de revizuire nu sunt valide.'], 422);
+        if ($record->detection_status !== 'ready'
+            || (int) $request->input('ocr_revision') !== (int) $record->ocr_revision
+            || (int) $request->input('detection_revision') !== (int) $record->detection_revision) {
+            return response()->json(['eroare' => 'Rezultatele de detectare s-au schimbat. Reîncărcați editorul înainte de revizuire.'], 409);
+        }
+        [$candidates, $changed] = DB::transaction(function () use ($draft, $request, $audit, $validator): array {
+            $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if ($locked === null || $locked->detection_status !== 'ready'
+                || (int) $request->input('ocr_revision') !== (int) $locked->ocr_revision
+                || (int) $request->input('detection_revision') !== (int) $locked->detection_revision) return [[], false];
+            $candidates = $locked->pii_candidates ?? [];
+            $byId = [];
+            foreach ($candidates as $index => $candidate) $byId[$candidate['id']] = $index;
+            foreach ($validator->validated()['decisions'] as $decision) {
+                if (!isset($byId[$decision['id']])) return [[], false];
+                $candidates[$byId[$decision['id']]]['review_status'] = $decision['review_status'];
+            }
+            $locked->pii_candidates = $candidates;
+            $locked->save();
+            $audit->record($request, $locked, 'pii_review_updated');
+            return [$candidates, true];
+        });
+        if (!$changed) return response()->json(['eroare' => 'Rezultatele de detectare s-au schimbat. Reîncărcați editorul înainte de revizuire.'], 409);
+        return response()->json(['candidates' => $candidates]);
+    }
+
+    private function editorDraft(string $id): DocumentDraft|JsonResponse
+    {
+        $record = DocumentDraft::query()->find($id);
+        if ($record === null) return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
+        if ($record->status !== 'review_ready' || !$record->ocr_extraction_id) {
+            return response()->json(['eroare' => 'Editorul nu este disponibil înainte de finalizarea OCR.'], 409);
+        }
+        return $record;
+    }
+
+    private function editorPayload(DocumentDraft $record, $pages): array
+    {
+        $corrected = collect($record->corrected_ocr ?? [])->keyBy('page');
+        $candidates = $record->detection_status === 'ready' ? ($record->pii_candidates ?? []) : [];
+        return [
+            'id' => $record->id, 'status' => $record->status,
+            'ocr_revision' => (int) $record->ocr_revision,
+            'detection_status' => $record->detection_status,
+            'detection_revision' => (int) $record->detection_revision,
+            'pages' => $pages->map(fn ($page) => [
+                'page' => (int) $page->page, 'width' => (int) $page->width, 'height' => (int) $page->height,
+                'source_text' => $page->text, 'corrected_text' => $corrected->get((int) $page->page)['text'] ?? $page->text,
+                'words' => json_decode($page->words, true, flags: JSON_THROW_ON_ERROR),
+            ])->values()->all(),
+            'candidates' => $candidates,
+        ];
     }
 
     public function metadata(Request $request, string $draft, MetadataSuggestionExtractor $extractor, DraftAccessLogger $audit): JsonResponse

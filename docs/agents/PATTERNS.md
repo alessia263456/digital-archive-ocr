@@ -24,6 +24,7 @@
 - PATTERN-016 · Keep PII detector candidates geometry-only · candidate
 - PATTERN-017 · Import a checked-in CSV transactionally with row context · candidate
 - PATTERN-018 · Require metadata context before proposing OCR values · candidate
+- PATTERN-019 · Keep corrected-OCR locations conservative and revision-bound · candidate
 
 ---
 
@@ -126,3 +127,8 @@
 - **Status:** candidate
 - **How:** Extract values only when Romanian labels or domain phrases establish the field. Keep the OCR candidate separate from editable staff metadata, retain its source phrase and page, and omit values whose context or value is ambiguous.
 - **Example:** [Metadata extractor](../../backend/app/Services/MetadataSuggestionExtractor.php) and [extractor tests](../../backend/tests/Unit/MetadataSuggestionExtractorTest.php).
+
+## PATTERN-019 · Keep corrected-OCR locations conservative and revision-bound
+- **Status:** candidate
+- **How:** Detect against corrected OCR tokens, but retain source Bounding Boxes only for exact tokens with a unique source occurrence and unchanged neighboring-token evidence. Store a JavaScript UTF-16 offset span into corrected text for every candidate. If candidate tokens split, merge, repeat ambiguously, or fail alignment, keep the candidate reviewable with no boxes and disable automatic Redaction. Bind every review decision to both the OCR revision and successful detection revision.
+- **Example:** [Draft PII review service](../../backend/app/Services/DocumentDraftPiiReview.php) and [OCR review tests](../../backend/tests/Feature/DocumentDraftOcrReviewTest.php).

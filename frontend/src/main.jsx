@@ -194,7 +194,7 @@ function DraftQueue({ onReview, onUpload, onBack }) {
                     <strong className="queue-filename" title={item.name}>{item.name}</strong>
                     <span className={`queue-badge${activeTab === 'quarantine' ? ' warning' : ''}`}>{activeTab === 'review' ? 'În așteptarea revizuirii' : 'În carantină'}</span>
                     {activeTab === 'review'
-                      ? <><span className="muted">Revizuirea umană este obligatorie înainte de aprobare.</span><button className="queue-link" type="button" onClick={() => onReview(item)}>Începe revizuirea</button></>
+                      ? <><span className="muted">Revizuirea umană este obligatorie înainte de aprobare.</span><button className="queue-link" type="button" onClick={() => onReview(item)}>Deschide editorul</button></>
                       : <><span className="muted">4 încercări de OCR eșuate: încercarea inițială și 3 reîncercări.</span><div className="queue-actions"><button className="button secondary" type="button" onClick={() => retry(item)} disabled={busyDraft === item.id}>{busyDraft === item.id ? 'Se trimite…' : 'Reîncearcă procesarea'}</button><button className="button secondary" type="button" onClick={() => { setConfirming(item); setActionError(''); dialogRef.current?.showModal(); }} disabled={busyDraft === item.id}>Marchează ca eșuat definitiv</button></div></>}
                   </div>
                 </li>
@@ -317,6 +317,157 @@ function DraftOcrResults({ item, onBack }) {
           </button>
         </section>
       </div>
+    </main>
+  );
+}
+
+const piiCategoryLabels = {
+  cnp: 'Cod numeric personal', iban: 'Cont IBAN', email: 'Adresă de e-mail', phone: 'Număr de telefon',
+  signatory_name: 'Nume semnatar', address: 'Adresă', identity_card: 'Date din actul de identitate',
+  signatory_signature: 'Semnătura semnatarului', cadastral_identifier: 'Identificator cadastral',
+  vehicle_identifier: 'Identificator vehicul', cui_cif: 'CUI / CIF',
+};
+
+function DraftEditor({ item, onBack }) {
+  const [editor, setEditor] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [reloadRequired, setReloadRequired] = useState(false);
+  const dirty = Boolean(editor && pages.some((page, index) => page.text !== editor.pages[index]?.corrected_text));
+  const stale = dirty || editor?.detection_status !== 'ready' || editor?.detection_revision !== editor?.ocr_revision;
+
+  async function load() {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await api.draftEditor(item.id);
+      setEditor(result);
+      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setFeedback('');
+      setReloadRequired(false);
+      try { setPreview(await api.draftPreview(item.id)); } catch { setPreview(null); }
+    } catch (requestError) {
+      setError(requestError.message || 'Editorul nu a putut fi încărcat. Verificați sesiunea și încercați din nou.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [item.id]);
+
+  async function saveCorrections() {
+    if (!editor || !dirty || saving) return;
+    setSaving(true);
+    setError('');
+    setFeedback('Se salvează corecturile și se detectează din nou datele personale…');
+    try {
+      const result = await api.saveDraftEditorOcr(item.id, editor.ocr_revision, pages);
+      setEditor(result);
+      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setFeedback('Corecturile au fost salvate. Rezultatele PII sunt actualizate.');
+    } catch (requestError) {
+      if (requestError.body?.detection_status === 'failed') {
+        setEditor((current) => ({ ...current, ocr_revision: requestError.body.ocr_revision, detection_status: 'failed', candidates: [] }));
+        setReloadRequired(true);
+        setFeedback('Textul a fost salvat, dar detectarea PII a eșuat. Revizuirea este dezactivată.');
+      } else {
+        if (requestError.status === 409) {
+          setEditor((current) => ({ ...current, detection_status: 'stale' }));
+          setReloadRequired(true);
+        }
+        setFeedback('');
+        setError(requestError.message || 'Corecturile nu au putut fi salvate. Încercați din nou.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function decide(candidate, reviewStatus) {
+    if (!editor || stale) return;
+    setError('');
+    try {
+      const result = await api.reviewDraftEditorPii(item.id, editor.ocr_revision, editor.detection_revision, [{ id: candidate.id, review_status: reviewStatus }]);
+      setEditor((current) => ({ ...current, candidates: result.candidates }));
+      setFeedback('Decizia de revizuire a fost salvată.');
+    } catch (requestError) {
+      if (requestError.status === 409) {
+        setEditor((current) => ({ ...current, detection_status: 'stale' }));
+        setReloadRequired(true);
+      }
+      setError(requestError.message || 'Decizia nu a putut fi salvată. Reîncărcați editorul și încercați din nou.');
+    }
+  }
+
+  return (
+    <main className="editor-wrap" aria-busy={loading || saving}>
+      <div className="editor-heading">
+        <button className="button secondary" type="button" onClick={onBack}>Înapoi la cozi</button>
+        <div><h1>Editor document</h1><p className="muted">Ciornă privată · corecturile și revizuirea PII nu aprobă documentul.</p></div>
+      </div>
+      <nav className="editor-steps" aria-label="Pașii revizuirii">
+        <ol>
+          <li><span>1</span><strong>Date document</strong><small>În așteptare</small></li>
+          <li aria-current="step"><span>2</span><strong>Corectare OCR</strong><small>{dirty ? 'Corecturi nesalvate' : 'Text extras'}</small></li>
+          <li><span>3</span><strong>Revizuire PII</strong><small>{stale ? 'Rezultate neactualizate' : 'De revizuit'}</small></li>
+          <li><span>4</span><strong>Verificare finală</strong><small>În așteptare</small></li>
+        </ol>
+      </nav>
+      {loading ? <p className="editor-state" role="status">Se încarcă editorul…</p>
+        : error && !editor ? <section className="editor-state editor-error"><p role="alert">{error}</p><button className="button secondary" type="button" onClick={load}>Reîncearcă încărcarea</button></section>
+          : editor && <>
+            {error && <p className="editor-feedback error" role="alert">{error}</p>}
+            {reloadRequired && <div className="editor-actions"><button className="button secondary" type="button" onClick={load}>Reîncarcă editorul</button></div>}
+            {feedback && <p className="editor-feedback" role="status" aria-live="polite">{feedback}</p>}
+            <div className="editor-grid">
+              <section className="editor-card" aria-labelledby="editor-preview-title">
+                <header><h2 id="editor-preview-title">Document original</h2><p className="muted">Previzualizare privată · paginile nu sunt modificate.</p></header>
+                {preview?.pages?.length ? <div className="editor-preview-pages">{preview.pages.map((page) => page.kind === 'image'
+                  ? <img key={page.page} src={page.url} alt={`Pagina ${page.page} din document`} />
+                  : <iframe key={page.page} title={`Document original · pagina ${page.page}`} src={page.url} />)}</div>
+                  : <p className="editor-state">Previzualizarea documentului nu este disponibilă.</p>}
+              </section>
+              <section className="editor-card" aria-labelledby="ocr-edit-title">
+                <header><h2 id="ocr-edit-title">Corectare OCR</h2><p className="muted">Textul extras rămâne păstrat separat. Corectați textul folosind documentul original.</p></header>
+                <div className="editor-pages">{pages.map((page, index) => {
+                  const source = editor.pages[index];
+                  return <article className="editor-page" key={page.page}>
+                    <label htmlFor={`editor-ocr-${page.page}`}>Corectare OCR · Pagina {page.page}</label>
+                    <textarea id={`editor-ocr-${page.page}`} rows="12" value={page.text} spellCheck="false" onChange={(event) => setPages((current) => current.map((entry, position) => position === index ? { ...entry, text: event.target.value } : entry))} />
+                    <details><summary>Casete de delimitare · {source.words.length} cuvinte</summary>
+                      {source.words.length ? <ul className="editor-word-list">{source.words.map((word, wordIndex) => <li key={`${word.left}-${word.top}-${wordIndex}`}><span>{word.text}</span><code>{word.left}, {word.top} · {word.width} × {word.height} px · {word.confidence}%</code></li>)}</ul> : <p className="muted">Nu există casete de delimitare pentru această pagină.</p>}
+                    </details>
+                  </article>;
+                })}</div>
+                {dirty && <p className="editor-warning" role="status">Rezultatele detectării sunt neactualizate.</p>}
+                {editor.detection_status === 'failed' && <p className="editor-warning" role="alert">Detectarea PII a eșuat. Rezultatele anterioare nu pot fi revizuite.</p>}
+                <div className="editor-actions"><button className="button" type="button" onClick={saveCorrections} disabled={!dirty || saving}>{saving ? 'Se salvează…' : 'Salvează corecturile'}</button></div>
+              </section>
+            </div>
+            <section className="editor-card editor-review" aria-labelledby="pii-review-title">
+              <header><h2 id="pii-review-title">Revizuire PII</h2><p className="muted">Verificați fiecare potrivire înainte de anonimizare.</p></header>
+              {stale && <p className="editor-warning">Salvați textul și așteptați o detectare reușită înainte de a revizui potrivirile.</p>}
+              {!stale && editor.candidates.length === 0 && <p className="editor-state">Nu au fost găsite potriviri PII.</p>}
+              <ul className="editor-candidates">{editor.candidates.map((candidate) => {
+                const page = editor.pages.find((entry) => entry.page === candidate.page);
+                const span = candidate.corrected_text_span;
+                const excerpt = page ? page.corrected_text.slice(span.start, span.start + span.length) : '';
+                return <li key={candidate.id}>
+                  <div className="editor-candidate-copy"><strong>{piiCategoryLabels[candidate.category] || candidate.category}</strong><span>{excerpt}</span><small>Pagina {candidate.page} · Încredere {Math.round(candidate.confidence)}%</small>
+                    <small>{candidate.location_status === 'reliable' ? 'Casete de delimitare asociate' : 'Necesită verificarea manuală a localizării'}</small>
+                    {candidate.bounding_boxes.length > 0 && <code>{candidate.bounding_boxes.map((box) => `${box.left}, ${box.top} · ${box.width} × ${box.height} px`).join(' | ')}</code>}
+                    {candidate.location_status === 'manual_review_required' && <span className="editor-warning">Localizarea nu este sigură pentru anonimizare automată.</span>}
+                    {candidate.review_status !== 'pending' && <span className="editor-review-status">{candidate.review_status === 'accepted' ? 'Acceptată' : 'Respinsă'}</span>}
+                  </div>
+                  <div className="editor-actions"><button className="button secondary" type="button" onClick={() => decide(candidate, 'accepted')} disabled={stale || candidate.review_status === 'accepted'}>Acceptă potrivirea</button><button className="button secondary" type="button" onClick={() => decide(candidate, 'rejected')} disabled={stale || candidate.review_status === 'rejected'}>Respinge potrivirea</button></div>
+                </li>;
+              })}</ul>
+            </section>
+          </>}
     </main>
   );
 }
@@ -756,9 +907,11 @@ function Application() {
   const content = staffRole && screen === 'upload'
     ? <UploadScreen onBack={() => setScreen('home')} />
     : staffRole && screen === 'queue'
-      ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`review:${item.id}`)} />
+      ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`editor:${item.id}`)} />
       : staffRole && screen.startsWith('review:')
         ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
+        : staffRole && screen.startsWith('editor:')
+          ? <DraftEditor item={{ id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} />
         : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
 
   return <AppShell user={user} screen={screen} onNavigate={setScreen} onLogout={logout} busy={busy}>{content}</AppShell>;

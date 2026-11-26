@@ -24,6 +24,9 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
     Route::post('/drafts/{draft}/permanent-failure', [DocumentDraftController::class, 'permanentFailure'])->name('drafts.permanent-failure');
     Route::get('/drafts/{draft}', [DocumentDraftController::class, 'show'])->name('drafts.show');
     Route::get('/drafts/{draft}/ocr', [DocumentDraftController::class, 'ocr'])->name('drafts.ocr');
+    Route::get('/drafts/{draft}/editor', [DocumentDraftController::class, 'editor'])->name('drafts.editor');
+    Route::patch('/drafts/{draft}/editor/ocr', [DocumentDraftController::class, 'saveEditorOcr'])->name('drafts.editor.ocr');
+    Route::patch('/drafts/{draft}/editor/pii-review', [DocumentDraftController::class, 'reviewEditorPii'])->name('drafts.editor.pii-review');
     Route::get('/drafts/{draft}/metadata', [DocumentDraftController::class, 'metadata'])->name('drafts.metadata');
     Route::patch('/drafts/{draft}/metadata', [DocumentDraftController::class, 'updateMetadata'])->name('drafts.metadata.update');
     Route::post('/drafts/{draft}/metadata/confirm', [DocumentDraftController::class, 'confirmMetadata'])->name('drafts.metadata.confirm');

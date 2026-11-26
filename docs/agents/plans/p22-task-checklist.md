@@ -152,7 +152,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [x] P22-13b · Prove corrupt-then-valid flow
   - On 2026-11-25, the opt-in browser check passed against an isolated disposable PostgreSQL database and real OCR queue worker: a synthetic malformed PDF reached `quarantined` after the initial attempt plus three retries, while its valid Romanian image sibling reached `review_ready`; both appeared in the protected DS-004 queue. The dedicated Compose project and volumes were removed afterward.
 - [x] P22-15 · Notifications and quarantine actions
-  - Preserved existing per-Arhivar failure notifications; added protected review/quarantine queue, retry and confirmed permanent-failure actions with actor/draft/time audit events. Permanent failure retains the draft and private objects but removes it from active queues. DS-004 hands review-ready drafts to protected OCR results until DS-011 exists; notification panel remains P22-48 scope.
+  - Preserved existing per-Arhivar failure notifications; added protected review/quarantine queue, retry and confirmed permanent-failure actions with actor/draft/time audit events. Permanent failure retains the draft and private objects but removes it from active queues. DS-004 starts or resumes review-ready drafts in DS-011 after P22-24a/b; notification panel remains P22-48 scope.
 - [x] P22-23 · DS-003 upload
   - DS-003 supports batch PDF/DOCX intake with independent results, one ordered JPG/PNG collection with page controls, and staff-only recovery of up to 50 persisted drafts. The Screen refreshes status on request and reopens protected read-only OCR results for review-ready drafts. [M1b plan](p22-m1b-batch-intake-completion.md)
   - The frontend production build and Playwright passed across desktop and mobile in both themes (100 passed, 20 opt-in cases skipped in the default run). Browser checks covered indexed batch outcomes, partial request errors, image ordering and undo, legacy filenames, reload recovery, and manual status refresh. Inspected DS-003 screenshots are in `docs/design/screens/`, including 320px and 1600px captures.
@@ -180,15 +180,18 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
   - PHPUnit `NomenclatureImportTest.php`: 4 tests, 308 assertions passed, including all 49 source rows, all six Retention Computation Bases, repeated Archival Indicators, retention terms, C.S. flags, rollback, and re-import IDs.
 - [ ] P22-22 · Metadata suggestions and classification
   - Backend extraction, draft persistence, role-protected metadata endpoints, and derived classification are implemented and tested. Production DS-011 UI wiring remains for the later DS-011 tasks, as requested by the owner; this item stays open until that work is complete.
-- [ ] P22-24a · Build DS-011 OCR editing
-- [ ] P22-24b · Build DS-011 candidate review
+- [x] P22-24a · Build DS-011 OCR editing
+  - Persisted corrected OCR separately from source OCR/TSV. OCR edits advance a guarded revision and run the detector on corrected text. Unique, neighbor-supported token matches retain source Bounding Boxes; uncertain matches use JavaScript UTF-16 text spans without boxes. PHPUnit covers source preservation, revisions, split-token handling, and Unicode spans. Full PHPUnit passed: 142 tests, 1,083 assertions, 3 OCR-only skips.
+- [x] P22-24b · Build DS-011 candidate review
+  - Added protected editor load, correction and PII review endpoints under C-004. Candidate values are absent from records and audits; stale/failed results invalidate review. Manual-location candidates have no boxes and cannot be automatically redacted. Reviewer decisions persist under OCR and detection revision guards. Frontend Playwright passed: 132 passed, 24 opt-in real API checks skipped. Desktop and 320px mobile screenshots in light and dark are saved under `docs/design/screens/DS-011*`.
 - [ ] P22-26 · Retention calculation and validation
 - [ ] P22-27a · Draw and preview manual Redaction
 - [ ] P22-27b · Capture metadata and review confirmation
 - [ ] P22-28a · Implement immutable version publication
 - [ ] P22-28b · Wire Editor publication and verify
 - [ ] P22-29 · Possible duplicates
-- [ ] P22-45 · DS-004 review and quarantine queues — completion after Editor navigation is integrated
+- [x] P22-45 · DS-004 review and quarantine queues
+  - DS-004 review-ready actions open or resume the selected draft in DS-011. Existing quarantine, retry and permanent-failure actions remain covered by queue feature tests and Playwright. Browser queue handoff passed in desktop and mobile, light and dark.
 
 ## M3 · Search, permissions and document viewing · target Nov 28–29
 

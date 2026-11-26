@@ -24,7 +24,7 @@ export function AppShell({ user, screen, onNavigate, onLogout, busy, children })
   const [minimized, setMinimized] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const visibleItems = navigationItems.filter((item) => item.roles.includes(user.role));
-  const activeScreen = screen.startsWith('review:') ? 'queue' : screen;
+  const activeScreen = screen.startsWith('review:') || screen.startsWith('editor:') ? 'queue' : screen;
 
   useEffect(() => {
     function closeOnEscape(event) {
