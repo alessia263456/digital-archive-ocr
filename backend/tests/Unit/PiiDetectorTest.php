@@ -58,6 +58,38 @@ final class PiiDetectorTest extends TestCase
         self::assertSame(['review', 'review'], array_column($candidates, 'disposition'));
     }
 
+    public function test_cnp_anchor_near_at_least_ten_digit_tokens_produces_value_free_review_cue(): void
+    {
+        $words = [
+            $this->word('CNP', 1, 1, 0, 0, 25, 10, 99),
+            $this->word('18001', 1, 2, 30, 0, 35, 10, 88),
+            $this->word('01220', 1, 3, 70, 0, 35, 10, 72),
+        ];
+
+        $candidates = (new PiiDetector)->detect($words, 4);
+
+        self::assertCount(1, $candidates);
+        self::assertSame('cnp', $candidates[0]['category']);
+        self::assertSame('review', $candidates[0]['disposition']);
+        self::assertSame(4, $candidates[0]['page']);
+        self::assertSame(72.0, $candidates[0]['confidence']);
+        self::assertSame([$this->box($words[1]), $this->box($words[2])], $candidates[0]['bounding_boxes']);
+        self::assertArrayNotHasKey('text', $candidates[0]);
+        self::assertArrayNotHasKey('value', $candidates[0]);
+        self::assertStringNotContainsString('1800101220', json_encode($candidates, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_cnp_anchor_near_fewer_than_ten_digit_tokens_does_not_produce_a_cue(): void
+    {
+        $words = [
+            $this->word('CNP', 1, 1, 0, 0, 25, 10, 99),
+            $this->word('18001', 1, 2, 30, 0, 35, 10, 88),
+            $this->word('0122', 1, 3, 70, 0, 30, 10, 72),
+        ];
+
+        self::assertSame([], (new PiiDetector)->detect($words, 4));
+    }
+
     public function test_iban_checksum_and_context_and_confidence_cutoff(): void
     {
         $words = [
