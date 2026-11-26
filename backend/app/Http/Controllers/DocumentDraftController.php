@@ -430,7 +430,7 @@ final class DocumentDraftController
                     $images[] = $path;
                 }
                 if ($images === []) throw new \RuntimeException('Colecția de imagini este goală.');
-                (new Process(['img2pdf', '--output', $source, ...$images]))->mustRun();
+                (new Process(['img2pdf', '--imgsize', '300dpi', '--output', $source, ...$images]))->mustRun();
             } else {
                 if (!$sourceKey || !$storage->exists($sourceKey)) throw new \RuntimeException('Sursă indisponibilă.');
                 $stream = $storage->readStream($sourceKey); if (!$stream) throw new \RuntimeException('Sursă indisponibilă.');
@@ -501,7 +501,7 @@ final class DocumentDraftController
                     $images[] = $path;
                 }
                 if ($images === []) throw new \RuntimeException('Colecția de imagini este goală.');
-                (new Process(['img2pdf', '--output', $source, ...$images]))->mustRun();
+                (new Process(['img2pdf', '--imgsize', '300dpi', '--output', $source, ...$images]))->mustRun();
             } else {
                 if (!$sourceKey || !$storage->exists($sourceKey)) throw new \RuntimeException('Sursă indisponibilă.');
                 $stream = $storage->readStream($sourceKey); if (!$stream) throw new \RuntimeException('Sursă indisponibilă.');
