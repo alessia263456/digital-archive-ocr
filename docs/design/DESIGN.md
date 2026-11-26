@@ -107,6 +107,10 @@ them; a ticket with UI has a design subtask instead (team addon).
 | `--color-danger` | `#C53030` | `#F87171` | Destructive actions and expired retention deadlines |
 | `--color-danger-bg` | `#FFF5F5` | `#451A1A` | Subtle background for destructive and error messages |
 | `--color-danger-border` | `#FEB2B2` | `#7F1D1D` | Border for destructive and error messages |
+| `--color-shell-brand` | `#045744` | `#072D5C` | AppShell header sampled from the shared navigation reference; existing deep navy in dark mode |
+| `--color-navigation-active-bg` | `#99EBDB` | `#334155` | Active navigation item sampled from the shared navigation reference; existing dark border tone in dark mode |
+| `--color-navigation-active-text` | `#072D5C` | `#F8FAFC` | Active navigation label and icon; dark mode uses the existing primary text color |
+| `--color-shell-text` | `#FFFFFF` | `#FFFFFF` | Text and icons on the AppShell brand header |
 
 ### Typography
 | Token | Family | Size / line height | Weight | Use |

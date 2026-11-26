@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ro" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Navigare comună · Arhivă digitală</title>
+  <style>
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(../fonts/public-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-024F, U+1E00-1EFF; }
+    @font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(../fonts/public-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF; }
+    :root {
+      color-scheme: light;
+      --color-bg-primary: #FAF8F5; --color-bg-surface: #FFFFFF; --color-bg-subtle: #F2EFE9;
+      --color-text-primary: #072D5C; --color-text-secondary: #556070; --color-border: #E5E0D8;
+      --color-primary: #072D5C; --color-shell-brand: #045744; --color-shell-text: #FFFFFF;
+      --color-navigation-active-bg: #99EBDB; --color-navigation-active-text: #072D5C;
+      --color-accent-mid: #4683CF; --color-accent-teal: #46CFC3; --color-accent-amber: #CE8946;
+      --color-version-navy: #072D5C; --color-focus-ring: #4683CF;
+      --font-body: 'Public Sans', system-ui, sans-serif; --font-heading: var(--font-body);
+      --text-h1: 700 32px/40px var(--font-heading); --text-h2: 600 24px/32px var(--font-heading);
+      --text-h3: 600 18px/26px var(--font-heading); --text-body: 400 16px/24px var(--font-body);
+      --text-small: 400 14px/20px var(--font-body); --space-xs: 4px; --space-sm: 8px;
+      --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px;
+      --radius-sm: 2px; --radius-md: 4px; --shadow-card: 0 1px 2px rgb(0 0 0 / 5%);
+      --duration-fast: 150ms ease; --duration-normal: 250ms ease;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark; --color-bg-primary: #1E293B; --color-bg-surface: #283548; --color-bg-subtle: #16202E;
+      --color-text-primary: #F8FAFC; --color-text-secondary: #94A3B8; --color-border: #334155;
+      --color-primary: #4683CF; --color-shell-brand: #072D5C; --color-shell-text: #FFFFFF;
+      --color-navigation-active-bg: #334155; --color-navigation-active-text: #F8FAFC;
+      --color-accent-mid: #60A5FA; --color-focus-ring: #46CFC3;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { min-block-size: 100vh; margin: 0; background: var(--color-bg-primary); color: var(--color-text-primary); font: var(--text-small); }
+    button, select { color: inherit; font: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: var(--radius-sm) solid var(--color-focus-ring); outline-offset: var(--space-xs); }
+    h1, h2, h3, p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    .mock-tools { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-md); min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-md); border-block-end: thin solid var(--color-border); background: var(--color-bg-subtle); }
+    .mock-tools label { display: flex; align-items: center; gap: var(--space-xs); color: var(--color-text-secondary); }
+    .mock-tools select, .theme-button { min-block-size: var(--space-xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .shell { display: grid; grid-template-rows: auto minmax(0, 1fr); min-block-size: calc(100vh - var(--space-2xl)); max-inline-size: 1600px; margin-inline: auto; overflow: hidden; border: thin solid var(--color-border); border-block-start: 0; border-radius: 0 0 var(--radius-md) var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .app-header { display: flex; align-items: center; gap: var(--space-md); min-block-size: var(--space-3xl); padding: var(--space-xs) var(--space-md); background: var(--color-shell-brand); color: var(--color-shell-text); }
+    .brand-icon { display: grid; flex: none; place-items: center; inline-size: var(--space-xl); block-size: var(--space-xl); color: #FFFFFF; }
+    .brand-icon svg { inline-size: 100%; block-size: 100%; }
+    .brand-divider { inline-size: 1px; block-size: var(--space-xl); background: color-mix(in srgb, var(--color-shell-text) 65%, transparent); }
+    .brand-name { flex: none; font: var(--text-body); font-weight: 600; }
+    .cabinet-name { overflow: hidden; color: color-mix(in srgb, var(--color-shell-text) 88%, transparent); font: var(--text-small); text-overflow: ellipsis; white-space: nowrap; }
+    .header-actions { display: flex; align-items: center; gap: var(--space-sm); margin-inline-start: auto; }
+    .icon-button { display: grid; flex: none; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border: 0; border-radius: var(--radius-md); background: transparent; color: inherit; }
+    .icon-button:hover { background: color-mix(in srgb, var(--color-shell-text) 14%, transparent); }
+    .icon-button svg { inline-size: var(--space-md); block-size: var(--space-md); }
+    .account-button { display: flex; align-items: center; gap: var(--space-xs); min-block-size: var(--space-2xl); padding-inline: var(--space-xs); border: 0; border-radius: var(--radius-md); background: transparent; color: inherit; }
+    .account-button:hover { background: color-mix(in srgb, var(--color-shell-text) 14%, transparent); }
+    .account-avatar { display: grid; place-items: center; inline-size: var(--space-xl); block-size: var(--space-xl); border-radius: 50%; background: var(--color-shell-text); color: var(--color-shell-brand); }
+    .account-avatar svg { inline-size: var(--space-md); block-size: var(--space-md); }
+    .mobile-menu-button, .mobile-close { display: none; }
+    .shell-body { display: grid; grid-template-columns: calc(var(--space-3xl) * 3 + var(--space-md)) minmax(0, 1fr); min-block-size: 0; }
+    .shell[data-sidebar="minimized"] .shell-body { grid-template-columns: calc(var(--space-3xl) + var(--space-sm)) minmax(0, 1fr); }
+    .sidebar { display: flex; flex-direction: column; min-inline-size: 0; padding: var(--space-md); border-inline-end: thin solid var(--color-border); background: var(--color-bg-surface); }
+    .nav-toggle { display: none; align-items: center; justify-content: flex-end; min-block-size: var(--space-2xl); margin-block-end: var(--space-sm); }
+    .nav-toggle button { display: grid; place-items: center; inline-size: var(--space-2xl); block-size: var(--space-2xl); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-primary); }
+    .nav-toggle button:hover { background: var(--color-bg-subtle); }
+    .nav-toggle .mobile-close { display: none; }
+    .nav-toggle svg { inline-size: var(--space-md); block-size: var(--space-md); }
+    .desktop-toggle { background: color-mix(in srgb, var(--color-shell-text) 14%, transparent); }
+    .nav-list { display: grid; gap: var(--space-xs); }
+    .nav-link { display: flex; align-items: center; gap: var(--space-sm); min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-md); color: var(--color-text-primary); font-weight: 600; text-decoration: none; transition: background-color var(--duration-fast), color var(--duration-fast); }
+    .nav-link:hover { background: var(--color-bg-subtle); }
+    .nav-link[aria-current="page"] { background: var(--color-navigation-active-bg); color: var(--color-navigation-active-text); }
+    .nav-icon { display: grid; flex: none; place-items: center; inline-size: var(--space-lg); block-size: var(--space-lg); color: var(--color-primary); }
+    .nav-icon svg { inline-size: var(--space-md); block-size: var(--space-md); }
+    .nav-label { min-inline-size: 0; overflow-wrap: anywhere; }
+    .nav-spacer { flex: 1; min-block-size: var(--space-xl); }
+    .admin-entry { margin-block-start: var(--space-sm); padding-block-start: var(--space-sm); border-block-start: thin solid var(--color-border); }
+    .shell[data-sidebar="minimized"] .sidebar { padding-inline: var(--space-sm); }
+    .shell[data-sidebar="minimized"] .nav-toggle { justify-content: center; }
+    .shell[data-sidebar="minimized"] .nav-link { justify-content: center; padding-inline: var(--space-xs); }
+    .shell[data-sidebar="minimized"] .nav-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .workspace { min-inline-size: 0; padding: var(--space-md); }
+    .page-heading { margin-block-end: var(--space-sm); font: var(--text-h3); }
+    .search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm); margin-block-end: var(--space-sm); }
+    .search-row input { min-inline-size: 0; min-block-size: calc(var(--space-2xl) - var(--space-xs)); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); color: var(--color-text-primary); font: var(--text-small); }
+    .search-row input::placeholder { color: var(--color-text-secondary); opacity: 1; }
+    .search-button { min-inline-size: calc(var(--space-3xl) + var(--space-md)); min-block-size: calc(var(--space-2xl) - var(--space-xs)); padding-inline: var(--space-md); border: 0; border-radius: var(--radius-md); background: var(--color-accent-teal); color: var(--color-version-navy); font-weight: 700; }
+    .archive-layout { display: grid; grid-template-columns: minmax(calc(var(--space-3xl) * 2 + var(--space-xl)), calc(var(--space-3xl) * 3)) minmax(0, 1fr); align-items: start; gap: var(--space-md); }
+    .filters, .content-area { min-inline-size: 0; }
+    .filters { display: grid; gap: var(--space-sm); padding: var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+    .filters h2 { font: var(--text-h3); }
+    .field { display: grid; gap: var(--space-xs); }
+    .field label { font-weight: 600; }
+    .field select, .field input { min-inline-size: 0; inline-size: 100%; min-block-size: var(--space-xl); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-surface); color: var(--color-text-primary); }
+    .content-area { display: grid; gap: var(--space-sm); }
+    .content-section { min-inline-size: 0; padding-block-end: var(--space-sm); border-block-end: thin solid var(--color-border); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-block-end: var(--space-xs); font-weight: 700; }
+    .section-heading a { color: var(--color-accent-mid); font-weight: 600; }
+    .folder-row { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); }
+    .folder { display: grid; justify-items: center; gap: var(--space-xs); inline-size: calc(var(--space-3xl) + var(--space-md)); min-block-size: calc(var(--space-3xl) + var(--space-xs)); padding: var(--space-xs); border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-primary); text-align: center; cursor: pointer; }
+    .folder:hover { background: var(--color-bg-subtle); }
+    .folder-icon { inline-size: var(--space-xl); block-size: var(--space-lg); border-radius: var(--radius-sm); background: var(--color-accent-amber); clip-path: polygon(0 20%, 42% 20%, 54% 0, 100% 0, 100% 100%, 0 100%); }
+    .folder span:last-child { font-weight: 600; }
+    .recent-list { display: grid; gap: var(--space-xs); }
+    .recent-item { min-inline-size: 0; padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-surface); }
+    .recent-item strong { display: block; overflow-wrap: anywhere; color: var(--color-primary); }
+    .recent-meta { color: var(--color-text-secondary); font: var(--text-small); }
+    .mobile-backdrop { display: none; }
+    @media (max-width: 639px) {
+      .mock-tools { justify-content: flex-start; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); }
+      .shell { min-block-size: calc(100vh - var(--space-2xl)); border-inline: 0; border-radius: 0; }
+      .app-header { gap: var(--space-sm); min-block-size: var(--space-3xl); padding-inline: var(--space-sm); }
+      .mobile-menu-button { display: grid; }
+      .brand-icon { inline-size: var(--space-lg); block-size: var(--space-lg); }
+      .brand-divider { block-size: var(--space-lg); }
+      .brand-name { font: var(--text-small); font-weight: 600; }
+      .cabinet-name { display: none; }
+      .header-actions { gap: 0; }
+      .header-actions .account-label { display: none; }
+      .account-button { padding-inline: 0; }
+      .shell-body { display: block; }
+      .sidebar[hidden] { display: none; }
+      .sidebar:not([hidden]) { position: fixed; z-index: 3; inset-block: 0; inset-inline-start: 0; inline-size: min(84vw, calc(var(--space-3xl) * 4)); padding: var(--space-md); box-shadow: var(--shadow-card); }
+      .sidebar:not([hidden]) .nav-toggle { display: flex; justify-content: flex-end; }
+      .sidebar:not([hidden]) .nav-toggle .mobile-close { display: grid; }
+      .desktop-toggle { display: none; }
+      .mobile-backdrop:not([hidden]) { position: fixed; z-index: 2; inset: 0; display: block; inline-size: 100%; block-size: 100%; border: 0; background: color-mix(in srgb, var(--color-shell-brand) 35%, transparent); }
+      .workspace { padding: var(--space-sm); }
+      .page-heading { font: var(--text-h3); }
+      .archive-layout { grid-template-columns: minmax(0, 1fr); }
+      .filters { order: 1; }
+      .content-area { order: 2; }
+      .folder-row { gap: var(--space-xs); }
+      .folder { flex: 1 1 calc(25% - var(--space-xs)); inline-size: auto; min-inline-size: calc(var(--space-3xl) - var(--space-xs)); }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <aside class="mock-tools" aria-label="Comenzi demonstrative">
+    <label>Rol demonstrat
+      <select id="role-select" aria-label="Rol demonstrat">
+        <option value="admin">Administrator</option>
+        <option value="arhivar">Arhivar</option>
+        <option value="cititor">Cititor</option>
+      </select>
+    </label>
+    <button class="theme-button" id="theme-toggle" type="button" aria-label="Activează tema întunecată">Temă: deschisă</button>
+  </aside>
+  <main class="shell" id="app-shell" data-sidebar="expanded" data-role="admin" role="application" aria-label="Arhivă digitală">
+    <header class="app-header">
+      <button class="icon-button desktop-toggle" id="desktop-sidebar-toggle" type="button" aria-label="Minimizează meniul" aria-expanded="true" aria-controls="main-navigation" title="Minimizează meniul">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 6 6 6-6 6m6-12 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-button mobile-menu-button" id="mobile-menu-open" type="button" aria-label="Deschide meniul" aria-controls="main-sidebar" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 11 16 4l13 7H3Zm2 2h4v11H5zm9 0h4v11h-4zm9 0h4v11h-4zM3 27h26v2H3zm2-2h22v2H5z" fill="currentColor"/></svg></span>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-name">Arhivă digitală</span>
+      <span class="cabinet-name">Cabinet Individual Notarial&nbsp; · &nbsp;Gestionare, căutare și procesare documente</span>
+      <div class="header-actions">
+        <button class="icon-button" type="button" aria-label="Notificări, 3 necitite">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="5" r="2.5" fill="var(--color-accent-teal)" stroke="var(--color-shell-brand)"/></svg>
+        </button>
+        <button class="account-button" type="button" aria-label="Cont: elena, administrator">
+          <span class="account-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21a8 8 0 0 1 16 0" fill="currentColor"/></svg></span>
+          <span class="account-label">elena</span><span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+    </header>
+    <div class="shell-body">
+      <aside class="sidebar" id="main-sidebar">
+        <div class="nav-toggle">
+          <button class="mobile-close" id="mobile-menu-close" type="button" aria-label="Închide meniul">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <nav id="main-navigation" aria-label="Navigare principală">
+          <ul class="nav-list" id="nav-primary"></ul>
+          <div class="nav-spacer"></div>
+          <ul class="nav-list admin-entry" id="nav-admin"></ul>
+        </nav>
+      </aside>
+      <button class="mobile-backdrop" id="mobile-backdrop" type="button" aria-label="Închide meniul" hidden></button>
+      <section class="workspace" aria-labelledby="archive-title">
+        <h1 class="page-heading" id="archive-title">Căutare în arhivă</h1>
+        <form class="search-row" role="search" onsubmit="return false">
+          <input aria-label="Caută după text sau număr de dosar" placeholder="Caută după text sau număr de dosar">
+          <button class="search-button" type="button">Caută</button>
+        </form>
+        <div class="archive-layout">
+          <section class="filters" aria-labelledby="filters-title">
+            <h2 id="filters-title">Filtre</h2>
+            <div class="field"><label for="folder-filter">Dosar fizic</label><select id="folder-filter"><option>Toate dosarele</option></select></div>
+            <div class="field"><label for="type-filter">Tipul documentului</label><select id="type-filter"><option>Toate tipurile</option></select></div>
+            <div class="field"><label for="year-filter">Anul actului</label><select id="year-filter"><option>Toți anii</option></select></div>
+            <div class="field"><label for="name-filter">Nume din acte</label><input id="name-filter" placeholder="Caută un nume din acte"></div>
+          </section>
+          <div class="content-area">
+            <section class="content-section" aria-labelledby="type-heading">
+              <h2 class="section-heading" id="type-heading">După tipul documentului <a href="#tipuri">Vezi toate⌄</a></h2>
+              <div class="folder-row"><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Procuri</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Succesiuni</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Cereri / Proiecte</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Declarații</span></button></div>
+            </section>
+            <section class="content-section" aria-labelledby="folder-heading">
+              <h2 class="section-heading" id="folder-heading">După dosar fizic <a href="#dosare">Vezi toate⌄</a></h2>
+              <div class="folder-row"><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Dosar nr. 004<br>Procuri · 2026</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Dosar nr. 004<br>Succesiuni · 2026</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Dosar nr. 018/2025</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>Dosar nr. 29/2014</span></button></div>
+            </section>
+            <section class="content-section" aria-labelledby="year-heading">
+              <h2 class="section-heading" id="year-heading">După an <a href="#ani">Vezi toate⌄</a></h2>
+              <div class="folder-row"><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>2026</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>2025</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>2024</span></button><button class="folder"><span class="folder-icon" aria-hidden="true"></span><span>2023</span></button></div>
+            </section>
+            <section aria-labelledby="recent-heading">
+              <h2 class="section-heading" id="recent-heading">Adăugate recent</h2>
+              <ul class="recent-list">
+                <li class="recent-item"><strong>Procură pentru vânzarea unui imobil</strong><span class="recent-meta">Procură · Act nr. 184 · Data actului: 12.05.2026 · Dosar nr. 004 · Adăugat la arhivă 23.11.2026</span></li>
+                <li class="recent-item"><strong>Certificat de moștenitor</strong><span class="recent-meta">Testament / Succesiune · Act nr. 58/2024 · Dosar nr. 004 · Adăugat la arhivă 22.11.2026</span></li>
+                <li class="recent-item"><strong>Cerere de deschidere a succesiunii</strong><span class="recent-meta">Succesiune · Act nr. 17 · Dosar nr. 018/2025</span></li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const screens = [
+      { id: 'DS-001', label: 'Căutare în arhivă', icon: 'search', roles: ['admin', 'arhivar', 'cititor'], current: true },
+      { id: 'DS-003', label: 'Încărcare documente', icon: 'upload', roles: ['admin', 'arhivar'] },
+      { id: 'DS-004', label: 'Cozi de lucru', icon: 'queue', roles: ['admin', 'arhivar'] },
+      { id: 'DS-005', label: 'Retenție și casare', icon: 'clock', roles: ['admin', 'arhivar'] },
+      { id: 'DS-007', label: 'Statistici', icon: 'chart', roles: ['admin', 'arhivar'] },
+      { id: 'DS-008', label: 'Jurnal de audit', icon: 'audit', roles: ['admin', 'arhivar'] },
+      { id: 'DS-012', label: 'Nomenclator arhivistic', icon: 'book', roles: ['admin', 'arhivar'] },
+    ];
+    const iconMarkup = {
+      search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+      upload: '<path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/>',
+      queue: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      chart: '<path d="M4 20V10m5 10V4m5 16v-7m5 7V7"/>',
+      audit: '<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',
+      book: '<path d="M4 4h7a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H4zM20 4h-3a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h3z"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="m19 13 2 1-2 4-2-1-2 1v2H9v-2l-2-1-2 1-2-4 2-1v-2l-2-1 2-4 2 1 2-1V4h6v2l2 1 2-1 2 4-2 1z"/>',
+    };
+    const shell = document.getElementById('app-shell');
+    const navPrimary = document.getElementById('nav-primary');
+    const navAdmin = document.getElementById('nav-admin');
+    const sidebar = document.getElementById('main-sidebar');
+    const roleSelect = document.getElementById('role-select');
+    const mobileOpen = document.getElementById('mobile-menu-open');
+    const mobileClose = document.getElementById('mobile-menu-close');
+    const backdrop = document.getElementById('mobile-backdrop');
+    const desktopToggle = document.getElementById('desktop-sidebar-toggle');
+    function icon(name) { return `<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${iconMarkup[name]}</svg></span>`; }
+    function renderNavigation(role) {
+      navPrimary.innerHTML = screens.filter(screen => screen.roles.includes(role)).map(screen => {
+        const description = screen.id === 'DS-005' && role === 'arhivar' ? ' aria-description="Acces doar pentru vizualizare și filtrare"' : '';
+        return `<li><a class="nav-link" href="#${screen.id}" data-screen="${screen.id}"${screen.current ? ' aria-current="page"' : ''}${description} title="${screen.label}">${icon(screen.icon)}<span class="nav-label">${screen.label}</span></a></li>`;
+      }).join('');
+      navAdmin.innerHTML = role === 'admin' ? `<li><a class="nav-link" href="#DS-006" data-screen="DS-006" title="Administrare">${icon('settings')}<span class="nav-label">Administrare</span></a></li>` : '';
+      document.querySelector('.account-button').setAttribute('aria-label', `Cont: elena, ${role}`);
+      shell.dataset.role = role;
+    }
+    function setMobileOpen(open) {
+      sidebar.hidden = !open;
+      backdrop.hidden = !open;
+      mobileOpen.setAttribute('aria-expanded', String(open));
+      if (open) mobileClose.focus(); else mobileOpen.focus();
+    }
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const next = theme === 'dark' ? 'light' : 'dark';
+      document.getElementById('theme-toggle').setAttribute('aria-label', `Activează tema ${next === 'dark' ? 'întunecată' : 'luminoasă'}`);
+      document.getElementById('theme-toggle').textContent = `Temă: ${theme === 'dark' ? 'închisă' : 'deschisă'}`;
+    }
+    renderNavigation(roleSelect.value);
+    setTheme(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    if (matchMedia('(max-width: 639px)').matches) sidebar.hidden = true;
+    roleSelect.addEventListener('change', event => renderNavigation(event.target.value));
+    desktopToggle.addEventListener('click', () => {
+      const minimized = shell.dataset.sidebar !== 'minimized';
+      shell.dataset.sidebar = minimized ? 'minimized' : 'expanded';
+      desktopToggle.setAttribute('aria-label', minimized ? 'Extinde meniul' : 'Minimizează meniul');
+      desktopToggle.setAttribute('aria-expanded', String(!minimized));
+      desktopToggle.title = minimized ? 'Extinde meniul' : 'Minimizează meniul';
+      desktopToggle.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${minimized ? 'm17 6-6 6 6 6m-6-12-6 6 6 6' : 'm7 6 6 6-6 6m6-12 6 6-6 6'}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      document.querySelectorAll('.nav-link').forEach(link => link.title = link.textContent.trim());
+    });
+    mobileOpen.addEventListener('click', () => setMobileOpen(true));
+    mobileClose.addEventListener('click', () => setMobileOpen(false));
+    backdrop.addEventListener('click', () => setMobileOpen(false));
+    document.getElementById('theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !sidebar.hidden) setMobileOpen(false); });
+  </script>
+</body>
+</html>

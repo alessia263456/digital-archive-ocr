@@ -107,3 +107,12 @@ designs:
     roles: [admin, arhivar]
     decisions: [D-035, D-039, D-042]
     description: "Consultarea nomenclatorului complet, aplicarea reviziilor CSV oficiale și revizuirea regulilor aplicate documentelor deja aprobate."
+
+  - id: DS-013
+    name: "Navigare comună AppShell (Shared AppShell navigation)"
+    kind: component
+    status: draft
+    roles: [admin, arhivar, cititor]
+    decisions: [D-018, D-019, D-042]
+    design_ref: mocks/DS-013.html
+    description: "Mock static pentru bara superioară și meniul lateral comun ecranelor autentificate, cu navigare adaptată rolului, meniu desktop extins/minimizat și panou temporar pe mobil. DS-009 și DS-010 nu afișează AppShell. Nu implementează autorizare sau comportament de aplicație."
