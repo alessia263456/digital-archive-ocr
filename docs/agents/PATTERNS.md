@@ -115,6 +115,7 @@
 - **Status:** candidate
 - **How:** Return the sensitive category, disposition, page, OCR confidence and Bounding Boxes without copying the matched OCR text into candidate records. Use the lowest confidence among the words covered by a candidate when one score is required.
 - **Example:** [PII detector](../../backend/app/Services/PiiDetector.php) and [PII detector tests](../../backend/tests/Unit/PiiDetectorTest.php).
+- **Confirmed:** 2026-11-26
 
 ## PATTERN-017 · Import a checked-in CSV transactionally with row context
 - **Status:** candidate

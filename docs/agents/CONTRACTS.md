@@ -12,6 +12,7 @@
 - C-001 · Expiring Signed URL document delivery endpoint · provided
 - C-002 · Username/password bearer authentication and role-protected API · provided · _superseded-by C-003_
 - C-003 · Username/password session authentication and role-protected API · provided
+- C-004 · Protected draft OCR correction and PII review API · provided
 
 ---
 
@@ -38,8 +39,16 @@
 - **Date:** 2026-11-24
 - **Interface:** `GET /sanctum/csrf-cookie` issues the first-party session and XSRF cookies. The browser sends same-origin requests and includes the decoded `XSRF-TOKEN` cookie in `X-XSRF-TOKEN` on state-changing requests; a missing or mismatched CSRF token returns Romanian JSON HTTP 419 using `eroare`. `POST /api/login` accepts JSON `{username, password}`. On success it regenerates the session ID and returns HTTP 200 with `{user: {id, username, role}}`; `name`, `email`, and bearer tokens are not included. Invalid credentials return a generic Romanian HTTP 401 response using `eroare`. Limit failed credential attempts as defined by D-043 and return Romanian HTTP 429 using `eroare`; validation errors do not count. `GET /api/user` returns only `{id, username, role}` for the authenticated session. `POST /api/logout` requires the session and CSRF token, invalidates the session, rotates CSRF state, and returns HTTP 204. Protected application routes require a live `auth:web` session; missing, expired, or revoked sessions and bearer-token-only requests return JSON HTTP 401, and authenticated users with a disallowed role receive JSON HTTP 403. Role grants follow D-042 and the resource-specific task.
 - **Evidence:** C-002, [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md), [M1a.1 plan](plans/p22-m1a-1-login-and-application-foundation.md), and owner approval in chat on 2026-11-24.
-- **Consumers:** DS-010 Login, P22-12b protected draft routes, P22-40 Admin account APIs, and later protected backend APIs.
-- **Confirmed:** 2026-11-25
+- **Consumers:** DS-010 Login, P22-12b protected draft routes, P22-24a/b and P22-45 draft Editor APIs (DS-011 and DS-004), P22-40 Admin account APIs, and later protected backend APIs.
+- **Confirmed:** 2026-11-26
+
+### C-004 · Protected draft OCR correction and PII review API
+- **Status:** approved
+- **Date:** 2026-11-26
+- **Interface:** These routes require the live C-003 session, its CSRF protection for state-changing requests, and the `admin` or `arhivar` role. `GET /api/drafts/{draft}/editor` returns the private draft ID and status, current `ocr_revision`, `detection_status`, `detection_revision`, ordered pages with dimensions, source OCR text, corrected OCR text and OCR words, plus current PII candidates. A candidate contains an opaque `id`, category, disposition, confidence, page, `bounding_boxes` (possibly empty), `location_status` (`reliable` or `manual_review_required`), a `corrected_text_span` (`start` and `length` offsets into that page's corrected OCR text), and `review_status` (`pending`, `accepted`, or `rejected`). Candidate records never contain matched OCR text. Candidates with `manual_review_required` location status are identifiable from their corrected-text span, but cannot be treated as safe for automatic Redaction. `PATCH /api/drafts/{draft}/editor/ocr` accepts the expected `ocr_revision` and the complete ordered corrected text for each page. A matching revision saves the corrected text, invalidates prior candidates, advances the OCR revision, and runs detection against the corrected OCR. On success it returns the new OCR and detection revisions, `detection_status: ready`, and candidates. A stale expected revision returns HTTP 409. If detection fails, the corrected text remains saved, prior candidates remain invalidated, the response is an error with `detection_status: failed`, the new `ocr_revision`, and no reviewable candidates. `PATCH /api/drafts/{draft}/editor/pii-review` accepts `ocr_revision`, `detection_revision`, and candidate ID/review-status decisions. It saves decisions only when both revisions match the current successful detection; stale or failed results return HTTP 409. The editor GET reports detection failure and returns no reviewable candidates until a successful detection run. All responses use Romanian `eroare` messages for errors and expose no private storage keys or Signed URLs.
+- **Evidence:** Owner-approved P22-24a/b and P22-45 plan clarifications in chat on 2026-11-26.
+- **Consumers:** `backend/app/Http/Controllers/DocumentDraftController.php`, `backend/routes/api.php`, `frontend/src/api.js`, `frontend/src/main.jsx`, backend draft-review feature tests, and frontend Editor/queue Playwright tests.
+- **Confirmed:** 2026-11-26
 
 ## Consumed
 
