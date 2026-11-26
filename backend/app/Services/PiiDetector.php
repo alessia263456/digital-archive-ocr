@@ -34,6 +34,31 @@ final class PiiDetector
 
     private function detectIdentifiers(array $words, int $start, int $page, array &$candidates): void
     {
+        $digitParts = [];
+        $digitCount = 0;
+        for ($end = $start; $end < min(count($words), $start + 13); $end++) {
+            if ($end > $start && !$this->adjacent($words[$end - 1], $words[$end])) {
+                break;
+            }
+            $part = (string) ($words[$end]['text'] ?? '');
+            if (!preg_match('/^\d+$/', $part)) {
+                break;
+            }
+            $digitParts[] = $words[$end];
+            $digitCount += strlen($part);
+        }
+        $digitSequence = implode('', array_map(static fn (array $word): string => (string) $word['text'], $digitParts));
+        $cnpAnchors = ['cnp', 'cod numeric personal', 'codul numeric personal'];
+        $continuesDigitRun = $start > 0 && $this->adjacent($words[$start - 1], $words[$start])
+            && preg_match('/^\d+$/', (string) ($words[$start - 1]['text'] ?? ''));
+        if (!$continuesDigitRun && $digitCount >= 10
+            && !($digitCount === 13 && $this->validCnp($digitSequence))
+            && $this->anchor($words, $start, $cnpAnchors) !== null
+            && $this->anchorCount($words, $start, $cnpAnchors) === 1
+            && !$this->conflictingAnchor($words, $start, 'cnp')) {
+            $this->add($candidates, 'cnp', 'review', $page, $digitParts);
+        }
+
         $digits = '';
         $parts = [];
         for ($end = $start; $end < min(count($words), $start + 13); $end++) {
