@@ -243,6 +243,22 @@ final class DocumentDraftOcrReviewTest extends TestCase
         self::assertDatabaseHas('draft_access_events', ['draft_id' => $draft->id, 'event' => 'redaction_pdf_generated']);
     }
 
+    public function test_accepted_automatic_region_can_generate_preview_without_manual_marks(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        Storage::disk('documents')->put('private/source.pdf', file_get_contents(base_path('tests/Fixtures/rendering/mark.pdf')));
+        $draft = $this->readyDraft();
+        $url = '/api/drafts/'.$draft->id.'/editor';
+        $editor = $this->staff()->getJson($url)->assertOk();
+        $this->patchJson($url.'/pii-review', [
+            'ocr_revision' => 1, 'detection_revision' => 1,
+            'decisions' => [['id' => $editor->json('candidates.0.id'), 'review_status' => 'accepted']],
+        ])->assertOk();
+        $this->postJson($url.'/redaction-preview')->assertOk();
+        $this->get($url.'/redaction-preview')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    }
+
     private function readyDraft(): DocumentDraft
     {
         $draft = DocumentDraft::query()->create([

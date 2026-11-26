@@ -86,6 +86,7 @@ test('draws a revision-bound mark after scrolling, supports undo, and generates 
   await expect(canvas).toBeVisible();
   let saved;
   await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => {
+    expect(route.request().headers()['content-type']).toContain('application/json');
     saved = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
   });
@@ -117,6 +118,7 @@ test('draws a mark from the keyboard using page coordinates', async ({ page }) =
   await openEditor(page);
   let saved;
   await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => {
+    expect(route.request().headers()['content-type']).toContain('application/json');
     saved = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
   });
