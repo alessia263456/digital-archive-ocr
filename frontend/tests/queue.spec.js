@@ -23,14 +23,12 @@ async function openQueue(page, response = { review: [reviewDraft], quarantine: [
   return queueState;
 }
 
-test('shows counted review and quarantine tabs and hands off to protected OCR results', async ({ page, colorScheme }, testInfo) => {
+test('shows counted review and quarantine tabs and hands off to DS-011 Editor', async ({ page, colorScheme }, testInfo) => {
   await openQueue(page);
-  await page.route('**/api/drafts/review-1/ocr', (route) => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }),
+  await page.route('**/api/drafts/review-1/editor', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'review-1', status: 'review_ready', ocr_revision: 1, detection_status: 'ready', detection_revision: 1, pages: [], candidates: [] }),
   }));
-  await page.route('**/api/drafts/review-1/preview', (route) => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [], expires_at: new Date(Date.now() + 60_000).toISOString() }),
-  }));
+  await page.route('**/api/drafts/review-1/preview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }) }));
   await expect(page.getByRole('tab', { name: 'Revizuire (1)' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText(longName)).toBeVisible();
   const isDesktop = testInfo.project.name.startsWith('desktop');
@@ -40,8 +38,8 @@ test('shows counted review and quarantine tabs and hands off to protected OCR re
   await page.getByRole('tab', { name: /Carantină/ }).click();
   await page.screenshot({ path: `test-results/DS-004.carantina.${viewport}.${colorScheme}.png`, fullPage: true });
   await page.getByRole('tab', { name: /Revizuire/ }).click();
-  await page.getByRole('button', { name: 'Începe revizuirea' }).click();
-  await expect(page.getByRole('heading', { name: 'Rezultate OCR' })).toBeVisible();
+  await page.getByRole('button', { name: 'Deschide editorul' }).click();
+  await expect(page.getByRole('heading', { name: 'Editor document' })).toBeVisible();
 });
 
 test('retry reports success, permanent failure requires confirmation, and stale items leave the list', async ({ page }) => {

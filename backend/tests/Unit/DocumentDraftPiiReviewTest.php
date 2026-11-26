@@ -1,0 +1,27 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Services\DocumentDraftPiiReview;
+use Tests\TestCase;
+
+final class DocumentDraftPiiReviewTest extends TestCase
+{
+    public function test_corrected_text_spans_use_javascript_unicode_offsets_and_candidates_remain_value_free(): void
+    {
+        $words = [
+            ['text' => '📄', 'confidence' => 99, 'left' => 0, 'top' => 0, 'width' => 12, 'height' => 10],
+            ['text' => 'Știință', 'confidence' => 99, 'left' => 14, 'top' => 0, 'width' => 30, 'height' => 10],
+            ['text' => 'CNP', 'confidence' => 99, 'left' => 46, 'top' => 0, 'width' => 20, 'height' => 10],
+            ['text' => '1960523123456', 'confidence' => 99, 'left' => 68, 'top' => 0, 'width' => 50, 'height' => 10],
+        ];
+        $page = (object) ['page' => 1, 'words' => json_encode($words, JSON_THROW_ON_ERROR)];
+
+        $candidates = (new DocumentDraftPiiReview)->detect([$page], [['page' => 1, 'text' => '📄 Știință CNP 1960523123456']]);
+
+        self::assertCount(1, $candidates);
+        self::assertSame(['start' => 15, 'length' => 13], $candidates[0]['corrected_text_span']);
+        self::assertSame('reliable', $candidates[0]['location_status']);
+        self::assertStringNotContainsString('1960523123456', json_encode($candidates, JSON_THROW_ON_ERROR));
+    }
+}
