@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Models\DocumentDraft;
 use App\Models\User;
 use App\Services\DocumentDraftPiiReview;
+use App\Services\DocumentPageRenderer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -104,6 +107,54 @@ final class DocumentDraftOcrReviewTest extends TestCase
         $this->staff('cititor')->patchJson('/api/drafts/'.$draft->id.'/editor/ocr', [])->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->getJson('/api/drafts/'.$draft->id.'/editor')->assertUnauthorized();
+    }
+
+    public function test_manual_redaction_marks_are_revision_bound_and_page_bounded(): void
+    {
+        $draft = $this->readyDraft();
+        $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk();
+        $payload = ['ocr_revision' => 1, 'detection_revision' => 1, 'marks' => [
+            ['page' => 1, 'box' => ['left' => 90, 'top' => 190, 'width' => 11, 'height' => 11]],
+        ]];
+        $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', $payload)->assertUnprocessable();
+        $payload['marks'][0]['box'] = ['left' => 20, 'top' => 20, 'width' => 10, 'height' => 10];
+        $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', $payload)->assertOk();
+        self::assertSame($payload['marks'][0]['page'], $draft->fresh()->redaction_marks[0]['page']);
+        self::assertSame($payload['marks'][0]['box']['left'], $draft->fresh()->redaction_marks[0]['box']['left']);
+        self::assertSame($payload['marks'][0]['box']['top'], $draft->fresh()->redaction_marks[0]['box']['top']);
+        $payload['ocr_revision'] = 2;
+        $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', $payload)->assertStatus(409);
+    }
+
+    public function test_reader_role_cannot_save_marks_or_fetch_draft_redaction(): void
+    {
+        $draft = $this->readyDraft();
+        $this->staff('cititor')->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', [])->assertForbidden();
+        $this->getJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertForbidden();
+    }
+
+    public function test_redaction_generation_publishes_a_private_image_only_derivative(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        $sourcePath = base_path('tests/Fixtures/rendering/mark.pdf');
+        Storage::disk('documents')->put('private/source.pdf', file_get_contents($sourcePath));
+        $draft = $this->readyDraft();
+        $work = sys_get_temp_dir().'/draft-pages-'.Str::uuid();
+        $rendered = (new DocumentPageRenderer)->render($sourcePath, $work);
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update(['width' => $rendered[0]['width'], 'height' => $rendered[0]['height']]);
+        \Illuminate\Support\Facades\File::deleteDirectory($work);
+        $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk();
+        $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', [
+            'ocr_revision' => 1, 'detection_revision' => 1,
+            'marks' => [['page' => 1, 'box' => ['left' => 1, 'top' => 1, 'width' => 20, 'height' => 20]]],
+        ])->assertOk();
+        $this->postJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk();
+        $key = $draft->fresh()->redacted_pdf_storage_key;
+        self::assertNotNull($key);
+        self::assertTrue(Storage::disk('documents')->exists($key));
+        self::assertSame('application/pdf', $this->get('/api/drafts/'.$draft->id.'/editor/redaction-preview')->headers->get('content-type'));
+        self::assertDatabaseHas('draft_access_events', ['draft_id' => $draft->id, 'event' => 'redaction_pdf_generated']);
     }
 
     private function readyDraft(): DocumentDraft
