@@ -1,8 +1,9 @@
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, body) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -44,7 +45,7 @@ async function request(path, options = {}) {
       || (response.status === 419
         ? 'Sesiunea a expirat. Reîncărcați pagina și încercați din nou.'
         : 'Cererea nu a putut fi finalizată. Încercați din nou.');
-    throw new ApiError(message, response.status);
+    throw new ApiError(message, response.status, body);
   }
 
   return body;
@@ -61,9 +62,11 @@ export const api = {
   uploadDraft: (files, kind) => {
     const body = new FormData();
     const field = kind === 'images' ? 'images[]' : 'documents[]';
+    body.append(kind === 'images' ? 'image_count' : 'document_count', String(files.length));
     files.forEach((file) => body.append(field, file, file.name));
     return request('/api/drafts', { method: 'POST', body });
   },
+  recentDrafts: () => request('/api/drafts/recent'),
   draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
   draftOcr: (id) => request(`/api/drafts/${encodeURIComponent(id)}/ocr`),
   draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),

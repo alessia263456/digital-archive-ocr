@@ -20,6 +20,7 @@
 - PATTERN-012 · Record authorized draft access before issuing preview URLs · candidate
 - PATTERN-013 · Run a real draft OCR browser check in an isolated Compose project · candidate
 - PATTERN-014 · Verify mixed draft outcomes through an isolated database queue worker · candidate
+- PATTERN-015 · Validate multipart completeness against the selected file count · candidate
 
 ---
 
@@ -101,3 +102,8 @@
 - **Status:** candidate
 - **How:** Run malformed and valid synthetic siblings through authenticated intake in a disposable Compose project with its own PostgreSQL and private-storage volumes. Poll the protected persisted statuses and verify each sibling reaches its expected independent queue before removing that project.
 - **Example:** [Mixed corrupt-then-valid worker check](../../frontend/tests/draft-quarantine-real-api.spec.js) and [isolated rehearsal procedure](../../README.md#isolated-quarantine-worker-verification).
+
+## PATTERN-015 · Validate multipart completeness against the selected file count
+- **Status:** candidate
+- **How:** Send the expected file count with multipart requests. Compare it with the received parts and their indexes before persisting a collection that must stay complete. For independent items, preserve known indexed outcomes and return a request-level error for unidentifiable omissions.
+- **Example:** [Draft intake controller](../../backend/app/Http/Controllers/DocumentDraftController.php) and [draft intake tests](../../backend/tests/Feature/DocumentDraftIntakeTest.php).

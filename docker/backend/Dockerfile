@@ -10,5 +10,7 @@ WORKDIR /app
 COPY . .
 RUN composer install --no-interaction --prefer-dist --no-progress
 RUN chown -R www-data:www-data storage bootstrap/cache
+# PHP can report multipart parser warnings before Laravel writes the JSON response.
+RUN printf 'display_errors=Off\nlog_errors=On\n' > "$PHP_INI_DIR/conf.d/api-errors.ini"
 USER www-data
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

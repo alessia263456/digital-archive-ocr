@@ -12,6 +12,12 @@ Complete P22-23 on the already approved DS-003 Screen. Use the existing `POST /a
 
 Per the owner’s direction, leave official-save duplicate blocking in P22-21/M2. The current M1b acceptance still says the exact duplicate guard blocks final save. This plan does not change that approved roadmap criterion, so M1b cannot satisfy every current acceptance criterion before M2 unless the criterion is separately revised.
 
+## Owner clarifications
+
+- Return the newest 50 persisted drafts across queued, processing, retryable failure, permanent failure, quarantine, and review-ready statuses. DS-003 shows the actual status and uses existing status refresh and protected OCR results.
+- Show `Nume indisponibil` when the original filename is missing. Use stored original filenames whenever available.
+- Keep accepted PDFs and DOCXs when a sibling fails. Report identifiable failures per item and use a request-level error for unidentified omissions. Reject the complete image collection if a required page is missing or incomplete.
+
 ## Files
 
 | Action | Path | What |
@@ -20,7 +26,8 @@ Per the owner’s direction, leave official-save duplicate blocking in P22-21/M2
 | Update | `frontend/src/api.js` | Add a method for the protected recent-drafts endpoint. Reuse the existing multipart upload and same-origin session/CSRF request path. |
 | Update | `frontend/src/theme.css` | Style batch rows, recent drafts, image-order controls, and loading/error/success/disabled states with existing Design Tokens. |
 | Update | `backend/routes/api.php` | Add `GET /api/drafts/recent` inside the existing `admin`/`arhivar` protected route group, before the parameterized draft route. |
-| Update | `backend/app/Http/Controllers/DocumentDraftController.php` | Return a small recent-draft summary containing only fields needed by DS-003, such as ID, original name, status, and creation time. Do not return private object keys, OCR, or Signed URLs. |
+| Update | `backend/app/Http/Controllers/DocumentDraftController.php` | Return a recent-draft summary with ID, original names, status, and creation time. Validate multipart completeness against the counts supplied by DS-003. |
+| Update | `docker/backend/Dockerfile` | Send PHP multipart parser warnings to the server log so Laravel can return a valid JSON response for truncated requests. The real-API regression provides the reproduction. |
 | Update | `backend/tests/Feature/DocumentDraftIntakeTest.php` or a focused new feature test | Cover recent-draft ordering/summary fields and role authorization. Retain the existing mixed-valid/invalid batch assertions. |
 | Update | `frontend/tests/upload.spec.js` | Cover a multi-document submission with mixed outcomes, correct filename/result mapping, ordered images, recent-draft restoration, manual status refresh, and no background polling. |
 | Add or update | `frontend/tests/draft-batch-real-api.spec.js` | Exercise batch intake and draft restoration against an isolated API/database/worker workflow with synthetic fixtures. |

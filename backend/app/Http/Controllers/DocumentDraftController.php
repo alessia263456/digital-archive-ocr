@@ -16,6 +16,7 @@ final class DocumentDraftController
     public function store(Request $request, DocumentDraftIntakeService $intake): JsonResponse
     {
         $items = [];
+        $errors = [];
         $documents = $request->file('documents', []);
         if (!is_array($documents)) {
             $documents = [$documents];
@@ -23,13 +24,22 @@ final class DocumentDraftController
         foreach ($documents as $index => $file) {
             $items[] = ['group' => 'documents', 'index' => $index] + $intake->acceptDocument($file);
         }
+        if (!$this->uploadCountMatches($request, 'document_count', $documents)) {
+            $errors[] = 'Unele documente nu au ajuns la server. Verificați rezultatele și retrimiteți doar documentele lipsă.';
+        }
 
         $images = $request->file('images', []);
-        if ($images !== []) {
-            if (!is_array($images)) {
-                $images = [$images];
-            }
+        if (!is_array($images)) {
+            $images = [$images];
+        }
+        if (!array_is_list($images) || !$this->uploadCountMatches($request, 'image_count', $images)) {
+            $errors[] = 'Colecția de imagini este incompletă. Retrimiteți toate paginile în ordinea dorită.';
+        } elseif ($images !== []) {
             $items[] = ['group' => 'images'] + $intake->acceptImages($images);
+        }
+
+        if ($errors !== []) {
+            return response()->json(['eroare' => implode(' ', $errors), 'items' => $items], 422);
         }
 
         if ($items === []) {
@@ -39,6 +49,35 @@ final class DocumentDraftController
         }
 
         return response()->json(['items' => $items]);
+    }
+
+    private function uploadCountMatches(Request $request, string $field, array $files): bool
+    {
+        if (!$request->has($field)) {
+            return true;
+        }
+
+        $expected = filter_var($request->input($field), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return $expected === count($files) && array_is_list($files);
+    }
+
+    public function recent(): JsonResponse
+    {
+        $drafts = DocumentDraft::query()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get(['id', 'original_names', 'status', 'created_at']);
+
+        return response()->json([
+            'drafts' => $drafts->map(static fn (DocumentDraft $record): array => [
+                'id' => $record->id,
+                'original_names' => $record->original_names,
+                'status' => $record->status,
+                'created_at' => $record->created_at?->toIso8601String(),
+            ]),
+        ]);
     }
 
     public function show(string $draft): JsonResponse

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const screenshotDir = join(process.cwd(), 'test-results', 'design');
@@ -306,6 +306,7 @@ test('keeps draft status visible when refresh reports missing draft or expired s
 
 test('maps mixed batch outcomes by index and recovers persisted drafts after returning to intake', async ({ page }, testInfo) => {
   await authenticatedPage(page);
+  await page.clock.install();
   let recentReads = 0;
   let statusReads = 0;
   await page.route('**/api/drafts/recent', (route) => route.fulfill({ json: { drafts: ++recentReads === 1 ? [] : [
@@ -336,11 +337,12 @@ test('maps mixed batch outcomes by index and recovers persisted drafts after ret
     { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
     { name: 'broken.docx', mimeType: 'application/zip', buffer: Buffer.from('invalid') },
   ]);
-  await page.getByRole('button', { name: 'Încarcă documentul', exact: true }).click();
+  await page.getByRole('button', { name: 'Încarcă documentele', exact: true }).click();
   const valid = page.locator('.draft-item').filter({ hasText: 'valid.pdf' });
   const invalid = page.locator('.draft-item').filter({ hasText: 'broken.docx' });
   await expect(valid).toContainText('OCR în așteptare');
   await expect(invalid).toContainText('Document sintetic respins.');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({ path: join(screenshotDir, `DS-003.batch.${testInfo.project.name}.png`), fullPage: true });
 
   await page.reload();
@@ -348,7 +350,6 @@ test('maps mixed batch outcomes by index and recovers persisted drafts after ret
   await expect(invalid).toHaveCount(0);
   await expect(valid).toContainText('OCR în curs');
   await expect(page.locator('.draft-item').filter({ hasText: 'Nume indisponibil' })).toContainText('Eșuată definitiv');
-  await page.clock.install();
   await page.clock.runFor(60_000);
   expect(statusReads).toBe(0);
   await valid.getByRole('button', { name: 'Actualizează starea' }).click();
@@ -370,7 +371,7 @@ test('keeps accepted siblings when the API cannot identify an omitted file', asy
     { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
     { name: 'omitted.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
   ]);
-  await page.getByRole('button', { name: 'Încarcă documentul', exact: true }).click();
+  await page.getByRole('button', { name: 'Încarcă documentele', exact: true }).click();
   await expect(page.getByText('Unele documente nu au ajuns la server.')).toBeVisible();
   await expect(page.locator('.draft-item')).toHaveCount(1);
   await expect(page.locator('.draft-item')).toContainText('valid.pdf');
@@ -387,8 +388,12 @@ test('changes multipart image order using the page controls', async ({ page }, t
   await page.goto('/');
   await page.getByRole('button', { name: 'Încarcă documente' }).click();
   await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
+  const mountedFixture = join(process.cwd(), 'fixtures', 'romanian.png');
+  const image = readFileSync(existsSync(mountedFixture)
+    ? mountedFixture
+    : join(process.cwd(), '..', 'backend', 'tests', 'Fixtures', 'rendering', 'romanian.png'));
   await page.getByLabel('Imagini în ordinea paginilor').setInputFiles(['first.png', 'second.png'].map((name) => ({
-    name, mimeType: 'image/png', buffer: Buffer.from('synthetic'),
+    name, mimeType: 'image/png', buffer: image,
   })));
   await page.getByRole('button', { name: 'Opțiuni pentru pagina 2' }).click();
   await page.getByRole('button', { name: 'Mută la stânga' }).focus();
@@ -396,6 +401,7 @@ test('changes multipart image order using the page controls', async ({ page }, t
   const pages = page.getByRole('list', { name: 'Ordinea paginilor' }).getByRole('listitem');
   await expect(pages.first()).toContainText('second.png');
   await expect(page.getByRole('button', { name: 'Opțiuni pentru pagina 1' }).first()).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({ path: join(screenshotDir, `DS-003.order.${testInfo.project.name}.png`), fullPage: true });
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();
   await expect(page.locator('.draft-item')).toContainText('second.png, first.png');

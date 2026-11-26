@@ -237,6 +237,7 @@ const statusLabels = {
   failed: 'OCR eșuat · reîncercare programată',
   review_ready: 'Gata de revizuit',
   quarantined: 'Trimisă în carantină',
+  failed_permanently: 'Eșuată definitiv',
 };
 
 function DraftOcrResults({ item, onBack }) {
@@ -339,74 +340,246 @@ function DraftOcrResults({ item, onBack }) {
   );
 }
 
+const documentExtension = /\.(pdf|docx)$/i;
+const imageExtension = /\.(jpe?g|png)$/i;
+
+function ImageThumbnail({ file }) {
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const preview = URL.createObjectURL(file);
+    setUrl(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [file]);
+
+  return <div className="image-thumbnail">
+    {url && !failed && <img src={url} alt="" onError={() => setFailed(true)} />}
+  </div>;
+}
+
+function ImagePageOrder({ pages, onChange, removed, onRemovedChange, disabled, inputRef }) {
+  const [openPage, setOpenPage] = useState(null);
+  const [announcement, setAnnouncement] = useState('');
+  const options = useRef(new Map());
+  const draggedPage = useRef(null);
+
+  function finishAction(id, message) {
+    setOpenPage(null);
+    setAnnouncement(message);
+    requestAnimationFrame(() => (options.current.get(id) || inputRef.current)?.focus());
+  }
+
+  function move(from, to) {
+    if (from === to || from < 0 || to < 0 || to >= pages.length) return;
+    const ordered = [...pages];
+    const [page] = ordered.splice(from, 1);
+    ordered.splice(to, 0, page);
+    onChange(ordered);
+    finishAction(page.id, `Pagina a fost mutată pe poziția ${to + 1}.`);
+  }
+
+  function remove(index) {
+    const remaining = pages.filter((_, position) => position !== index);
+    onRemovedChange({ page: pages[index], index });
+    onChange(remaining);
+    finishAction(remaining[Math.min(index, remaining.length - 1)]?.id, 'Pagina a fost eliminată.');
+  }
+
+  function undo() {
+    const restored = [...pages];
+    restored.splice(removed.index, 0, removed.page);
+    onChange(restored);
+    onRemovedChange(null);
+    finishAction(removed.page.id, 'Pagina a fost restaurată.');
+  }
+
+  return (
+    <section className="image-order" aria-labelledby="image-order-title">
+      <h3 id="image-order-title">Ordinea paginilor</h3>
+      <p className="muted">Folosiți mânerul sau meniul paginii pentru a schimba ordinea.</p>
+      {pages.length === 0 && <p className="muted">Adăugați imagini pentru a stabili ordinea paginilor.</p>}
+      <ol className="image-pages" aria-label="Ordinea paginilor">
+        {pages.map((page, index) => (
+          <li className="image-page" key={page.id}
+            onDragOver={(event) => { if (!disabled && draggedPage.current !== null) event.preventDefault(); }}
+            onDrop={(event) => {
+              if (disabled || draggedPage.current === null) return;
+              event.preventDefault();
+              move(pages.findIndex((entry) => entry.id === draggedPage.current), index);
+              draggedPage.current = null;
+            }}
+          >
+            <ImageThumbnail file={page.file} />
+            <strong title={page.file.name}>{page.file.name}</strong>
+            <div className="image-page-tools">
+              <span className="muted">Pagina {index + 1}</span>
+              <span className="image-grip" aria-hidden="true" title="Trageți pentru a muta pagina"
+                draggable={!disabled}
+                onDragStart={(event) => {
+                  draggedPage.current = page.id;
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', String(page.id));
+                }}
+                onDragEnd={() => { draggedPage.current = null; }}
+              >⠿</span>
+              <button className="button secondary image-options" type="button" disabled={disabled}
+                aria-label={`Opțiuni pentru pagina ${index + 1}`} aria-expanded={openPage === page.id}
+                ref={(element) => {
+                  if (element) options.current.set(page.id, element);
+                  else options.current.delete(page.id);
+                }}
+                onClick={() => setOpenPage(openPage === page.id ? null : page.id)}
+              >⋯</button>
+            </div>
+            {openPage === page.id && <div className="image-page-menu" onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setOpenPage(null);
+                options.current.get(page.id)?.focus();
+              }
+            }}>
+              <button className="button secondary" type="button" disabled={disabled || index === 0} onClick={() => move(index, index - 1)}>Mută la stânga</button>
+              <button className="button secondary" type="button" disabled={disabled || index === pages.length - 1} onClick={() => move(index, index + 1)}>Mută la dreapta</button>
+              <button className="button secondary" type="button" disabled={disabled} onClick={() => remove(index)}>Elimină pagina</button>
+            </div>}
+          </li>
+        ))}
+      </ol>
+      {removed && <button className="button secondary" type="button" disabled={disabled} onClick={undo}>Anulează eliminarea paginii</button>}
+      <span className="screen-reader-only" aria-live="polite">{announcement}</span>
+    </section>
+  );
+}
+
+function DraftIntakeRow({ item, refreshing, onRefresh, onOpen }) {
+  return (
+    <li className="draft-item">
+      <div className="draft-copy">
+        <strong title={item.name}>{item.name}</strong>
+        <span className={`draft-status ${item.status === 'invalid' || item.status === 'failed_permanently' ? 'error' : item.status === 'review_ready' ? 'ready' : ''}`}>
+          {item.status === 'invalid' ? 'Încărcarea nu a reușit' : statusLabels[item.status] || 'Stare necunoscută'}
+        </span>
+        {item.id && <span className="draft-id">Ciornă privată · ID {item.id}</span>}
+        {item.created_at && <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString('ro-RO', { dateStyle: 'short', timeStyle: 'short' })}</time>}
+        {item.status === 'review_ready' && <span>OCR finalizat. Documentul așteaptă revizuirea umană.</span>}
+        {item.status === 'failed' && <span>Verificați din nou starea după reîncercare.</span>}
+        {item.error && <span className="draft-error">{item.error}</span>}
+        {item.refreshError && <span className="draft-error" role="alert">{item.refreshError}</span>}
+      </div>
+      {item.id && <div className="draft-actions">
+        {item.status === 'review_ready' && <button className="button" type="button" onClick={onOpen}>Vezi rezultatele OCR</button>}
+        <button className="button secondary" type="button" onClick={onRefresh} disabled={refreshing}>
+          {refreshing ? 'Se actualizează…' : 'Actualizează starea'}
+        </button>
+      </div>}
+    </li>
+  );
+}
+
 function UploadScreen({ onBack }) {
   const fileInputRef = useRef(null);
+  const fileSequence = useRef(0);
+  const resultSequence = useRef(0);
   const [kind, setKind] = useState('documents');
   const [files, setFiles] = useState([]);
+  const [removedPage, setRemovedPage] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
   const [items, setItems] = useState([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState('');
-  const [refreshing, setRefreshing] = useState(null);
+  const [refreshing, setRefreshing] = useState(new Set());
   const [openedItem, setOpenedItem] = useState(null);
+  const [recentAttempt, setRecentAttempt] = useState(0);
+  const [recentLoading, setRecentLoading] = useState(true);
+  const [recentError, setRecentError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    api.recentDrafts().then(({ drafts }) => {
+      if (!active) return;
+      const recovered = drafts.map((draft) => ({
+        ...draft,
+        key: draft.id,
+        name: draft.original_names?.join(', ') || 'Nume indisponibil',
+      }));
+      setItems((previous) => {
+        const existing = new Set(previous.map((item) => item.id));
+        return [...previous, ...recovered.filter((item) => !existing.has(item.id))];
+      });
+    }).catch((error) => {
+      if (active) setRecentError(error instanceof ApiError
+        ? error.message
+        : 'Ciornele nu au putut fi încărcate. Verificați conexiunea și încercați din nou.');
+    }).finally(() => { if (active) setRecentLoading(false); });
+
+    return () => { active = false; };
+  }, [recentAttempt]);
+
+  function clearFiles() {
+    setFiles([]);
+    setRemovedPage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function chooseKind(next) {
+    if (next === kind) return;
+    setKind(next);
+    clearFiles();
+    setMessage('');
+  }
 
   function selectFiles(selection) {
-    const selected = Array.from(selection || []);
-    setFiles(selected);
+    const selected = Array.from(selection, (file) => ({ id: fileSequence.current++, file }));
+    if (!selected.length) return;
+    setFiles((previous) => kind === 'images' ? [...previous, ...selected] : selected);
     setMessage('');
-    setMessageKind('');
-    if (kind === 'documents' && selected.length > 1) {
-      setMessage('Selectați un singur document pentru fiecare încărcare.');
-      setMessageKind('error');
-      return;
-    }
-    if (kind === 'documents' && selected.some((file) => !/\.(pdf|docx)$/i.test(file.name))) {
+    if (kind === 'documents' && selected.every(({ file }) => !documentExtension.test(file.name))) {
       setMessage('Sunt acceptate doar documentele PDF și DOCX.');
-      setMessageKind('error');
-      return;
-    }
-    if (kind === 'images' && selected.some((file) => !/\.(jpe?g|png)$/i.test(file.name))) {
-      setMessage('Colecția acceptă numai imagini JPG și PNG.');
       setMessageKind('error');
     }
   }
 
+  function recordResults(results) {
+    const received = results.map((entry) => ({
+      key: entry.id || `invalid-${resultSequence.current++}`,
+      id: entry.id,
+      name: entry.group === 'images'
+        ? files.map(({ file }) => file.name).join(', ')
+        : files[entry.index]?.file.name || 'Nume indisponibil',
+      status: entry.status,
+      error: entry.error || '',
+    }));
+    const ids = new Set(received.filter((entry) => entry.id).map((entry) => entry.id));
+    setItems((previous) => [...received, ...previous.filter((entry) => !ids.has(entry.id))]);
+    return received;
+  }
+
   async function upload(event) {
     event.preventDefault();
-    if (!files.length) {
-      setMessage(kind === 'images'
-        ? 'Selectați cel puțin o imagine JPG sau PNG.'
-        : 'Selectați un document PDF sau DOCX pentru încărcare.');
-      setMessageKind('error');
-      return;
-    }
-    if (kind === 'documents' && files.length !== 1) {
-      setMessage('Selectați un singur document pentru fiecare încărcare.');
-      setMessageKind('error');
-      return;
-    }
+    if (busy || !validSelection) return;
+
     setBusy(true);
-    setMessage('Se transferă documentul către arhivă…');
+    setMessage(kind === 'documents' && files.length > 1
+      ? 'Se transferă documentele către arhivă…'
+      : 'Se transferă documentul către arhivă…');
     setMessageKind('loading');
     try {
-      const result = await api.uploadDraft(files, kind);
-      const received = (result.items || []).map((entry, index) => ({
-        key: entry.id || `invalid-${Date.now()}-${index}`,
-        id: entry.id,
-        name: entry.group === 'images' ? `${files.length} imagini` : files[0].name,
-        status: entry.status,
-        error: entry.error || '',
-        refreshError: '',
-      }));
-      setItems((previous) => [...received, ...previous]);
-      setFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      const result = await api.uploadDraft(files.map(({ file }) => file), kind);
+      const received = recordResults(result.items);
+      clearFiles();
       const failed = received.some((entry) => entry.status === 'invalid');
+      const accepted = received.some((entry) => entry.id);
       setMessage(failed
-        ? (received.find((entry) => entry.error)?.error || 'Documentul nu a putut fi încărcat. Verificați selecția și încercați din nou.')
-        : 'Transfer finalizat. Documentul este o ciornă privată; OCR-ul poate fi încă în așteptare.');
+        ? (accepted ? 'Unele documente nu au fost încărcate. Verificați rezultatul fiecărui document.'
+          : 'Verificați erorile afișate și încercați din nou.')
+        : 'Transfer finalizat. Documentele încărcate rămân ciorne private.');
       setMessageKind(failed ? 'error' : 'success');
     } catch (error) {
+      if (error instanceof ApiError && error.body?.items?.length) {
+        recordResults(error.body.items);
+        clearFiles();
+      }
       setMessage(error instanceof ApiError
         ? error.message
         : 'Conexiunea a eșuat. Verificați conexiunea și încercați din nou.');
@@ -417,25 +590,32 @@ function UploadScreen({ onBack }) {
   }
 
   async function refresh(item) {
-    setRefreshing(item.key);
-    setItems((previous) => previous.map((entry) => entry.key === item.key ? { ...entry, refreshError: '' } : entry));
+    setRefreshing((previous) => new Set(previous).add(item.id));
+    setItems((previous) => previous.map((entry) => entry.id === item.id ? { ...entry, refreshError: '' } : entry));
     try {
       const result = await api.draftStatus(item.id);
-      setItems((previous) => previous.map((entry) => entry.key === item.key
+      setItems((previous) => previous.map((entry) => entry.id === item.id
         ? { ...entry, status: result.status, refreshError: '' }
         : entry));
     } catch (error) {
-      setItems((previous) => previous.map((entry) => entry.key === item.key
-        ? { ...entry, refreshError: error.message || 'Starea nu a putut fi actualizată. Încercați din nou.' }
-        : entry));
+      const refreshError = error instanceof ApiError
+        ? error.message
+        : 'Starea nu a putut fi actualizată. Încercați din nou.';
+      setItems((previous) => previous.map((entry) => entry.id === item.id ? { ...entry, refreshError } : entry));
     } finally {
-      setRefreshing(null);
+      setRefreshing((previous) => {
+        const active = new Set(previous);
+        active.delete(item.id);
+        return active;
+      });
     }
   }
 
-  const validSelection = files.length > 0
-    && !(kind === 'documents' && (files.length !== 1 || files.some((file) => !/\.(pdf|docx)$/i.test(file.name))))
-    && !(kind === 'images' && files.some((file) => !/\.(jpe?g|png)$/i.test(file.name)));
+  const validSelection = files.length > 0 && (kind === 'documents'
+    ? files.some(({ file }) => documentExtension.test(file.name))
+    : files.every(({ file }) => imageExtension.test(file.name)));
+  const rejected = items.filter((item) => !item.id);
+  const drafts = items.filter((item) => item.id);
 
   if (openedItem) return <DraftOcrResults item={openedItem} onBack={() => setOpenedItem(null)} />;
 
@@ -448,13 +628,30 @@ function UploadScreen({ onBack }) {
       <section className="upload-panel" aria-labelledby="upload-title">
         <h2 id="upload-title">Adaugă documente</h2>
         <div className="upload-modes" role="group" aria-label="Tipul documentului">
-          <button className={`button secondary${kind === 'documents' ? ' selected' : ''}`} type="button" aria-pressed={kind === 'documents'} disabled={busy} onClick={() => { setKind('documents'); setFiles([]); setMessage(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>PDF / DOCX</button>
-          <button className={`button secondary${kind === 'images' ? ' selected' : ''}`} type="button" aria-pressed={kind === 'images'} disabled={busy} onClick={() => { setKind('images'); setFiles([]); setMessage(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>Colecție de imagini JPG și PNG</button>
+          <button className={`button secondary${kind === 'documents' ? ' selected' : ''}`} type="button" aria-pressed={kind === 'documents'} disabled={busy} onClick={() => chooseKind('documents')}>PDF / DOCX</button>
+          <button className={`button secondary${kind === 'images' ? ' selected' : ''}`} type="button" aria-pressed={kind === 'images'} disabled={busy} onClick={() => chooseKind('images')}>Colecție de imagini JPG și PNG</button>
         </div>
         <form className="upload-form" onSubmit={upload}>
-          <div className="file-picker">
-            <label className="button secondary" htmlFor="draft-files">Alege fișiere</label>
-            <span className="muted">{kind === 'images' ? 'Ordinea selecției devine ordinea paginilor.' : 'Un singur PDF sau DOCX per încărcare.'}</span>
+          <div className={`file-picker${dragOver ? ' drag-over' : ''}`}
+            onDragOver={(event) => {
+              if (!event.dataTransfer.types.includes('Files')) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = busy ? 'none' : 'copy';
+              if (!busy) setDragOver(true);
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setDragOver(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragOver(false);
+              if (!busy) selectFiles(event.dataTransfer.files);
+            }}
+          >
+            <label className="button secondary" htmlFor="draft-files" aria-disabled={busy}>Alege fișiere</label>
+            <span className="muted">{kind === 'images'
+              ? 'Adăugați sau trageți imagini. Paginile formează un singur document.'
+              : 'Alegeți sau trageți fișiere PDF sau DOCX. Fiecare document se procesează separat.'}</span>
           </div>
           <input
             id="draft-files"
@@ -462,45 +659,50 @@ function UploadScreen({ onBack }) {
             className="file-input"
             type="file"
             accept={kind === 'images' ? '.jpg,.jpeg,.png,image/jpeg,image/png' : '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'}
-            multiple={kind === 'images'}
+            multiple
             disabled={busy}
             aria-label={kind === 'images' ? 'Imagini în ordinea paginilor' : 'Document PDF sau DOCX'}
-            onChange={(event) => selectFiles(event.target.files)}
+            onChange={(event) => {
+              selectFiles(event.currentTarget.files);
+              event.currentTarget.value = '';
+            }}
           />
-          {files.length > 0 && <ul className="selected-files" aria-label="Fișiere selectate">{files.map((file, index) => <li key={`${file.name}-${index}`} title={file.name}>{file.name}</li>)}</ul>}
+          {kind === 'images'
+            ? <ImagePageOrder pages={files} onChange={setFiles} removed={removedPage} onRemovedChange={setRemovedPage} disabled={busy} inputRef={fileInputRef} />
+            : files.length > 0 && <ul className="selected-files" aria-label="Fișiere selectate">{files.map(({ file, id }) => (
+              <li key={id} title={file.name}>{file.name}</li>
+            ))}</ul>}
+          {kind === 'images' && files.length > 0 && !validSelection
+            && <p className="state-message error" role="alert">Colecția acceptă numai imagini JPG și PNG. Eliminați celelalte fișiere.</p>}
           {message && <p className={`state-message ${messageKind}`} role="status" aria-live="polite">{message}</p>}
           <button className="button submit" type="submit" disabled={busy || !validSelection}>
-            {busy ? 'Se încarcă…' : 'Încarcă documentul'}
+            {busy ? 'Se încarcă…' : kind === 'documents' && files.length > 1 ? 'Încarcă documentele' : 'Încarcă documentul'}
           </button>
         </form>
+        {rejected.length > 0 && <ul className="draft-items" aria-label="Documente respinse">
+          {rejected.map((item) => <DraftIntakeRow key={item.key} item={item} />)}
+        </ul>}
       </section>
-      <section className="draft-list" aria-labelledby="draft-list-title">
-        <div className="page-intro"><h2 id="draft-list-title">Încărcate în această sesiune</h2><p>Starea nu se actualizează automat. Folosiți butonul de actualizare pentru a verifica procesarea OCR.</p></div>
-        {items.length === 0
-          ? <p className="empty-archive">Documentele încărcate în această sesiune vor apărea aici.</p>
-          : <ul className="draft-items">{items.map((item) => (
-            <li className="draft-item" key={item.key}>
-              <div className="draft-copy">
-                <strong title={item.name}>{item.name}</strong>
-                <span className={`draft-status ${item.status === 'invalid' ? 'error' : item.status === 'review_ready' ? 'ready' : ''}`}>
-                  {item.status === 'invalid' ? 'Încărcarea nu a reușit' : statusLabels[item.status] || 'Stare necunoscută'}
-                </span>
-                {item.id && <span className="draft-id">Ciornă privată · ID {item.id}</span>}
-                {item.id && <span>Transferul sau finalizarea OCR nu aprobă și nu indexează documentul.</span>}
-                {item.status === 'review_ready' && <span>OCR finalizat. Documentul așteaptă revizuirea umană și nu este aprobat sau indexat.</span>}
-                {item.status === 'failed' && <span>Procesarea a eșuat. Verificați din nou starea după reîncercare.</span>}
-                {item.status === 'quarantined' && <span>Documentul a ajuns în Carantină Queue după încercările OCR eșuate.</span>}
-                {item.error && <span className="draft-error">{item.error}</span>}
-                {item.refreshError && <span className="draft-error" role="alert">{item.refreshError}</span>}
-              </div>
-              {item.id && <div className="draft-actions">
-                {item.status === 'review_ready' && <button className="button" type="button" onClick={() => setOpenedItem(item)}>Vezi rezultatele OCR</button>}
-                <button className="button secondary" type="button" onClick={() => refresh(item)} disabled={refreshing === item.key}>
-                  {refreshing === item.key ? 'Se actualizează…' : 'Actualizează starea'}
-                </button>
-              </div>}
-            </li>
-          ))}</ul>}
+      <section className="draft-list" aria-labelledby="draft-list-title" aria-busy={recentLoading}>
+        <div className="page-intro">
+          <h2 id="draft-list-title">Ciorne recente</h2>
+          <p>Folosiți butonul de actualizare pentru a verifica starea OCR.</p>
+          {drafts.length > 0 && <p>Transferul sau finalizarea OCR nu aprobă și nu indexează documentul.</p>}
+        </div>
+        {recentLoading && <p className="state-message loading">Se încarcă ciornele…</p>}
+        {recentError && <div className="recent-error">
+          <p className="state-message error" role="alert">{recentError}</p>
+          <button className="button secondary" type="button" onClick={() => {
+            setRecentLoading(true);
+            setRecentError('');
+            setRecentAttempt((previous) => previous + 1);
+          }}>Reîncarcă ciornele</button>
+        </div>}
+        {drafts.length === 0 && !recentLoading && !recentError && <p className="empty-archive">Ciornele private vor apărea aici după încărcare.</p>}
+        {drafts.length > 0 && <ul className="draft-items">{drafts.map((item) => (
+          <DraftIntakeRow key={item.key} item={item} refreshing={refreshing.has(item.id)}
+            onRefresh={() => refresh(item)} onOpen={() => setOpenedItem(item)} />
+        ))}</ul>}
       </section>
     </main>
   );

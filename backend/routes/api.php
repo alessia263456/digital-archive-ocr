@@ -19,6 +19,7 @@ Route::get('/user', [AuthController::class, 'currentUser'])
 Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group(function () {
     Route::post('/drafts', [DocumentDraftController::class, 'store'])->name('drafts.store');
     Route::get('/drafts/queue', [DocumentDraftController::class, 'queue'])->name('drafts.queue');
+    Route::get('/drafts/recent', [DocumentDraftController::class, 'recent'])->name('drafts.recent');
     Route::post('/drafts/{draft}/retry', [DocumentDraftController::class, 'retry'])->name('drafts.retry');
     Route::post('/drafts/{draft}/permanent-failure', [DocumentDraftController::class, 'permanentFailure'])->name('drafts.permanent-failure');
     Route::get('/drafts/{draft}', [DocumentDraftController::class, 'show'])->name('drafts.show');

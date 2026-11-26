@@ -578,6 +578,100 @@ p {
   outline-offset: var(--space-xs);
 }
 
+.file-picker.drag-over {
+  border-color: var(--color-focus-ring);
+  background: var(--color-bg-subtle);
+}
+
+.file-picker .button[aria-disabled="true"] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.image-order,
+.image-page,
+.image-page-menu,
+.recent-error {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-sm);
+}
+
+.image-order h3 {
+  font: var(--text-h3);
+}
+
+.image-order > .button,
+.recent-error > .button {
+  justify-self: start;
+}
+
+.image-pages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--space-3xl) * 3)), 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.image-pages:empty {
+  display: none;
+}
+
+.image-page {
+  align-content: start;
+  padding: var(--space-sm);
+  border: thin solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+}
+
+.image-page strong {
+  overflow-wrap: anywhere;
+}
+
+.image-thumbnail {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--color-bg-subtle);
+}
+
+.image-thumbnail img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.image-page-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.image-page-tools .muted {
+  margin-inline-end: auto;
+}
+
+.image-grip {
+  padding: var(--space-xs);
+  color: var(--color-text-secondary);
+}
+
+.image-grip[draggable="true"] {
+  cursor: grab;
+}
+
+.image-grip[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.image-options {
+  min-inline-size: calc(var(--space-2xl) - var(--space-xs));
+}
+
 .selected-files,
 .draft-items {
   display: grid;
@@ -603,7 +697,8 @@ p {
 }
 
 .draft-list .page-intro p,
-.draft-copy > span {
+.draft-copy > span,
+.draft-copy > time {
   color: var(--color-text-secondary);
   font: var(--text-small);
 }
@@ -627,6 +722,7 @@ p {
 
 .draft-actions {
   display: flex;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-sm);
@@ -732,8 +828,10 @@ p {
 
 .draft-copy {
   display: grid;
+  flex: 1;
   min-inline-size: 0;
   gap: var(--space-xs);
+  overflow-wrap: anywhere;
 }
 
 .draft-copy strong {
