@@ -29,6 +29,20 @@ final class PiiDetectorTest extends TestCase
         self::assertStringNotContainsString($digits, json_encode($candidates, JSON_THROW_ON_ERROR));
     }
 
+    public function test_confidence_cutoff_is_configurable(): void
+    {
+        config(['services.ocr.pii_confidence_cutoff' => 97]);
+        $digits = $this->cnp('180010122001');
+        $words = [
+            $this->word('CNP', 1, 1, 0, 0, 25, 10, 99),
+            $this->word($digits, 1, 2, 30, 0, 80, 10, 96.9),
+        ];
+
+        $candidate = (new PiiDetector)->detect($words, 1)[0];
+
+        self::assertSame('review', $candidate['disposition']);
+    }
+
     public function test_invalid_cnp_and_cnp_without_preceding_anchor_go_to_review(): void
     {
         $digits = $this->cnp('180010122001');
@@ -59,6 +73,36 @@ final class PiiDetectorTest extends TestCase
         self::assertArrayNotHasKey('value', $candidate);
     }
 
+    public function test_split_iban_words_are_combined_with_all_identifier_boxes(): void
+    {
+        $words = [
+            $this->word('IBAN', 1, 1, 0, 0, 30, 10, 99),
+            $this->word('RO49', 1, 2, 35, 0, 35, 10, 98),
+            $this->word('AAAA1B3100', 1, 3, 75, 0, 75, 10, 97),
+            $this->word('7593840000', 1, 4, 155, 0, 75, 10, 96),
+        ];
+
+        $candidate = (new PiiDetector)->detect($words, 2)[0];
+
+        self::assertSame('iban', $candidate['category']);
+        self::assertSame('redact', $candidate['disposition']);
+        self::assertSame(96.0, $candidate['confidence']);
+        self::assertCount(3, $candidate['bounding_boxes']);
+    }
+
+    public function test_invalid_iban_checksum_is_sent_to_review(): void
+    {
+        $words = [
+            $this->word('IBAN', 1, 1, 0, 0, 30, 10, 99),
+            $this->word('RO48AAAA1B31007593840000', 1, 2, 35, 0, 200, 10, 99),
+        ];
+
+        $candidate = (new PiiDetector)->detect($words, 1)[0];
+
+        self::assertSame('iban', $candidate['category']);
+        self::assertSame('review', $candidate['disposition']);
+    }
+
     public function test_anchor_must_precede_identifier_and_be_nearby(): void
     {
         $digits = $this->cnp('180010122001');
@@ -70,7 +114,25 @@ final class PiiDetectorTest extends TestCase
 
         $candidates = (new PiiDetector)->detect($words, 1);
 
-        self::assertSame(['review', 'review'], array_column($candidates, 'disposition'));
+        self::assertSame(['review', 'redact'], array_column($candidates, 'disposition'));
+    }
+
+    public function test_next_line_anchor_is_limited_by_configuration_and_ambiguous_anchors_require_review(): void
+    {
+        $digits = $this->cnp('180010122001');
+        $words = [
+            $this->word('CNP', 1, 1, 0, 0, 25, 10, 99),
+            $this->word('Date', 1, 2, 30, 0, 25, 10, 99),
+            $this->word('de', 1, 3, 60, 0, 10, 10, 99),
+            $this->word('identificare', 1, 4, 75, 0, 60, 10, 99),
+            $this->word($digits, 2, 1, 0, 20, 80, 10, 98),
+            $this->word('CNP', 2, 2, 90, 20, 25, 10, 98),
+            $this->word($digits, 2, 3, 120, 20, 80, 10, 98),
+        ];
+
+        $candidates = (new PiiDetector)->detect($words, 1);
+
+        self::assertSame(['redact', 'review'], array_column($candidates, 'disposition'));
     }
 
     public function test_detects_contact_for_review_and_sensitive_regions_from_conservative_labels(): void
@@ -97,6 +159,52 @@ final class PiiDetectorTest extends TestCase
             self::assertArrayNotHasKey('text', $candidate);
             self::assertArrayNotHasKey('value', $candidate);
         }
+    }
+
+    public function test_flags_cadastral_vehicle_company_and_party_signature_and_exempts_notary(): void
+    {
+        $words = [
+            $this->word('număr', 1, 1, 0, 0, 40, 10, 95),
+            $this->word('cadastral', 1, 2, 45, 0, 60, 10, 95),
+            $this->word('12345', 1, 3, 110, 0, 50, 10, 95),
+            $this->word('VIN:', 1, 4, 0, 20, 30, 10, 92),
+            $this->word('WVWZZZ1JZXW000001', 1, 5, 35, 20, 120, 10, 92),
+            $this->word('CUI', 1, 6, 0, 40, 25, 10, 90),
+            $this->word('12345678', 1, 7, 30, 40, 60, 10, 90),
+            $this->word('semnătura', 1, 8, 0, 60, 50, 10, 89),
+            $this->word('Notarul', 1, 9, 0, 80, 50, 10, 99),
+            $this->word('public', 1, 10, 55, 80, 40, 10, 99),
+            $this->word('semnătura', 1, 11, 100, 80, 50, 10, 99),
+            $this->word('semnătura', 2, 1, 0, 100, 50, 10, 99),
+            $this->word('notarului', 2, 2, 55, 100, 55, 10, 99),
+            $this->word('public', 2, 3, 115, 100, 40, 10, 99),
+        ];
+
+        $candidates = (new PiiDetector)->detect($words, 3);
+
+        self::assertSame(['cadastral_identifier', 'vehicle_identifier', 'cui_cif', 'signatory_signature'], array_column($candidates, 'category'));
+        self::assertSame(['redact', 'redact', 'redact', 'review'], array_column($candidates, 'disposition'));
+    }
+
+    public function test_party_names_go_to_review_and_notary_public_name_is_exempt(): void
+    {
+        $words = [
+            $this->word('subsemnatul', 1, 1, 0, 0, 65, 10, 96),
+            $this->word('Ion', 1, 2, 70, 0, 25, 10, 96),
+            $this->word('Popescu', 1, 3, 100, 0, 55, 10, 96),
+            $this->word('notarul', 1, 4, 0, 20, 50, 10, 99),
+            $this->word('public', 1, 5, 55, 20, 40, 10, 99),
+            $this->word('domnul', 1, 6, 100, 20, 40, 10, 99),
+            $this->word('Mihai', 1, 7, 145, 20, 40, 10, 99),
+            $this->word('Ionescu', 1, 8, 190, 20, 55, 10, 99),
+        ];
+
+        $candidates = (new PiiDetector)->detect($words, 1);
+
+        self::assertCount(1, $candidates);
+        self::assertSame('signatory_name', $candidates[0]['category']);
+        self::assertSame('review', $candidates[0]['disposition']);
+        self::assertSame([$this->box($words[1]), $this->box($words[2])], $candidates[0]['bounding_boxes']);
     }
 
     private function word(string $text, int $line, int $order, int $left, int $top, int $width, int $height, float $confidence): array
