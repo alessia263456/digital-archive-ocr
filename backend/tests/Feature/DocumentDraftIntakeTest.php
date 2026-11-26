@@ -6,6 +6,7 @@ use App\Models\DocumentDraft;
 use App\Models\User;
 use App\Jobs\ProcessDocumentDraft;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -150,6 +151,73 @@ final class DocumentDraftIntakeTest extends TestCase
         $this->actingAs($this->user('admin'), 'web')->post('/api/drafts', [
             'documents' => [$this->upload('Fixtures/rendering/mark.pdf', 'valid.pdf', 'application/pdf')],
         ])->assertOk()->assertJsonPath('items.0.status', 'queued');
+    }
+
+    public function test_recent_drafts_are_limited_ordered_and_expose_only_safe_summary_fields(): void
+    {
+        DB::beginTransaction();
+        $this->beforeApplicationDestroyed(fn () => DB::rollBack());
+        $statuses = ['queued', 'processing', 'failed', 'failed_permanently', 'quarantined', 'review_ready'];
+        $expected = [];
+        $created = now()->addDay()->startOfSecond();
+        for ($index = 0; $index < 53; $index++) {
+            $draft = new DocumentDraft([
+                'id' => (string) Str::uuid(),
+                'source_format' => 'pdf',
+                'original_storage_keys' => ['drafts/private/001.pdf'],
+                'original_names' => $index === 52 ? null : ["synthetic-{$index}.pdf"],
+                'status' => $statuses[$index % count($statuses)],
+            ]);
+            $draft->created_at = $created->copy()->subSeconds(52 - $index);
+            $draft->save();
+            $expected[] = [
+                'id' => $draft->id,
+                'original_names' => $draft->original_names,
+                'status' => $draft->status,
+                'created_at' => $draft->created_at->toIso8601String(),
+            ];
+        }
+
+        $this->getJson('/api/drafts/recent')->assertUnauthorized();
+        $this->actingAs($this->user('cititor'), 'web')->getJson('/api/drafts/recent')->assertForbidden();
+        foreach (['admin', 'arhivar'] as $role) {
+            $this->actingAs($this->user($role), 'web')->getJson('/api/drafts/recent')->assertOk()
+                ->assertExactJson(['drafts' => array_slice(array_reverse($expected), 0, 50)]);
+        }
+    }
+
+    public function test_incomplete_document_batch_reports_request_error_and_keeps_known_outcomes(): void
+    {
+        $initialDraftCount = DocumentDraft::query()->count();
+        $response = $this->actingAs($this->user('admin'), 'web')->post('/api/drafts', [
+            'document_count' => '3',
+            'documents' => [
+                $this->upload('Fixtures/rendering/mark.pdf', 'valid.pdf', 'application/pdf'),
+                new UploadedFile('', 'partial.pdf', 'application/pdf', UPLOAD_ERR_PARTIAL, true),
+            ],
+        ]);
+
+        $response->assertUnprocessable()->assertJsonStructure(['eroare'])
+            ->assertJsonCount(2, 'items')->assertJsonPath('items.0.status', 'queued')
+            ->assertJsonPath('items.1.status', 'invalid')->assertJsonPath('items.1.index', 1);
+        self::assertSame($initialDraftCount + 1, DocumentDraft::query()->count());
+        Queue::assertPushed(ProcessDocumentDraft::class, 1);
+    }
+
+    public function test_an_incomplete_image_collection_never_creates_a_draft(): void
+    {
+        $initialDraftCount = DocumentDraft::query()->count();
+        $this->actingAs($this->user('arhivar'), 'web');
+        $validPage = $this->upload('Fixtures/rendering/romanian.png', 'page.png', 'image/png');
+        $this->post('/api/drafts', ['image_count' => '2', 'images' => [$validPage]])
+            ->assertUnprocessable()->assertJsonStructure(['eroare']);
+        $this->post('/api/drafts', ['image_count' => '2', 'images' => [
+            $validPage, new UploadedFile('', 'partial.png', 'image/png', UPLOAD_ERR_PARTIAL, true),
+        ]])->assertOk()->assertJsonPath('items.0.status', 'invalid');
+        $this->post('/api/drafts', ['images' => [1 => $validPage]])
+            ->assertUnprocessable()->assertJsonStructure(['eroare']);
+        self::assertSame($initialDraftCount, DocumentDraft::query()->count());
+        Queue::assertNothingPushed();
     }
 
     private function user(string $role): User

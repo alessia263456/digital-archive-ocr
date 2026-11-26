@@ -6,6 +6,7 @@ const screenshotDir = join(process.cwd(), 'test-results', 'design');
 mkdirSync(screenshotDir, { recursive: true });
 
 async function authenticatedPage(page, role = 'admin') {
+  await page.route('**/api/drafts/recent', (route) => route.fulfill({ json: { drafts: [] } }));
   await page.route('**/api/user', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -301,4 +302,143 @@ test('keeps draft status visible when refresh reports missing draft or expired s
   await expect(page.getByText('OCR în așteptare')).toBeVisible();
   await page.getByRole('button', { name: 'Actualizează starea' }).click();
   await expect(page.getByRole('alert')).toHaveText('Sesiunea a expirat. Reîncărcați pagina și încercați din nou.');
+});
+
+test('maps mixed batch outcomes by index and recovers persisted drafts after returning to intake', async ({ page }, testInfo) => {
+  await authenticatedPage(page);
+  let recentReads = 0;
+  let statusReads = 0;
+  await page.route('**/api/drafts/recent', (route) => route.fulfill({ json: { drafts: ++recentReads === 1 ? [] : [
+    { id: 'newest', original_names: ['valid.pdf'], status: 'processing', created_at: '2026-11-26T12:00:00Z' },
+    { id: 'legacy', original_names: null, status: 'failed_permanently', created_at: '2026-11-26T11:00:00Z' },
+  ] } }));
+  await page.route('**/api/drafts', (route) => {
+    const body = route.request().postData();
+    expect(body).toMatch(/name="document_count"\r\n\r\n2/);
+    expect(body).toContain('filename="valid.pdf"');
+    expect(body).toContain('filename="broken.docx"');
+    return route.fulfill({ json: { items: [
+      { group: 'documents', index: 1, status: 'invalid', error: 'Document sintetic respins.' },
+      { group: 'documents', index: 0, status: 'queued', id: 'newest' },
+    ] } });
+  });
+  await page.route('**/api/drafts/newest', (route) => {
+    statusReads += 1;
+    return route.fulfill({ json: { id: 'newest', status: 'review_ready' } });
+  });
+  await page.route('**/api/drafts/newest/ocr', (route) => route.fulfill({ json: { id: 'newest', status: 'review_ready', pages: [] } }));
+  await page.route('**/api/drafts/newest/preview', (route) => route.fulfill({ json: { pages: [] } }));
+
+  await page.goto('/');
+  const openUpload = () => page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await openUpload();
+  await page.getByLabel('Document PDF sau DOCX').setInputFiles([
+    { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
+    { name: 'broken.docx', mimeType: 'application/zip', buffer: Buffer.from('invalid') },
+  ]);
+  await page.getByRole('button', { name: 'Încarcă documentul', exact: true }).click();
+  const valid = page.locator('.draft-item').filter({ hasText: 'valid.pdf' });
+  const invalid = page.locator('.draft-item').filter({ hasText: 'broken.docx' });
+  await expect(valid).toContainText('OCR în așteptare');
+  await expect(invalid).toContainText('Document sintetic respins.');
+  await page.screenshot({ path: join(screenshotDir, `DS-003.batch.${testInfo.project.name}.png`), fullPage: true });
+
+  await page.reload();
+  await openUpload();
+  await expect(invalid).toHaveCount(0);
+  await expect(valid).toContainText('OCR în curs');
+  await expect(page.locator('.draft-item').filter({ hasText: 'Nume indisponibil' })).toContainText('Eșuată definitiv');
+  await page.clock.install();
+  await page.clock.runFor(60_000);
+  expect(statusReads).toBe(0);
+  await valid.getByRole('button', { name: 'Actualizează starea' }).click();
+  await valid.getByRole('button', { name: 'Vezi rezultatele OCR' }).click();
+  await expect(page.getByRole('heading', { name: 'Rezultate OCR' })).toBeVisible();
+  expect(statusReads).toBe(1);
+  expect(recentReads).toBe(2);
+});
+
+test('keeps accepted siblings when the API cannot identify an omitted file', async ({ page }) => {
+  await authenticatedPage(page);
+  await page.route('**/api/drafts', (route) => route.fulfill({ status: 422, json: {
+    eroare: 'Unele documente nu au ajuns la server.',
+    items: [{ group: 'documents', index: 0, id: 'accepted', status: 'queued' }],
+  } }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByLabel('Document PDF sau DOCX').setInputFiles([
+    { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
+    { name: 'omitted.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
+  ]);
+  await page.getByRole('button', { name: 'Încarcă documentul', exact: true }).click();
+  await expect(page.getByText('Unele documente nu au ajuns la server.')).toBeVisible();
+  await expect(page.locator('.draft-item')).toHaveCount(1);
+  await expect(page.locator('.draft-item')).toContainText('valid.pdf');
+});
+
+test('changes multipart image order using the page controls', async ({ page }, testInfo) => {
+  await authenticatedPage(page, 'arhivar');
+  await page.route('**/api/drafts', (route) => {
+    const body = route.request().postData();
+    expect(body).toMatch(/name="image_count"\r\n\r\n2/);
+    expect(body.indexOf('filename="second.png"')).toBeLessThan(body.indexOf('filename="first.png"'));
+    return route.fulfill({ json: { items: [{ group: 'images', status: 'queued', id: 'ordered' }] } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
+  await page.getByLabel('Imagini în ordinea paginilor').setInputFiles(['first.png', 'second.png'].map((name) => ({
+    name, mimeType: 'image/png', buffer: Buffer.from('synthetic'),
+  })));
+  await page.getByRole('button', { name: 'Opțiuni pentru pagina 2' }).click();
+  await page.getByRole('button', { name: 'Mută la stânga' }).focus();
+  await page.keyboard.press('Enter');
+  const pages = page.getByRole('list', { name: 'Ordinea paginilor' }).getByRole('listitem');
+  await expect(pages.first()).toContainText('second.png');
+  await expect(page.getByRole('button', { name: 'Opțiuni pentru pagina 1' }).first()).toBeFocused();
+  await page.screenshot({ path: join(screenshotDir, `DS-003.order.${testInfo.project.name}.png`), fullPage: true });
+  await page.getByRole('button', { name: 'Încarcă documentul' }).click();
+  await expect(page.locator('.draft-item')).toContainText('second.png, first.png');
+});
+
+test('reports unavailable recent drafts and reloads only on request', async ({ page }) => {
+  await authenticatedPage(page);
+  let finishLoading;
+  let reads = 0;
+  await page.route('**/api/drafts/recent', async (route) => {
+    reads += 1;
+    if (reads === 1) {
+      await new Promise((resolve) => { finishLoading = resolve; });
+      await route.fulfill({ status: 503, json: { eroare: 'Ciornele sunt temporar indisponibile.' } });
+    } else {
+      await route.fulfill({ json: { drafts: [] } });
+    }
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await expect(page.getByText('Se încarcă ciornele…')).toBeVisible();
+  finishLoading();
+  await expect(page.getByRole('alert')).toHaveText('Ciornele sunt temporar indisponibile.');
+  await page.getByRole('button', { name: 'Reîncarcă ciornele' }).click();
+  await expect(page.getByText('Ciornele private vor apărea aici după încărcare.')).toBeVisible();
+  expect(reads).toBe(2);
+});
+
+test('allows removing and restoring image pages and reordering by drag', async ({ page }) => {
+  await authenticatedPage(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Încarcă documente' }).click();
+  await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
+  const input = page.getByLabel('Imagini în ordinea paginilor');
+  await input.setInputFiles({ name: 'first.png', mimeType: 'image/png', buffer: Buffer.from('synthetic') });
+  await input.setInputFiles({ name: 'second.png', mimeType: 'image/png', buffer: Buffer.from('synthetic') });
+  const pages = page.getByRole('list', { name: 'Ordinea paginilor' }).getByRole('listitem');
+  await expect(pages).toHaveCount(2);
+  await page.getByRole('button', { name: 'Opțiuni pentru pagina 1' }).click();
+  await page.getByRole('button', { name: 'Elimină pagina' }).click();
+  await expect(pages).toHaveCount(1);
+  await page.getByRole('button', { name: 'Anulează eliminarea paginii' }).click();
+  await expect(pages.first()).toContainText('first.png');
+  await pages.first().locator('[draggable="true"]').dragTo(pages.last());
+  await expect(pages.first()).toContainText('second.png');
 });
