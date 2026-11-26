@@ -78,6 +78,11 @@ export const api = {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, decisions }),
   }),
+  saveDraftRedactionMarks: (id, ocrRevision, detectionRevision, marks) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-marks`, {
+    method: 'PATCH', body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, marks }),
+  }),
+  generateDraftRedaction: (id) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`, { method: 'POST' }),
+  draftRedactedPdf: (id) => `/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`,
   draftPreview: (id) => request(`/api/drafts/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
   draftQueue: () => request('/api/drafts/queue'),
   retryDraft: (id) => request(`/api/drafts/${encodeURIComponent(id)}/retry`, { method: 'POST' }),

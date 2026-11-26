@@ -14,7 +14,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Services\RedactedPdf;
+use Symfony\Component\Process\Process;
 
 final class DocumentDraftController
 {
@@ -270,6 +273,10 @@ final class DocumentDraftController
             $record->detection_status = 'pending';
             $record->detection_revision = 0;
             $record->pii_candidates = [];
+            $record->redaction_marks = null;
+            $record->redacted_pdf_storage_key = null;
+            $record->redaction_ocr_revision = null;
+            $record->redaction_detection_revision = null;
             $record->save();
             $audit->record($request, $record, 'ocr_corrections_saved');
             return [$record, $pages, false];
@@ -340,12 +347,127 @@ final class DocumentDraftController
                 $candidates[$byId[$decision['id']]]['review_status'] = $decision['review_status'];
             }
             $locked->pii_candidates = $candidates;
+            $locked->redacted_pdf_storage_key = null;
             $locked->save();
             $audit->record($request, $locked, 'pii_review_updated');
             return [$candidates, true];
         });
         if (!$changed) return response()->json(['eroare' => 'Rezultatele de detectare s-au schimbat. Reîncărcați editorul înainte de revizuire.'], 409);
         return response()->json(['candidates' => $candidates]);
+    }
+
+    public function saveRedactionMarks(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = $this->editorDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $validator = Validator::make($request->all(), [
+            'ocr_revision' => 'required|integer|min:1', 'detection_revision' => 'required|integer|min:1',
+            'marks' => 'present|array|max:500', 'marks.*.page' => 'required|integer|min:1',
+            'marks.*.box.left' => 'required|integer|min:0', 'marks.*.box.top' => 'required|integer|min:0',
+            'marks.*.box.width' => 'required|integer|min:1', 'marks.*.box.height' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) return response()->json(['eroare' => 'Marcajele de anonimizare nu sunt valide.'], 422);
+        $values = $validator->validated();
+        [$saved, $stale] = DB::transaction(function () use ($draft, $values, $request, $audit): array {
+            $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if ($locked === null || $locked->detection_status !== 'ready'
+                || $values['ocr_revision'] !== (int) $locked->ocr_revision
+                || $values['detection_revision'] !== (int) $locked->detection_revision) return [false, true];
+            $pages = DB::table('ocr_pages')->where('extraction', $locked->ocr_extraction_id)->get(['page','width','height'])->keyBy('page');
+            foreach ($values['marks'] as $mark) {
+                $page = $pages->get($mark['page']); $box = $mark['box'];
+                if (!$page || $box['left'] + $box['width'] > $page->width || $box['top'] + $box['height'] > $page->height) return [false, false];
+            }
+            $locked->redaction_marks = $values['marks'];
+            $locked->redaction_ocr_revision = $locked->ocr_revision;
+            $locked->redaction_detection_revision = $locked->detection_revision;
+            $locked->redacted_pdf_storage_key = null;
+            $locked->save();
+            $audit->record($request, $locked, 'redaction_marks_saved');
+            return [true, false];
+        });
+        if ($stale) return response()->json(['eroare' => 'Revizuirea s-a schimbat. Reîncărcați editorul.'], 409);
+        if (!$saved) return response()->json(['eroare' => 'Un marcaj depășește pagina selectată.'], 422);
+        return response()->json(['marks' => $values['marks']]);
+    }
+
+    public function generateRedaction(Request $request, string $draft, DocumentStorageService $storage, DraftAccessLogger $audit): JsonResponse
+    {
+        $record = DocumentDraft::query()->find($draft);
+        if (!$record) return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
+        if ($record->status !== 'review_ready' || $record->detection_status !== 'ready'
+            || (int) $record->ocr_revision !== (int) $record->redaction_ocr_revision
+            || (int) $record->detection_revision !== (int) $record->redaction_detection_revision) {
+            return response()->json(['eroare' => 'Revizuirea anonimizării este incompletă sau neactualizată. Reîncărcați editorul.'], 409);
+        }
+        $boxes = [];
+        foreach ($record->pii_candidates ?? [] as $candidate) {
+            if (($candidate['review_status'] ?? null) !== 'accepted') continue;
+            if (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes'])) {
+                return response()->json(['eroare' => 'O potrivire acceptată nu are o localizare sigură. Adăugați un marcaj manual.'], 422);
+            }
+            foreach ($candidate['bounding_boxes'] as $box) $boxes[$candidate['page']][] = $box;
+        }
+        foreach ($record->redaction_marks ?? [] as $mark) $boxes[$mark['page']][] = $mark['box'];
+        if ($boxes === []) return response()->json(['eroare' => 'Adăugați sau acceptați cel puțin un marcaj de anonimizare.'], 422);
+
+        $sourceKey = match ($record->source_format) {
+            'docx' => $record->derived_pdf_storage_key,
+            'pdf' => ($record->original_storage_keys[0] ?? null),
+            default => null,
+        };
+        $source = tempnam(sys_get_temp_dir(), 'redaction-source-'); $target = sys_get_temp_dir().'/redaction-'.Str::uuid().'.pdf'; $imageWork = null;
+        try {
+            if ($record->source_format === 'image_collection') {
+                $imageWork = sys_get_temp_dir().'/redaction-images-'.Str::uuid(); mkdir($imageWork, 0700);
+                $images = [];
+                foreach ($record->original_storage_keys ?? [] as $index => $key) {
+                    if (!$storage->exists($key)) throw new \RuntimeException('Sursă indisponibilă.');
+                    $stream = $storage->readStream($key); $path = "$imageWork/".sprintf('%04d', $index).'.'.(strtolower(pathinfo($key, PATHINFO_EXTENSION)) === 'png' ? 'png' : 'jpg');
+                    $output = fopen($path, 'wb'); stream_copy_to_stream($stream, $output); fclose($stream); fclose($output);
+                    $images[] = $path;
+                }
+                if ($images === []) throw new \RuntimeException('Colecția de imagini este goală.');
+                (new Process(['img2pdf', '--output', $source, ...$images]))->mustRun();
+            } else {
+                if (!$sourceKey || !$storage->exists($sourceKey)) throw new \RuntimeException('Sursă indisponibilă.');
+                $stream = $storage->readStream($sourceKey); if (!$stream) throw new \RuntimeException('Sursă indisponibilă.');
+                $output = fopen($source, 'wb'); stream_copy_to_stream($stream, $output); fclose($stream); fclose($output);
+            }
+            (new RedactedPdf)->create($source, $boxes, $target);
+            $key = 'redacted/'.$record->id.'/'.Str::uuid().'.pdf';
+            $output = fopen($target, 'rb');
+            try { if (!$storage->put($key, $output, ['visibility' => 'private'])) throw new \RuntimeException('Publicarea a eșuat.'); }
+            finally { fclose($output); }
+            $saved = DB::transaction(function () use ($draft, $record, $key, $request, $audit): bool {
+                $current = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+                if (!$current || $current->status !== 'review_ready' || $current->detection_status !== 'ready'
+                    || (int) $current->ocr_revision !== (int) $record->ocr_revision
+                    || (int) $current->detection_revision !== (int) $record->detection_revision
+                    || $current->redaction_marks !== $record->redaction_marks
+                    || $current->pii_candidates !== $record->pii_candidates) return false;
+                $current->redacted_pdf_storage_key = $key; $current->save();
+                $audit->record($request, $current, 'redaction_pdf_generated');
+                return true;
+            });
+            if (!$saved) { $storage->delete($key); return response()->json(['eroare' => 'Revizuirea s-a schimbat în timpul generării. Reîncărcați editorul.'], 409); }
+            return response()->json(['status' => 'ready']);
+        } catch (\Throwable $exception) {
+            report($exception);
+            return response()->json(['eroare' => 'PDF-ul anonimizat nu a putut fi generat.'], 500);
+        } finally { @unlink($source); @unlink($target); if ($imageWork) \Illuminate\Support\Facades\File::deleteDirectory($imageWork); }
+    }
+
+    public function redactedPdf(string $draft, DocumentStorageService $storage)
+    {
+        $record = DocumentDraft::query()->find($draft);
+        if (!$record || !$record->redacted_pdf_storage_key || !$storage->exists($record->redacted_pdf_storage_key)) {
+            return response()->json(['eroare' => 'PDF-ul anonimizat nu este disponibil.'], 404);
+        }
+        return response()->stream(function () use ($storage, $record): void {
+            $stream = $storage->readStream($record->redacted_pdf_storage_key);
+            if ($stream) { fpassthru($stream); fclose($stream); }
+        }, 200, ['Content-Type' => 'application/pdf', 'Cache-Control' => 'private, no-store, max-age=0', 'X-Content-Type-Options' => 'nosniff', 'Content-Disposition' => 'inline; filename="anonimizat.pdf"']);
     }
 
     private function editorDraft(string $id): DocumentDraft|JsonResponse
@@ -373,6 +495,7 @@ final class DocumentDraftController
                 'words' => json_decode($page->words, true, flags: JSON_THROW_ON_ERROR),
             ])->values()->all(),
             'candidates' => $candidates,
+            'manual_marks' => $record->redaction_marks ?? [],
         ];
     }
 
