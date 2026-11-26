@@ -336,6 +336,8 @@ function DraftEditor({ item, onBack }) {
   const [anchor, setAnchor] = useState(null);
   const [cursor, setCursor] = useState(null);
   const [undoMarks, setUndoMarks] = useState(null);
+  const [generatingPreview, setGeneratingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState('');
   const [previewReady, setPreviewReady] = useState(false);
   const [markSaving, setMarkSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -454,7 +456,9 @@ function DraftEditor({ item, onBack }) {
   }
 
   async function generatePreview() {
-    if (stale || dirty || markSaving) return;
+    if (stale || dirty || markSaving || generatingPreview) return;
+    setGeneratingPreview(true);
+    setPreviewError('');
     setError(''); setPreviewReady(false);
     try {
       await api.generateDraftRedaction(item.id);
@@ -462,7 +466,9 @@ function DraftEditor({ item, onBack }) {
       setFeedback('Previzualizarea anonimizării a fost generată. Verificați toate paginile.');
     } catch (requestError) {
       if (requestError.status === 409) { setReloadRequired(true); setEditor((current) => ({ ...current, detection_status: 'stale' })); }
-      setError(requestError.message || 'Previzualizarea nu a putut fi generată. Verificați marcajele și încercați din nou.');
+      setPreviewError(requestError.message || 'Previzualizarea nu a putut fi generată. Verificați marcajele și încercați din nou.');
+    } finally {
+      setGeneratingPreview(false);
     }
   }
 
@@ -520,8 +526,10 @@ function DraftEditor({ item, onBack }) {
                   })}
                 </div>
                 {manualMarks.length > 0 && <ul className="editor-manual-mark-list" aria-label="Marcaje manuale">{manualMarks.map((mark, index) => <li key={`${mark.page}-${mark.box.left}-${mark.box.top}-${index}`}><span>Manual · Pagina {mark.page} · {mark.box.left}, {mark.box.top} · {mark.box.width} × {mark.box.height} px</span><button className="button secondary" type="button" aria-label={`Elimină marcajul manual ${index + 1}`} onClick={() => saveMarks(manualMarks.filter((_, position) => position !== index), manualMarks)} disabled={markSaving}>Elimină</button></li>)}</ul>}
-                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : 'Previzualizează anonimizarea'}</button></div>
-                {previewReady && <div className="editor-preview-pages"><h3>Previzualizare PDF anonimizat</h3><iframe title="Previzualizare PDF anonimizat" src={api.draftRedactedPdf(item.id)} /></div>}
+                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={generatingPreview || stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : generatingPreview ? 'Se generează PDF-ul…' : 'Previzualizează anonimizarea'}</button></div>
+                {previewError && <p className="editor-warning" role="alert">{previewError}</p>}
+                {!stale && !manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted') && <p className="muted">Pentru previzualizare, marcați o zonă sau acceptați o potrivire PII.</p>}
+                {previewReady && !stale && <div className="editor-preview-pages"><h3>Previzualizare PDF anonimizat</h3><iframe title="Previzualizare PDF anonimizat" src={api.draftRedactedPdf(item.id)} /></div>}
               </section>
               <section className="editor-card" aria-labelledby="ocr-edit-title">
                 <header><h2 id="ocr-edit-title">Corectare OCR</h2><p className="muted">Textul extras rămâne păstrat separat. Corectați textul folosind documentul original.</p></header>

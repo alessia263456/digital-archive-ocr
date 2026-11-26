@@ -396,8 +396,11 @@ final class DocumentDraftController
         $record = DocumentDraft::query()->find($draft);
         if (!$record) return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
         if ($record->status !== 'review_ready' || $record->detection_status !== 'ready'
-            || (int) $record->ocr_revision !== (int) $record->redaction_ocr_revision
-            || (int) $record->detection_revision !== (int) $record->redaction_detection_revision) {
+            || (int) $record->detection_revision !== (int) $record->ocr_revision
+            || (!empty($record->redaction_marks) && (
+                (int) $record->ocr_revision !== (int) $record->redaction_ocr_revision
+                || (int) $record->detection_revision !== (int) $record->redaction_detection_revision
+            ))) {
             return response()->json(['eroare' => 'Revizuirea anonimizării este incompletă sau neactualizată. Reîncărcați editorul.'], 409);
         }
         $boxes = [];
