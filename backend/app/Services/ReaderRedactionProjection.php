@@ -1,0 +1,141 @@
+<?php
+
+namespace App\Services;
+
+final class ReaderRedactionProjection
+{
+    public function project(array $pages, array $candidates, array $manualMarks, array $metadata): array
+    {
+        $byPage = [];
+        foreach ($pages as $page) {
+            foreach (['page', 'width', 'height', 'text', 'words'] as $field) {
+                if (!array_key_exists($field, $page) || !is_int($page[$field]) && !is_string($page[$field]) && !is_array($page[$field])) {
+                    throw new \RuntimeException('Datele OCR nu permit filtrarea sigură.');
+                }
+            }
+            $byPage[(int) $page['page']] = $page;
+        }
+        if ($byPage === []) throw new \RuntimeException('Nu există pagini OCR pentru filtrare.');
+
+        $regions = [];
+        $phrases = [];
+        foreach ($candidates as $candidate) {
+            if (($candidate['review_status'] ?? null) !== 'accepted') continue;
+            if (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes'])
+                || !isset($candidate['page'], $candidate['corrected_text_span']['start'], $candidate['corrected_text_span']['length'])) {
+                throw new \RuntimeException('O anonimizare acceptată nu are o localizare sigură.');
+            }
+            $pageNumber = (int) $candidate['page'];
+            $page = $byPage[$pageNumber] ?? throw new \RuntimeException('Lipsește pagina unei anonimizări acceptate.');
+            $span = $candidate['corrected_text_span'];
+            $start = $this->utf16ByteOffset((string) $page['text'], (int) $span['start']);
+            $end = $this->utf16ByteOffset((string) $page['text'], (int) ($span['start'] + $span['length']));
+            if ($end <= $start) throw new \RuntimeException('Pasajul anonimizat nu este valid.');
+            $phrases[] = substr((string) $page['text'], $start, $end - $start);
+            foreach ($candidate['bounding_boxes'] as $box) $regions[$pageNumber][] = $this->validatedBox($box, $page);
+        }
+        foreach ($manualMarks as $mark) {
+            $pageNumber = (int) ($mark['page'] ?? 0);
+            $page = $byPage[$pageNumber] ?? throw new \RuntimeException('Lipsește pagina unui marcaj manual.');
+            if (!isset($mark['box']) || !is_array($mark['box'])) throw new \RuntimeException('Marcajul manual nu este valid.');
+            $regions[$pageNumber][] = $this->validatedBox($mark['box'], $page);
+        }
+
+        foreach ($regions as $pageNumber => $boxes) {
+            $page = $byPage[$pageNumber];
+            $text = (string) $page['text'];
+            $tokens = $this->textTokens($text);
+            $words = $page['words'];
+            if (count($tokens) !== count($words)) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+            $spans = [];
+            foreach ($words as $index => $word) {
+                if (!isset($word['text'], $word['left'], $word['top'], $word['width'], $word['height'])) {
+                    throw new \RuntimeException('Geometria OCR nu este completă.');
+                }
+                if ($tokens[$index]['text'] !== (string) $word['text']) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+                foreach ($boxes as $box) {
+                    if ($this->overlaps($box, $word)) {
+                        $spans[] = [$tokens[$index]['start'], $tokens[$index]['end']];
+                        break;
+                    }
+                }
+            }
+            if ($spans === []) throw new \RuntimeException('O regiune anonimizată nu corespunde unui cuvânt OCR.');
+            foreach ($spans as [$start, $end]) $phrases[] = substr($text, $start, $end - $start);
+            usort($spans, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
+            foreach ($spans as [$start, $end]) $text = substr_replace($text, '', $start, $end - $start);
+            $text = preg_replace('/[ \t]{2,}/u', ' ', $text) ?? throw new \RuntimeException('Textul anonimizat nu poate fi pregătit.');
+            $byPage[$pageNumber]['text'] = trim($text);
+        }
+
+        $phrases = array_values(array_unique(array_filter(array_map(fn (string $value): string => $this->normalize($value), $phrases))));
+        return [
+            'pages' => array_values(array_map(static fn (array $page): array => ['page' => (int) $page['page'], 'text' => $page['text']], $byPage)),
+            'metadata' => $this->sanitizeMetadata($metadata, $phrases),
+        ];
+    }
+
+    private function validatedBox(array $box, array $page): array
+    {
+        foreach (['left', 'top', 'width', 'height'] as $field) if (!is_int($box[$field] ?? null)) throw new \RuntimeException('Coordonatele anonimizării nu sunt valide.');
+        if ($box['left'] < 0 || $box['top'] < 0 || $box['width'] < 1 || $box['height'] < 1
+            || $box['left'] + $box['width'] > (int) $page['width'] || $box['top'] + $box['height'] > (int) $page['height']) {
+            throw new \RuntimeException('Coordonatele anonimizării depășesc pagina.');
+        }
+        return $box;
+    }
+
+    private function overlaps(array $box, array $word): bool
+    {
+        return $box['left'] < (int) $word['left'] + (int) $word['width']
+            && $box['left'] + $box['width'] > (int) $word['left']
+            && $box['top'] < (int) $word['top'] + (int) $word['height']
+            && $box['top'] + $box['height'] > (int) $word['top'];
+    }
+
+    private function textTokens(string $text): array
+    {
+        preg_match_all('/\S+/u', $text, $matches, PREG_OFFSET_CAPTURE);
+        return array_map(static fn (array $match): array => [
+            'text' => $match[0], 'start' => $match[1], 'end' => $match[1] + strlen($match[0]),
+        ], $matches[0]);
+    }
+
+    private function utf16ByteOffset(string $text, int $units): int
+    {
+        if ($units < 0) throw new \RuntimeException('Pasajul anonimizat nu este valid.');
+        $encoded = mb_convert_encoding($text, 'UTF-16LE', 'UTF-8');
+        if ($units * 2 > strlen($encoded)) throw new \RuntimeException('Pasajul anonimizat nu este valid.');
+        $prefix = mb_convert_encoding(substr($encoded, 0, $units * 2), 'UTF-8', 'UTF-16LE');
+        return strlen($prefix);
+    }
+
+    private function normalize(string $value): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $value) ?? $value), 'UTF-8');
+    }
+
+    private function sanitizeMetadata(array $metadata, array $phrases): array
+    {
+        $clean = [];
+        foreach ($metadata as $key => $value) {
+            if (is_string($value)) {
+                $normalized = $this->normalize($value);
+                if ($normalized === '' || $this->containsSensitivePhrase($normalized, $phrases)) continue;
+                $clean[$key] = $value;
+            } elseif (is_array($value)) {
+                $nested = $this->sanitizeMetadata($value, $phrases);
+                if ($nested !== []) $clean[$key] = $nested;
+            } else {
+                $clean[$key] = $value;
+            }
+        }
+        return $clean;
+    }
+
+    private function containsSensitivePhrase(string $value, array $phrases): bool
+    {
+        foreach ($phrases as $phrase) if (str_contains($value, $phrase)) return true;
+        return false;
+    }
+}
