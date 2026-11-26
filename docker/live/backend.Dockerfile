@@ -11,6 +11,7 @@ COPY app/ app/
 COPY bin/ bin/
 COPY bootstrap/ bootstrap/
 COPY config/ config/
+COPY --from=repo docs/nomenclator_arhivistic.csv database/seeders/data/nomenclator_arhivistic.csv
 COPY database/migrations/ database/migrations/
 COPY public/ public/
 COPY routes/ routes/

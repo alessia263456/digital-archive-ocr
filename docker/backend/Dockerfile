@@ -8,6 +8,7 @@ RUN apt-get update \
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 WORKDIR /app
 COPY . .
+COPY --from=repo docs/nomenclator_arhivistic.csv /app/database/seeders/data/nomenclator_arhivistic.csv
 RUN composer install --no-interaction --prefer-dist --no-progress
 RUN chown -R www-data:www-data storage bootstrap/cache
 # PHP can report multipart parser warnings before Laravel writes the JSON response.

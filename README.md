@@ -117,6 +117,7 @@ printf "ALTER ROLE archive WITH PASSWORD '%s';\n" "$escaped_db_password" | docke
 # Build/start the backend and worker, then apply pending application migrations.
 docker compose up --build -d backend ocr-queue-worker
 docker compose exec backend php artisan migrate
+docker compose exec backend php artisan db:seed
 docker compose exec backend php artisan archive:admin:create
 docker compose exec -T postgres psql -U archive -d archive -c "SELECT current_database() AS database, count(*) AS applied_migrations FROM migrations;"
 curl --fail --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:8000/up
