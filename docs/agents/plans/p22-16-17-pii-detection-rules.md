@@ -1,6 +1,6 @@
 # Plan — P22-16, P22-17a and P22-17b · PII detection rules
 
-**Status:** Approved for implementation on 2026-11-26. Implementation not started.
+**Status:** Implementation completed on 2026-11-26. Automated checks passed; Document Corpus validation remains pending because source documents are not present in this checkout.
 
 ## Size
 
@@ -10,7 +10,7 @@
 
 Build on `OcrTsv`, `OcrExtraction`, and the persisted word data in `ocr_pages`. Extend the word data to retain OCR block, line and word order, which the current parser reads from TSV but does not save. This lets detection handle identifiers split across words and apply the approved line and block proximity rules. Add backend detectors that return candidates with category, Bounding Boxes and disposition for later review and Redaction.
 
-For CNP and IBAN, use **80/100 provisionally** as the configurable automatic-Redaction cutoff, provided the checksum is valid and an appropriate Notarial Context Anchor precedes the identifier within the agreed proximity limits. Route candidates below the cutoff to human review rather than discarding them. Route ambiguous or conflicting anchor associations to human review. Detect names, phone numbers and email addresses for human review; flag addresses, identity-card details, Signatory Party signatures, cadastral and vehicle identifiers, and CUI/CIF for Redaction. Preserve Notary Public name, title and signature.
+For CNP and IBAN, use **80/100 provisionally** as the configurable automatic-Redaction cutoff, provided the checksum is valid and an appropriate Notarial Context Anchor precedes the identifier within the agreed proximity limits. Route candidates below the cutoff to human review rather than discarding them. Route ambiguous or conflicting anchor associations to human review. Detect names, phone numbers and email addresses for human review; flag addresses, identity-card details, cadastral and vehicle identifiers, and CUI/CIF for Redaction. An OCR signature label creates a review cue only so staff can draw a Bounding Box around the actual Signatory Party signature. Preserve Notary Public name, title and signature.
 
 ## Files
 
@@ -35,7 +35,7 @@ No database migration is planned: OCR word data is stored as JSON, so the detect
 | 3 | CNP and IBAN candidates assemble correctly when split across adjacent OCR words, and their boxes cover all identifier words. | PHPUnit unit tests | — |
 | 4 | Automatic Redaction requires a valid checksum, score at or above the configurable cutoff, and an appropriate preceding anchor within the same-line or fallback limits. | PHPUnit unit tests | — |
 | 5 | Below-cutoff candidates, invalid or uncertain matches, and conflicting or ambiguous anchor associations go to human review. | PHPUnit unit tests | — |
-| 6 | Names and contact data are detected for review; the other D-022 categories are flagged; Notary Public name, title and signature are exempt. | PHPUnit unit and feature tests | Handwritten or difficult visual cases require corpus review. |
+| 6 | Names and contact data are detected for review; the other D-022 text-label categories are flagged; OCR signature labels cue manual Bounding Box review; Notary Public name, title and signature are exempt. | PHPUnit unit and feature tests | Handwritten or difficult visual cases require corpus review. |
 | 7 | Candidate Bounding Boxes map to the correct page and OCR words. | PHPUnit feature tests | — |
 | 8 | Provisional cutoff and proximity configuration are exercised against the Document Corpus and results recorded without including personal data in logs. | Corpus validation using synthetic test documents | Depends on access to the available corpus; report any unavailable cases. |
 
@@ -78,3 +78,4 @@ DS-011 review UI, manual Bounding Box drawing, applying Redaction to PDFs, safe 
 - Fallback anchor proximity: immediately following OCR line within the same OCR block, at most 5 intervening words.
 - The anchor must precede the identifier and be appropriate for its PII type. Conflicting or ambiguous associations go to human review.
 - Keep proximity thresholds configurable and validate them against the Document Corpus.
+- Do not treat an OCR signature label box as the actual handwritten signature. Return a review cue; manual Bounding Box drawing handles the signature region.

@@ -163,9 +163,13 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 
 ## M2 · Safe review and immutable publication · target Nov 27–28
 
-- [ ] P22-16 · CNP and IBAN confidence rules
-- [ ] P22-17a · Detect names and contact data
-- [ ] P22-17b · Flag other sensitive regions
+- [x] P22-16 · CNP and IBAN confidence rules
+  - Added configurable 80/100 confidence, same-line 3-word and next-line/same-block 5-word anchor limits; retained OCR block/paragraph/line/word positions. Valid CNP and ISO 7064 MOD-97 IBAN candidates redact only when checksum, unique preceding type-specific anchor and confidence all pass; uncertain, invalid, low-confidence and ambiguous matches go to review.
+- [x] P22-17a · Detect names and contact data
+  - Added conservative Romanian label matching for Signatory Party names, phone numbers and email addresses. Names and contact details route to review; Notary Public references are exempt.
+- [x] P22-17b · Flag other sensitive regions
+  - Added conservative Romanian labels for addresses, identity-card details, cadastral and vehicle identifiers, and CUI/CIF. A Signatory Party signature label yields a review cue only; staff must draw a Bounding Box around handwriting in the later manual review workflow. Candidates carry category, disposition, page, minimum OCR confidence and geometry only; no matched value is copied or logged.
+  - Focused PHPUnit passed (16 tests, 49 assertions). The synthetic Document Corpus binaries are not available in this checkout; confidence and proximity remain configurable/provisional pending corpus validation. The checked-in OCR fixture contains no PII cases.
 - [ ] P22-21a · Generate reviewed Redaction PDF
 - [ ] P22-21b · Generate safe reader projections
 - [ ] P22-19 · Part 1 Notarial Nomenclature import

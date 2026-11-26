@@ -31,7 +31,9 @@ final class OcrTsv
                 throw new RuntimeException('Cuvânt TSV nevalid.');
             }
             $words[] = ['text' => $cells[11], 'confidence' => $confidence, 'left' => $left,
-                'top' => $top, 'width' => $w, 'height' => $h];
+                'top' => $top, 'width' => $w, 'height' => $h,
+                'block_num' => (int) $cells[2], 'paragraph_num' => (int) $cells[3],
+                'line_num' => (int) $cells[4], 'word_num' => (int) $cells[5]];
         }
         return $words;
     }

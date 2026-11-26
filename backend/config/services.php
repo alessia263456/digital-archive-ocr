@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ocr' => [
+        'pii_confidence_cutoff' => (float) env('OCR_PII_CONFIDENCE_CUTOFF', 80),
+        'pii_anchor_same_line_words' => (int) env('OCR_PII_ANCHOR_SAME_LINE_WORDS', 3),
+        'pii_anchor_next_line_words' => (int) env('OCR_PII_ANCHOR_NEXT_LINE_WORDS', 5),
+    ],
+
 ];
