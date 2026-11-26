@@ -131,6 +131,27 @@ final class DocumentDraftOcrReviewTest extends TestCase
         $draft = $this->readyDraft();
         $this->staff('cititor')->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', [])->assertForbidden();
         $this->getJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertForbidden();
+        $this->getJson('/api/drafts/'.$draft->id.'/editor/pages/1/image')->assertForbidden();
+    }
+
+    public function test_staff_page_image_uses_renderer_dimensions_and_is_private(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        $sourcePath = base_path('tests/Fixtures/rendering/mark.pdf');
+        Storage::disk('documents')->put('private/source.pdf', file_get_contents($sourcePath));
+        $draft = $this->readyDraft();
+        $work = sys_get_temp_dir().'/draft-pages-'.Str::uuid();
+        $rendered = (new DocumentPageRenderer)->render($sourcePath, $work);
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update(['width' => $rendered[0]['width'], 'height' => $rendered[0]['height']]);
+        \Illuminate\Support\Facades\File::deleteDirectory($work);
+        $response = $this->staff()->get('/api/drafts/'.$draft->id.'/editor/pages/1/image')->assertOk();
+        self::assertSame('image/png', $response->headers->get('content-type'));
+        self::assertStringContainsString('private', $response->headers->get('cache-control'));
+        self::assertStringContainsString('no-store', $response->headers->get('cache-control'));
+        self::assertStringContainsString('max-age=0', $response->headers->get('cache-control'));
+        self::assertStringStartsWith("\x89PNG\r\n\x1a\n", $response->streamedContent());
+        self::assertDatabaseHas('draft_access_events', ['draft_id' => $draft->id, 'event' => 'editor_page_image_viewed']);
     }
 
     public function test_redaction_generation_publishes_a_private_image_only_derivative(): void
@@ -149,6 +170,13 @@ final class DocumentDraftOcrReviewTest extends TestCase
             'ocr_revision' => 1, 'detection_revision' => 1,
             'marks' => [['page' => 1, 'box' => ['left' => 1, 'top' => 1, 'width' => 20, 'height' => 20]]],
         ])->assertOk();
+        $record = $draft->fresh();
+        $candidates = $record->pii_candidates;
+        $candidates[0]['review_status'] = 'accepted';
+        $candidates[0]['location_status'] = 'manual_review_required';
+        $candidates[0]['bounding_boxes'] = [];
+        $record->pii_candidates = $candidates;
+        $record->save();
         $this->postJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk();
         $key = $draft->fresh()->redacted_pdf_storage_key;
         self::assertNotNull($key);

@@ -7,6 +7,7 @@ const editorState = {
     { text: 'CNP', confidence: 99, left: 1, top: 1, width: 20, height: 10 },
     { text: '1960523123456', confidence: 99, left: 22, top: 1, width: 50, height: 10 },
   ] }],
+  manual_marks: [],
   candidates: [{ id: 'candidate-1', category: 'cnp', disposition: 'review', confidence: 99, page: 1, bounding_boxes: [], location_status: 'manual_review_required', corrected_text_span: { start: 4, length: 13 }, review_status: 'pending' }],
 };
 
@@ -15,6 +16,7 @@ async function openEditor(page, state = editorState, editorStatus = 200) {
   await page.route('**/api/drafts/queue', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ review: [draft], quarantine: [] }) }));
   await page.route('**/api/drafts/editor-1/editor', (route) => route.fulfill({ status: editorStatus, contentType: 'application/json', body: JSON.stringify(editorStatus === 200 ? structuredClone(state) : { eroare: 'Editorul nu a putut fi încărcat.' }) }));
   await page.route('**/api/drafts/editor-1/preview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }) }));
+  await page.route('**/api/drafts/editor-1/editor/pages/1/image', (route) => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="white"/><text x="8" y="18" font-family="sans-serif" font-size="5" fill="#072D5C">DECLARAȚIE SINTETICĂ</text><text x="8" y="32" font-family="sans-serif" font-size="4" fill="#072D5C">CNP 1960523123456</text><text x="8" y="46" font-family="sans-serif" font-size="4" fill="#072D5C">Semnatar · document pentru test</text></svg>' }));
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
@@ -72,4 +74,63 @@ test('shows an actionable editor load error', async ({ page }) => {
   await openEditor(page, editorState, 500);
   await expect(page.getByRole('alert')).toHaveText('Editorul nu a putut fi încărcat.');
   await expect(page.getByRole('button', { name: 'Reîncearcă încărcarea' })).toBeVisible();
+});
+
+test('draws a revision-bound mark after scrolling, supports undo, and generates a preview', async ({ page }, testInfo) => {
+  await openEditor(page);
+  await page.setViewportSize(testInfo.project.name.startsWith('desktop') ? { width: 1600, height: 700 } : { width: 320, height: 600 });
+  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
+  await canvas.scrollIntoViewIfNeeded();
+  await expect(canvas).toBeVisible();
+  let saved;
+  await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => {
+    saved = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
+  });
+  const bounds = await canvas.boundingBox();
+  await page.mouse.move(bounds.x + bounds.width * 0.2, bounds.y + bounds.height * 0.2);
+  await page.mouse.down();
+  await page.setViewportSize(testInfo.project.name.startsWith('desktop') ? { width: 800, height: 600 } : { width: 360, height: 600 });
+  const resized = await canvas.boundingBox();
+  await page.mouse.move(resized.x + resized.width * 0.4, resized.y + resized.height * 0.3);
+  await expect(page.locator('.editor-mark-rect.preview')).toBeVisible();
+  await page.mouse.up();
+  await expect.poll(() => saved?.marks?.length).toBe(1);
+  expect(saved.ocr_revision).toBe(1);
+  expect(saved.detection_revision).toBe(1);
+  await expect(page.getByText('Total: 1 marcaj')).toBeVisible();
+  await page.getByRole('button', { name: 'Elimină marcajul manual 1' }).click();
+  await expect(page.getByText('Total: 0 marcaje')).toBeVisible();
+  await page.getByRole('button', { name: 'Anulează eliminarea' }).click();
+  await expect(page.getByText('Total: 1 marcaj')).toBeVisible();
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() === 'POST') await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ready' }) });
+    else await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
+  });
+  await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
+  await expect(page.getByTitle('Previzualizare PDF anonimizat')).toBeVisible();
+});
+
+test('draws a mark from the keyboard using page coordinates', async ({ page }) => {
+  await openEditor(page);
+  let saved;
+  await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => {
+    saved = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
+  });
+  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
+  await canvas.focus();
+  await canvas.press('ArrowRight');
+  await canvas.press('ArrowDown');
+  await canvas.press('Enter');
+  await canvas.press('ArrowRight');
+  await canvas.press('ArrowDown');
+  await canvas.press('Enter');
+  await expect.poll(() => saved?.marks?.length).toBe(1);
+  expect(saved.marks[0].page).toBe(1);
+  expect(saved.marks[0].box.width).toBeGreaterThan(0);
+  expect(saved.marks[0].box.height).toBeGreaterThan(0);
 });
