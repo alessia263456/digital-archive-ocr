@@ -29,6 +29,25 @@ final class PiiDetectorTest extends TestCase
         self::assertStringNotContainsString($digits, json_encode($candidates, JSON_THROW_ON_ERROR));
     }
 
+    public function test_valid_cnp_with_trailing_comma_is_automatically_redacted(): void
+    {
+        $digits = $this->cnp('180010122001');
+        $words = [
+            $this->word('CNP', 1, 1, 0, 0, 25, 10, 99),
+            $this->word($digits.',', 1, 2, 30, 0, 85, 10, 96),
+        ];
+
+        $candidates = (new PiiDetector)->detect($words, 2);
+
+        self::assertCount(1, $candidates);
+        self::assertSame('cnp', $candidates[0]['category']);
+        self::assertSame('redact', $candidates[0]['disposition']);
+        self::assertSame(2, $candidates[0]['page']);
+        self::assertSame(96.0, $candidates[0]['confidence']);
+        self::assertSame([$this->box($words[1])], $candidates[0]['bounding_boxes']);
+        self::assertStringNotContainsString($digits, json_encode($candidates, JSON_THROW_ON_ERROR));
+    }
+
     public function test_confidence_cutoff_is_configurable(): void
     {
         config(['services.ocr.pii_confidence_cutoff' => 97]);
