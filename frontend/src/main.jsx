@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api, ApiError } from './api.js';
 import { AppShell } from './components/AppShell.jsx';
+import { ArchiveSearch } from './components/ArchiveSearch.jsx';
 import './theme.css';
 
 function LoginScreen({ onLogin, busy, message, messageKind }) {
@@ -912,7 +913,7 @@ function Application() {
         ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
         : staffRole && screen.startsWith('editor:')
           ? <DraftEditor item={{ id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} />
-        : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
+        : <ArchiveSearch user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
 
   return <AppShell user={user} screen={screen} onNavigate={setScreen} onLogout={logout} busy={busy}>{content}</AppShell>;
 }
