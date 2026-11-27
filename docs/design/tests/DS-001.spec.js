@@ -19,6 +19,8 @@ test('browses four archive sections, searches matching records, and previews app
   await expect(page.getByRole('heading', { level: 1, name: 'Căutare în arhivă' })).toBeVisible();
   await expect(searchInput).toBeVisible();
   await expect(filters).toBeVisible();
+  await expect(page.locator('#tag-search')).toBeVisible();
+  await expect(page.locator('#party-search')).toBeVisible();
 
   const sectionNames = ['După tipul documentului', 'După dosar fizic', 'După an', 'Adăugate recent'];
   await expect(home.locator('.browse-section')).toHaveCount(4);
@@ -136,6 +138,15 @@ test('browses four archive sections, searches matching records, and previews app
   await expect(filters).toBeVisible();
   const results = page.locator('#search-results .document-card');
   await expect(results).toHaveCount(2);
+  await expect(page.locator('#search-results mark').first()).toBeVisible();
+  await expect(page.locator('#result-count')).toContainText('2 rezultate în total');
+  const sort = page.getByLabel('Ordonează rezultatele');
+  await sort.selectOption('oldest');
+  let resultDates = await results.evaluateAll(items => items.map(item => item.dataset.actDate));
+  expect(resultDates).toEqual([...resultDates].sort());
+  await sort.selectOption('newest');
+  resultDates = await results.evaluateAll(items => items.map(item => item.dataset.actDate));
+  expect(resultDates).toEqual([...resultDates].sort().reverse());
   for (const card of await results.all()) {
     await expect(card.locator('h3')).toContainText('Procură');
     await expect(card.locator('.dossier-number')).toBeVisible();
@@ -149,6 +160,14 @@ test('browses four archive sections, searches matching records, and previews app
     await page.screenshot({ path: '/screens/DS-001.search.dark.png', fullPage: true, scale: 'css' });
     await page.getByLabel('Mod luminos').click();
   }
+  await page.getByLabel('Tipul documentului', { exact: true }).selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Șterge filtrele' }).click();
+  await expect(page.getByLabel('Tipul documentului', { exact: true })).toHaveValue('all');
+  await expect(results).toHaveCount(2);
+  await page.getByLabel('Etichete').fill('reprezentare');
+  await expect(results).toHaveCount(1);
+  await page.getByRole('button', { name: 'Șterge filtrele' }).click();
+  await expect(results).toHaveCount(2);
   await page.getByRole('button', { name: 'Șterge căutarea' }).click();
   await expect(home).toBeVisible();
   await expect(page.locator('#search-view')).toBeHidden();
@@ -156,12 +175,13 @@ test('browses four archive sections, searches matching records, and previews app
   const previewRole = page.getByLabel('Rol pentru previzualizare');
   await previewRole.selectOption('cititor');
   await expect(page.locator('#party-search')).toBeHidden();
+  await expect(page.locator('#tag-search')).toBeHidden();
   await expect(page.getByRole('status', { name: 'Diferențe de previzualizare' })).toContainText('aprobate și anonimizate');
   await searchInput.fill('procură');
   await page.getByRole('button', { name: 'Caută' }).click();
   await expect(page.locator('#search-results .document-card')).toHaveCount(1);
   await expect(page.locator('#search-results [data-reader-excerpt]')).toBeVisible();
-  await expect(page.locator('#search-results [data-admin-excerpt]')).toBeHidden();
+  await expect(page.locator('#search-results [data-admin-excerpt]')).toHaveCount(0);
   if (info.project.name === 'desktop-light') {
     await page.evaluate(() => document.activeElement?.blur());
     await page.screenshot({ path: '/screens/DS-001.cititor.light.png', fullPage: true, scale: 'css' });
@@ -193,6 +213,13 @@ test('browses four archive sections, searches matching records, and previews app
     if (value === 'one' || value === 'many') await expect(page.locator('#search-results')).toBeVisible();
     else await expect(page.getByRole('status', { name: 'Stare rezultate' })).toContainText(copy);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+    if (value === 'many') {
+      await expect(page.getByText(/Pagina 1 din 2/)).toBeVisible();
+      await page.getByRole('button', { name: 'Pagina următoare' }).click();
+      await expect(page.getByText(/Pagina 2 din 2/)).toBeVisible();
+      await page.getByRole('button', { name: 'Pagina anterioară' }).click();
+      await expect(page.getByText(/Pagina 1 din 2/)).toBeVisible();
+    }
     if (['empty', 'denied'].includes(value)) await page.screenshot({ path: info.outputPath(`${value}.png`), fullPage: true, scale: 'css' });
     if (info.project.name === 'desktop-light' && ['one', 'many', 'empty', 'denied', 'long'].includes(value)) {
       await page.evaluate(() => document.activeElement?.blur());

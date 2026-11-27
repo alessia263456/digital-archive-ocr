@@ -50,10 +50,10 @@
     .header-title { overflow: hidden; font: var(--text-body); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
     .wrap { inline-size: min(100%, calc(var(--space-3xl) * 18)); margin-inline: auto; padding: var(--space-xs) var(--space-md) var(--space-xs); }
     .page-intro { margin-block-end: 0; }
-    .page-intro h1 { font: var(--text-h2); }
+    .page-intro h1 { font: var(--text-h3); }
     .search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm); margin-block-end: var(--space-xs); }
     .search-input, .filter-select { min-inline-size: 0; inline-size: 100%; min-block-size: calc(var(--space-2xl) - var(--space-xs)); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); }
-    .search-input { font: var(--text-body); }
+    .search-input { font: var(--text-small); }
     input::placeholder { color: var(--color-text-secondary); opacity: 1; }
     .button, .expand-button, .folder-card, .back-button, .clear-search { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--space-2xl); padding: var(--space-xs) var(--space-md); border: thin solid var(--color-text-secondary); border-radius: var(--radius-md); background: var(--color-bg-surface); color: var(--color-text-primary); font: var(--text-small); font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color var(--duration-fast), border-color var(--duration-fast); }
     .button { min-block-size: calc(var(--space-2xl) - var(--space-xs)); border-color: var(--color-accent-teal); background: var(--color-accent-teal); color: var(--color-version-navy); }
@@ -61,18 +61,21 @@
     .button:hover { border-color: var(--color-focus-ring); background: var(--color-accent-teal); }
     .button:active, .folder-card:active, .expand-button:active, .back-button:active, .clear-search:active { text-decoration: underline; }
     .archive-layout { display: grid; grid-template-columns: minmax(calc(var(--space-3xl) * 3), calc(var(--space-3xl) * 4)) minmax(0, 1fr); align-items: start; gap: var(--space-md); }
-    .filter-sidebar { display: grid; gap: var(--space-sm); padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .filter-sidebar h2 { font: var(--text-h3); }
+    .filter-sidebar { display: grid; gap: var(--space-xs); padding: var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .filter-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+    .filter-sidebar h2 { font: var(--text-small); font-weight: 700; }
+    .clear-filters { min-block-size: var(--space-2xl); padding: var(--space-xs); border: 0; background: transparent; color: var(--color-accent-mid); font: var(--text-small); text-decoration: underline; cursor: pointer; }
     .filters { display: grid; gap: var(--space-sm); }
     .field { display: grid; gap: var(--space-xs); min-inline-size: 0; }
     .field label { color: var(--color-text-secondary); font: var(--text-small); font-weight: 600; }
+    .field span { color: var(--color-text-secondary); font: var(--text-small); font-weight: 600; }
     .filter-select { min-block-size: calc(var(--space-2xl) - var(--space-xs)); padding: var(--space-xs) var(--space-sm); font: var(--text-small); }
     .permission-note { padding: var(--space-xs) var(--space-sm); border-inline-start: var(--space-xs) solid var(--color-accent-teal); border-radius: var(--radius-sm); background: var(--color-bg-subtle); font: var(--text-small); }
     .content-column { display: grid; gap: var(--space-sm); min-inline-size: 0; }
     .home-sections { display: grid; gap: var(--space-xs); }
     .browse-section { display: grid; gap: 0; min-inline-size: 0; padding-block-end: 0; border-block-end: thin solid var(--color-border); }
     .browse-heading, .view-heading, .results-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); }
-    .browse-heading h2, .view-heading h2 { font: var(--text-h3); }
+    .browse-heading h2, .view-heading h2 { font: var(--text-small); font-weight: 700; }
     .expand-button { gap: var(--space-xs); min-block-size: calc(var(--space-2xl) - var(--space-xs)); margin-inline-start: auto; padding: 0 var(--space-xs); border: 0; border-radius: var(--radius-none); background: transparent; color: var(--color-accent-mid); text-decoration: underline; text-underline-offset: var(--space-xs); }
     .expand-button:hover, .expand-button:active { border-color: transparent; background: transparent; color: var(--color-primary); }
     .chevron { inline-size: var(--space-sm); block-size: var(--space-sm); border-inline-end: thin solid currentColor; border-block-end: thin solid currentColor; transform: rotate(45deg) translateY(calc(-1 * var(--space-xs))); transition: transform var(--duration-fast); }
@@ -99,14 +102,22 @@
     .view-title { display: grid; gap: var(--space-xs); min-inline-size: 0; }
     .view-title p { color: var(--color-text-secondary); font: var(--text-small); }
     .back-button, .clear-search { min-block-size: var(--space-2xl); padding-inline: var(--space-md); font: var(--text-small); }
-    .results-toolbar { justify-content: flex-start; color: var(--color-text-secondary); font: var(--text-small); }
+    .results-toolbar { justify-content: space-between; color: var(--color-text-secondary); font: var(--text-small); }
+    .results-toolbar label { display: inline-flex; align-items: center; gap: var(--space-xs); }
+    .results-toolbar select { min-block-size: calc(var(--space-2xl) - var(--space-xs)); padding: var(--space-xs) var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); font: var(--text-small); }
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding-block-start: var(--space-xs); border-block-start: thin solid var(--color-border); color: var(--color-text-secondary); font: var(--text-small); }
+    .pagination > div { display: flex; gap: var(--space-xs); }
+    .pagination button:disabled { cursor: not-allowed; opacity: .55; }
     .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
     .document-card { min-inline-size: 0; }
-    .document-card article { display: grid; align-content: start; gap: var(--space-sm); min-inline-size: 0; block-size: 100%; padding: var(--space-md); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
+    .document-card article { display: grid; align-content: start; gap: var(--space-xs); min-inline-size: 0; block-size: 100%; padding: var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
     .document-card h3 { overflow-wrap: anywhere; font: var(--text-small); font-weight: 600; }
     .document-metadata { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); color: var(--color-text-secondary); font: var(--text-small); }
     .dossier-number { color: var(--color-archival-label-text); font-weight: 600; }
     .excerpt { overflow-wrap: anywhere; }
+    .result-tags { display: flex; flex-wrap: wrap; gap: var(--space-xs); color: var(--color-text-secondary); font: var(--text-small); }
+    .result-tags span { padding: var(--radius-sm) var(--space-xs); border: thin solid var(--color-border); border-radius: var(--radius-sm); }
+    .excerpt mark { border-radius: var(--radius-sm); background: var(--color-archival-label-bg); color: var(--color-archival-label-text); font-weight: 600; }
     .state-message { padding: var(--space-md); border-inline-start: var(--space-xs) solid var(--color-accent-mid); border-radius: var(--radius-sm); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
     main[data-state="error"] .state-message, main[data-state="denied"] .state-message { border-color: var(--color-accent-amber); }
     main[data-state="success"] .state-message { border-color: var(--color-accent-teal); }
@@ -163,11 +174,12 @@
 
     <div class="archive-layout">
       <aside class="filter-sidebar" aria-label="Filtre de arhivă">
-        <h2>Filtre</h2>
+        <div class="filter-heading"><h2>Filtre</h2><button class="clear-filters" id="clear-filters" type="button">Șterge filtrele</button></div>
         <div class="filters">
           <div class="field"><label for="filter-dossier">Dosar fizic</label><select class="filter-select" id="filter-dossier"><option value="all">Toate dosarele</option></select></div>
           <div class="field"><label for="filter-type">Tipul documentului</label><select class="filter-select" id="filter-type"><option value="all">Toate tipurile</option></select></div>
           <div class="field"><label for="filter-year">Anul actului</label><select class="filter-select" id="filter-year"><option value="all">Toți anii</option></select></div>
+          <label class="field" id="tag-search"><span>Etichete</span><input class="filter-select" id="tag-query" type="search" placeholder="Filtrează după etichetă"></label>
           <label class="field" id="party-search"><span>Nume din acte</span><input class="filter-select" id="party-query" type="search" placeholder="Caută un nume din act"></label>
         </div>
       </aside>
@@ -199,10 +211,11 @@
         </section>
 
         <section class="view-panel" id="search-view" aria-labelledby="results-title" hidden>
-          <div class="view-heading"><div class="view-title"><h2 id="results-title">Rezultate</h2><p id="result-count"></p></div><button class="clear-search" id="clear-search" type="button">Șterge căutarea</button></div>
-          <div class="results-toolbar"><span id="sort-caption">Ordonare: relevanță</span><span id="query-caption"></span></div>
+          <div class="view-heading"><div class="view-title"><h2 id="results-title">Rezultate</h2><p id="result-count" aria-live="polite"></p></div><button class="clear-search" id="clear-search" type="button">Șterge căutarea</button></div>
+          <div class="results-toolbar"><label>Ordonează rezultatele<select id="sort-results" aria-label="Ordonează rezultatele"><option value="relevance">Relevanță</option><option value="newest">Cele mai noi</option><option value="oldest">Cele mai vechi</option></select></label><span id="query-caption"></span></div>
           <p class="state-message" id="state-message" role="status" aria-label="Stare rezultate" aria-live="polite" hidden></p>
           <ul class="results" id="search-results"></ul>
+          <nav class="pagination" id="pagination" aria-label="Pagini rezultate"><span id="pagination-caption">Pagina 1 din 1</span><div><button class="back-button" id="previous-page" type="button" aria-label="Pagina anterioară">Înapoi</button><button class="back-button" id="next-page" type="button" aria-label="Pagina următoare">Înainte</button></div></nav>
           <div class="skeleton-list" id="loading-results" aria-label="Rezultate în curs de încărcare" hidden>
             <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
             <div class="skeleton-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
@@ -241,6 +254,7 @@
       { id: 'doc-procura-122', title: 'Procură pentru operațiuni administrative', type: 'Procură', year: '2019', actNumber: 'Act nr. 122/2019', actDate: '22.07.2019', inventory: 'Inventar nr. 080', dossierId: 'dossier-003-2019', dossierNumber: 'Dosar nr. 003/2019', addedDate: '2026-11-16', addedLabel: '16.11.2026', readerVisible: false, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: procură pentru operațiuni administrative.', readerExcerpt: 'Text disponibil după anonimizare: procură pentru operațiuni administrative.' },
       { id: 'doc-cerere-divort-31', title: 'Cerere de divorț', type: 'Divorț / Familie', year: '2022', actNumber: 'Act nr. 31/2022', actDate: '05.06.2022', inventory: 'Inventar nr. 096', dossierId: 'dossier-031-2022', dossierNumber: 'Dosar nr. 031/2022', addedDate: '2026-11-15', addedLabel: '15.11.2026', readerVisible: true, partyName: 'Persoană sintetică', adminExcerpt: 'Text extras: cerere de divorț și acte de procedură.', readerExcerpt: 'Text disponibil după anonimizare: cerere de divorț și acte de procedură.' }
     ];
+    documents.forEach((item, index) => { item.tags = [['reprezentare', 'instituții'], ['succesiune'], ['cereri'], ['acceptare'], ['legalizare']][index % 5]; });
     const years = [...new Set(documents.map(document => document.year))].sort((a, b) => b.localeCompare(a));
     const main = document.getElementById('search-screen');
     const home = document.getElementById('home-sections');
@@ -249,6 +263,8 @@
     const previewState = document.getElementById('preview-state');
     const roleSelect = document.getElementById('preview-role');
     const queryInput = document.getElementById('query');
+    const tagInput = document.getElementById('tag-query');
+    const partyInput = document.getElementById('party-query');
     const searchResults = document.getElementById('search-results');
     const folderDocuments = document.getElementById('folder-documents');
     const stateMessage = document.getElementById('state-message');
@@ -257,6 +273,10 @@
     let activeFolder = null;
     let currentView = 'home';
     let currentSearchResults = [];
+    let currentQuery = '';
+    let currentSort = 'relevance';
+    let currentPage = 1;
+    const pageSize = 6;
 
     function activeDocuments() {
       return main.dataset.role === 'cititor' ? documents.filter(item => item.readerVisible) : documents;
@@ -315,6 +335,7 @@
       const li = document.createElement('li');
       li.className = compact ? 'browse-item' : 'document-card';
       li.dataset.documentId = item.id;
+      if (!compact) li.dataset.actDate = dateSortValue(item.actDate);
       if (compact) li.dataset.addedDate = item.addedDate;
       const article = document.createElement('article');
       article.className = compact ? 'recent-preview' : '';
@@ -345,15 +366,21 @@
         article.append(heading, meta);
         const excerpt = document.createElement('p');
         excerpt.className = 'excerpt';
-        excerpt.dataset.readerExcerpt = '';
-        excerpt.hidden = main.dataset.role !== 'cititor';
-        excerpt.textContent = item.readerExcerpt;
-        const adminExcerpt = document.createElement('p');
-        adminExcerpt.className = 'excerpt';
-        adminExcerpt.dataset.adminExcerpt = '';
-        adminExcerpt.hidden = main.dataset.role === 'cititor';
-        adminExcerpt.textContent = item.adminExcerpt;
-        article.append(adminExcerpt, excerpt);
+        if (main.dataset.role === 'cititor') {
+          excerpt.dataset.readerExcerpt = '';
+          excerpt.textContent = item.readerExcerpt;
+        } else {
+          excerpt.dataset.adminExcerpt = '';
+          excerpt.textContent = item.adminExcerpt;
+        }
+        highlightText(excerpt, currentQuery);
+        article.append(excerpt);
+        if (main.dataset.role !== 'cititor') {
+          const tagList = document.createElement('div');
+          tagList.className = 'result-tags';
+          item.tags.forEach(tag => addMeta(tagList, tag));
+          article.append(tagList);
+        }
       }
       li.append(article);
       return li;
@@ -380,6 +407,7 @@
       searchView.hidden = view !== 'search';
     }
     function openFolder(kind, id) {
+      currentQuery = '';
       let items = [];
       let title = '';
       let caption = '';
@@ -414,6 +442,15 @@
     function showHome() {
       activeFolder = null;
       queryInput.value = '';
+      document.getElementById('filter-dossier').value = 'all';
+      document.getElementById('filter-type').value = 'all';
+      document.getElementById('filter-year').value = 'all';
+      tagInput.value = '';
+      partyInput.value = '';
+      currentQuery = '';
+      currentSort = 'relevance';
+      currentPage = 1;
+      document.getElementById('sort-results').value = currentSort;
       searchResults.replaceChildren();
       stateMessage.hidden = true;
       loadingResults.hidden = true;
@@ -426,28 +463,98 @@
       const dossierId = document.getElementById('filter-dossier').value;
       const type = document.getElementById('filter-type').value;
       const year = document.getElementById('filter-year').value;
-      const party = document.getElementById('party-query').value;
+      const party = partyInput.value;
+      const tags = main.dataset.role === 'cititor' ? '' : tagInput.value;
       const normalizedQuery = normalize(query.trim());
       const normalizedParty = normalize(party.trim());
+      const normalizedTags = normalize(tags.trim());
       return activeDocuments().filter(item => {
-        const text = normalize([item.title, item.type, item.actNumber, item.actDate, item.inventory, item.dossierNumber, item.adminExcerpt, item.readerExcerpt].join(' '));
-        const matchesQuery = !normalizedQuery || text.includes(normalizedQuery);
+        const excerpts = main.dataset.role === 'cititor' ? [item.readerExcerpt] : [item.adminExcerpt, item.partyName, ...item.tags];
+        const text = normalize([item.title, item.type, item.actNumber, item.actDate, item.inventory, item.dossierNumber, ...excerpts].join(' '));
+        const matchesQuery = !normalizedQuery || normalizedQuery.split(/\s+/).every(term => text.includes(term));
         const matchesDossier = dossierId === 'all' || item.dossierId === dossierId;
         const matchesType = type === 'all' || item.type === type;
         const matchesYear = year === 'all' || item.year === year;
         const matchesParty = !normalizedParty || (main.dataset.role !== 'cititor' && normalize(item.partyName).includes(normalizedParty));
-        return matchesQuery && matchesDossier && matchesType && matchesYear && matchesParty;
+        const matchesTags = !normalizedTags || (main.dataset.role !== 'cititor' && item.tags.some(tag => normalize(tag).includes(normalizedTags)));
+        return matchesQuery && matchesDossier && matchesType && matchesYear && matchesParty && matchesTags;
       });
+    }
+    function highlightText(element, query) {
+      if (!query.trim()) return;
+      const text = element.textContent;
+      const normalizedText = normalize(text);
+      const ranges = [];
+      query.trim().split(/\s+/).forEach(term => {
+        const normalizedTerm = normalize(term);
+        let offset = 0;
+        while (normalizedTerm && offset < normalizedText.length) {
+          const start = normalizedText.indexOf(normalizedTerm, offset);
+          if (start < 0) break;
+          ranges.push([start, start + normalizedTerm.length]);
+          offset = start + normalizedTerm.length;
+        }
+      });
+      ranges.sort((left, right) => left[0] - right[0]);
+      const merged = ranges.reduce((all, range) => {
+        const previous = all[all.length - 1];
+        if (previous && range[0] <= previous[1]) previous[1] = Math.max(previous[1], range[1]);
+        else all.push([...range]);
+        return all;
+      }, []);
+      if (!merged.length) return;
+      element.replaceChildren();
+      let cursor = 0;
+      merged.forEach(([start, end]) => {
+        if (start > cursor) element.append(document.createTextNode(text.slice(cursor, start)));
+        const mark = document.createElement('mark');
+        mark.textContent = text.slice(start, end);
+        element.append(mark);
+        cursor = end;
+      });
+      if (cursor < text.length) element.append(document.createTextNode(text.slice(cursor)));
+    }
+    function dateSortValue(value) {
+      const [day, month, year] = value.split('.');
+      return `${year}-${month}-${day}`;
+    }
+    function sortedResults() {
+      const items = [...currentSearchResults];
+      if (currentSort === 'newest') return items.sort((a, b) => dateSortValue(b.actDate).localeCompare(dateSortValue(a.actDate)));
+      if (currentSort === 'oldest') return items.sort((a, b) => dateSortValue(a.actDate).localeCompare(dateSortValue(b.actDate)));
+      const score = item => {
+        const text = normalize([item.title, item.adminExcerpt, item.readerExcerpt].join(' '));
+        return currentQuery.trim().split(/\s+/).filter(Boolean).reduce((sum, term) => sum + Math.max(0, text.split(normalize(term)).length - 1), 0);
+      };
+      return items.sort((a, b) => score(b) - score(a) || dateSortValue(b.actDate).localeCompare(dateSortValue(a.actDate)));
+    }
+    function renderSearchPage() {
+      const sorted = sortedResults();
+      const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
+      currentPage = Math.min(Math.max(1, currentPage), pageCount);
+      const first = (currentPage - 1) * pageSize;
+      const visible = sorted.slice(first, first + pageSize);
+      searchResults.replaceChildren(...visible.map(item => documentCard(item)));
+      document.getElementById('result-count').textContent = main.dataset.state === 'many'
+        ? `${sorted.length} rezultate în total · exemple demonstrative`
+        : `${sorted.length} ${sorted.length === 1 ? 'rezultat' : 'rezultate'} în total`;
+      document.getElementById('sort-results').value = currentSort;
+      document.getElementById('pagination-caption').textContent = `Pagina ${currentPage} din ${pageCount}`;
+      document.getElementById('previous-page').disabled = currentPage <= 1;
+      document.getElementById('next-page').disabled = currentPage >= pageCount;
+      document.getElementById('pagination').hidden = sorted.length <= pageSize;
     }
     function showSearchResults(items, query, state = 'success', preview = false) {
       currentSearchResults = items;
+      currentQuery = query;
+      currentPage = 1;
       setView('search');
       main.dataset.state = state;
       activeFolder = null;
       stateMessage.hidden = true;
       loadingResults.hidden = state !== 'loading';
-      searchResults.replaceChildren(...items.map(item => documentCard(item)));
-      document.getElementById('result-count').textContent = `${items.length} ${items.length === 1 ? 'rezultat' : 'rezultate'}${preview ? ' · exemple vizuale' : ' · ordonate după relevanță'}`;
+      currentSort = document.getElementById('sort-results').value || 'relevance';
+      renderSearchPage();
       document.getElementById('query-caption').textContent = query ? `Căutare: „${query}”` : '';
       if (['empty', 'denied', 'error', 'success', 'long'].includes(state)) {
         stateMessage.hidden = false;
@@ -464,7 +571,15 @@
     }
     function runSearch() {
       const query = queryInput.value.trim();
-      if (!query) { showHome(); return; }
+      const filtersActive = document.getElementById('filter-dossier').value !== 'all'
+        || document.getElementById('filter-type').value !== 'all'
+        || document.getElementById('filter-year').value !== 'all'
+        || Boolean(tagInput.value.trim()) || Boolean(partyInput.value.trim());
+      if (!query && !filtersActive) { showHome(); return; }
+      if (query !== currentQuery) {
+        currentSort = 'relevance';
+        document.getElementById('sort-results').value = currentSort;
+      }
       const matching = getFilteredDocuments(query);
       showSearchResults(matching, query, matching.length ? 'search' : 'empty');
     }
@@ -472,7 +587,7 @@
       if (state === 'default') { showHome(); return; }
       const available = activeDocuments();
       if (state === 'one') { showSearchResults(available.slice(0, 1), '', 'one', true); return; }
-      if (state === 'many') { showSearchResults(available, '', 'many', true); document.getElementById('result-count').textContent = 'Multe rezultate demonstrative'; main.dataset.state = 'many'; return; }
+      if (state === 'many') { showSearchResults(available, '', 'many', true); document.getElementById('result-count').textContent = `${available.length} rezultate în total · multe exemple demonstrative`; main.dataset.state = 'many'; return; }
       if (state === 'denied') { showSearchResults([], '', 'denied', true); return; }
       if (state === 'loading') { showSearchResults([], '', 'loading', true); stateMessage.hidden = false; stateMessage.textContent = 'Se caută în arhivă…'; return; }
       if (state === 'error' || state === 'success' || state === 'long') {
@@ -486,6 +601,8 @@
       main.dataset.role = role;
       const reader = role === 'cititor';
       document.getElementById('party-search').hidden = reader;
+      document.getElementById('tag-search').hidden = reader;
+      if (reader) { partyInput.value = ''; tagInput.value = ''; }
       document.getElementById('role-note').textContent = reader
         ? 'Exemple aprobate și anonimizate din dosarele permise.'
         : 'Căutarea numelor din acte este disponibilă.';
@@ -537,6 +654,14 @@
     document.getElementById('search-form').addEventListener('submit', event => { event.preventDefault(); runSearch(); });
     queryInput.addEventListener('input', () => { if (!queryInput.value.trim() && currentView === 'search') showHome(); });
     document.getElementById('clear-search').addEventListener('click', showHome);
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      document.getElementById('filter-dossier').value = 'all';
+      document.getElementById('filter-type').value = 'all';
+      document.getElementById('filter-year').value = 'all';
+      tagInput.value = '';
+      partyInput.value = '';
+      runSearch();
+    });
     document.getElementById('theme-toggle').addEventListener('click', event => {
       const dark = document.documentElement.dataset.theme !== 'dark';
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
@@ -545,10 +670,19 @@
     });
     previewState.addEventListener('change', event => setPreviewState(event.target.value));
     roleSelect.addEventListener('change', event => setRole(event.target.value));
-    document.getElementById('filter-dossier').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
-    document.getElementById('filter-type').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
-    document.getElementById('filter-year').addEventListener('change', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
-    document.getElementById('party-query').addEventListener('input', () => { if (currentView === 'search' && previewState.value === 'default') runSearch(); });
+    function filterChanged() { if (previewState.value === 'default') runSearch(); }
+    document.getElementById('filter-dossier').addEventListener('change', filterChanged);
+    document.getElementById('filter-type').addEventListener('change', filterChanged);
+    document.getElementById('filter-year').addEventListener('change', filterChanged);
+    tagInput.addEventListener('input', filterChanged);
+    partyInput.addEventListener('input', filterChanged);
+    document.getElementById('sort-results').addEventListener('change', event => {
+      currentSort = event.target.value;
+      currentPage = 1;
+      renderSearchPage();
+    });
+    document.getElementById('previous-page').addEventListener('click', () => { currentPage -= 1; renderSearchPage(); });
+    document.getElementById('next-page').addEventListener('click', () => { currentPage += 1; renderSearchPage(); });
     populateFilters();
     renderHome();
     setRole('admin');

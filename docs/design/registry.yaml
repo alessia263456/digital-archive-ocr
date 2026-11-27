@@ -9,7 +9,7 @@ designs:
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-033, D-042]
-    description: "M1a.1 implements the authenticated default home with the confirmed copy-only empty state for admin, arhivar and cititor. M1a.2 adds a DS-003 upload entry for admin and arhivar. Search, filters, collection browsing, recent documents and dossier permission views remain within P22-34."
+    description: "Authenticated archive search and browsing for admin, arhivar and cititor. Preserves the approved type, dossier and year browsing groups, Vezi toate interactions and recent documents. Search results support filters, total count, relevance/date sorting, highlighted snippets and pagination; tag and Signatory Party filters are staff-only. The frontend currently uses replaceable synthetic mock data pending C-008 and real API integration. Desktop light/dark home and result captures: docs/design/screens/DS-001.*.png."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
