@@ -153,3 +153,17 @@ Am investigat răspunsul HTTP 403 pentru Signed URL. Laravel nu avea Caddy confi
 Proprietarul a autorizat deploy-ul reviziei `f089e2c43f1c287450076e56ffc966296d71822b`. Aceasta a fost transferată privat în Azure; a fost reconstruit și recreat numai serviciul backend. Backend-ul a devenit healthy, iar containerele Caddy și PostgreSQL au rămas neschimbate. Configurația privată, TLS și rollback-ul placeholder au fost păstrate. HTTP a redirecționat către HTTPS (308), certificatul HTTPS a fost valid, iar accesul anonim la frontend, health și API a primit 401.
 
 Proprietarul a raportat că proba live Signed URL a trecut: livrare validă, respingere pentru URL expirat și modificat și curățarea obiectului sintetic. Verificările autentificate au returnat frontend 200, health 200 și fallback API 404. În Chrome DevTools, interfața React s-a randat; JavaScript-ul `index-DOxFgDtR.js` și CSS-ul `index-DV9xApkK.css` au returnat 200, iar documentul HTML principal a returnat 304 din cache. P22-11 și P22-56b au fost marcate complete în checklist. Testele PHPUnit, verificările de configurare, linterul Ledger și `git diff --check` au trecut. Checklist-ul a fost actualizat în commiturile locale `ef1c077` și `65ede59`; fixul este în `f089e2c`. Nu s-a făcut push.
+
+## 2026-11-27 · P22-21 OCR, anonimizare și siguranța previzualizării
+
+**Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.
+
+Am cerut continuarea planului aprobat pentru asocierea cuvintelor OCR corectate cu Bounding Box-urile originale, păstrând textarea liberă DS-011 și corecturile existente din frontend. Codex a implementat operații de editare cu offset-uri UTF-16, validate și reaplicate pe backend, asocieri derivate din OCR-ul original și proiecția textului sigur pentru cititor. Nu a fost necesară o migrare sau o dependență nouă. Contractul C-004 a fost păstrat ca istoric supersedat de C-005.
+
+Verificarea a acoperit corectarea OCR, detectarea PII, acceptarea potrivirii, generarea PDF-ului privat și proiecția pentru cititor. PHPUnit a trecut cu 160 de teste și 1.168 de aserțiuni, apoi verificarea sintetică pentru trei pagini a trecut cu 2 teste și 15 aserțiuni. Playwright a trecut cu 148 de teste; 24 de verificări API reale au rămas opt-in. Build-ul React, linterul Ledger și capturile DS-011 pentru desktop și mobil, în temele deschisă și întunecată, au trecut inspecția.
+
+În testarea locală, documentele nu s-au previzualizat și încărcările au eșuat după pornirea backend-ului cu discul local `documents`, în timp ce ciornele existente foloseau R2. Discul R2 a fost verificat prin proba de scriere, citire, semnare și ștergere, apoi backend-ul și worker-ul au fost repornite cu configurația R2. Un PDF și o colecție JPG au fost rasterizate, iar dimensiunile paginilor au corespuns OCR-ului.
+
+Salvarea corecturilor OCR a returnat HTTP 422 deoarece middleware-ul Laravel transforma șirurile goale și elimina spațiile din operațiile textarea. Excepția middleware-ului a fost limitată la ruta de salvare OCR. Testul de regresie a reprodus eroarea înainte de fix; suita PHPUnit a trecut apoi cu 162 de teste și 1.184 de aserțiuni, cu trei teste OCR-worker omise în acel mediu.
+
+Schimbările au fost înregistrate local în commiturile `fbd22c9`, `fdf688b`, `58239ac` și `bdfd54c`, apoi integrate prin fast-forward în ramura locală `main`. Nu s-a făcut push sau deploy.
