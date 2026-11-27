@@ -356,6 +356,24 @@ final class DocumentDraftOcrReviewTest extends TestCase
         }
     }
 
+    public function test_textarea_insert_delete_and_whitespace_operations_survive_request_middleware(): void
+    {
+        $draft = $this->readyDraft();
+        $url = '/api/drafts/'.$draft->id.'/editor/ocr';
+        $this->staff()->patchJson($url, [
+            'ocr_revision' => 1,
+            'pages' => [['page' => 1, 'text' => "CNP 1960523123456 nou\n", 'operations' => [
+                ['start' => 17, 'deleted' => '', 'inserted' => " nou\n"],
+            ]]],
+        ])->assertOk()->assertJsonPath('pages.0.corrected_text', "CNP 1960523123456 nou\n");
+        $this->patchJson($url, [
+            'ocr_revision' => 2,
+            'pages' => [['page' => 1, 'text' => 'CNP 1960523123456', 'operations' => [
+                ['start' => 17, 'deleted' => " nou\n", 'inserted' => ''],
+            ]]],
+        ])->assertOk()->assertJsonPath('pages.0.corrected_text', 'CNP 1960523123456');
+    }
+
     private function readyDraft(): DocumentDraft
     {
         $draft = DocumentDraft::query()->create([

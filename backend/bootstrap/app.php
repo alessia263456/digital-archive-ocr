@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
+        // OCR edit replay requires exact whitespace and empty insertion/deletion strings.
+        $ocrSave = fn (Request $request) => $request->is('api/drafts/*/editor/ocr');
+        $middleware->trimStrings(except: [$ocrSave]);
+        $middleware->convertEmptyStringsToNull(except: [$ocrSave]);
         $middleware->trustProxies(at: '172.16.0.0/12');
         $middleware->statefulApi();
         $middleware->alias([
