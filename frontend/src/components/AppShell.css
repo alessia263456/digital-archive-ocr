@@ -13,6 +13,9 @@
   background: var(--color-bg-surface);
   box-shadow: var(--shadow-card);
 }
+.app-shell.editor-mode > .app-header,
+.app-shell.editor-mode > .app-shell-body { min-inline-size: 0; }
+.app-shell.editor-mode .app-workspace { min-inline-size: 0; }
 
 .app-header {
   display: flex;

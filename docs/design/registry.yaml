@@ -94,10 +94,10 @@ designs:
   - id: DS-011
     name: "Editor document & Anonimizare (Document Editor & Anonymization)"
     kind: screen
-    status: approved
+    status: implemented
     roles: [admin, arhivar]
     decisions: [D-004, D-038, D-022, D-035, D-042, D-044, D-045]
-    description: "Clasificare arhivistică și metadate confirmate, dosar fizic compatibil selectat după numărul tipărit, termen și prima dată eligibilă pentru retenție, corectare OCR, revizuire PII obligatorie, marcaje manuale, PDF anonimizat, confirmare finală legată de revizii și publicare ca versiune imuabilă. Eligibilitatea nu autorizează distrugerea."
+    description: "Editor cu file Date document, Corectare OCR, Anonimizare / Revizuire PII și Verificare finală. Vizualizatorul cu pagini consecutive și marcaje aliniate rămâne disponibil lângă etapa selectată. Salvează ciorna fără confirmare sau publicare; metadatele confirmate, revizuirea PII obligatorie, marcajele manuale, PDF anonimizat și publicarea ca versiune imuabilă rămân legate de reviziile curente. Eligibilitatea nu autorizează distrugerea. Capturi PII desktop/mobile, light/dark: `docs/design/screens/DS-011.PII.*.png`."
     design_ref: mocks/DS-011.html
 
   - id: DS-012

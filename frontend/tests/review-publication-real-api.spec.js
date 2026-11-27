@@ -58,6 +58,7 @@ test('hands off from DS-004 through metadata, final review, and immutable public
   await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
   await expect(page.getByRole('status').filter({ hasText: 'Metadatele au fost confirmate' })).toBeVisible();
   console.log('M2 real API: metadata confirmed');
+  await page.getByRole('tab', { name: /Anonimizare/ }).click();
   const rejectButtons = page.getByRole('button', { name: 'Respinge potrivirea' });
   const candidateCount = await rejectButtons.count();
   for (let index = 0; index < candidateCount; index++) {
@@ -70,6 +71,7 @@ test('hands off from DS-004 through metadata, final review, and immutable public
   await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
   await expect(page.getByTitle('Previzualizare PDF anonimizat')).toBeVisible();
   console.log('M2 real API: redaction preview ready');
+  await page.getByRole('tab', { name: /Verificare finală/ }).click();
   await page.getByRole('button', { name: 'Confirmă revizuirea finală' }).click();
   await page.getByRole('button', { name: 'Aprobă și publică' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Documentul a fost aprobat' })).toBeVisible({ timeout: 30_000 });

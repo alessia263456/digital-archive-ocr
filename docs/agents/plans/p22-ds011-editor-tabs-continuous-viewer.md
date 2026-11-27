@@ -1,6 +1,6 @@
 # Plan — DS-011 interactive tabs and document viewer
 
-**Status:** Proposed; awaiting owner approval. This is a corrective implementation plan against the already approved DS-011 mock. It does not replace the earlier M2 plan.
+**Status:** Implemented (2026-11-27). This is a corrective implementation plan against the already approved DS-011 mock. It does not replace the earlier M2 plan.
 
 ## Size
 
@@ -46,12 +46,14 @@ The approved `docs/design/mocks/DS-011.html` remains unchanged.
 | 1 | Each tab selects its panel; inactive workflow panels are not displayed; selected state is distinct from completion status. | `frontend/tests/editor.spec.js` · Playwright |
 | 2 | Switching tabs preserves unsubmitted metadata, OCR edits, redaction state, review decisions, and viewer scroll position and zoom. | `frontend/tests/editor.spec.js` · Playwright |
 | 3 | Viewer pages are rendered consecutively and scroll naturally; the page indicator tracks the page in view; previous/next and direct page selection scroll to the requested page. | `frontend/tests/editor.spec.js` · Playwright |
-| 4 | The viewer toolbar remains visible during scrolling and zoom, fit-to-width, and fit-to-page controls work. | `frontend/tests/editor.spec.js` · Playwright |
+| 4 | A compact, one-row desktop toolbar supports page selection, zoom, fit-to-width, fit-to-page, and manual redaction. Fit-to-page uses the available viewer dimensions and recalculates after resize or sidebar changes. | `frontend/tests/editor.spec.js` · Playwright at 1366×768 and 1600×900 |
 | 5 | OCR bounding boxes and redaction overlays remain aligned with their page at multiple zoom levels and fit modes. | `frontend/tests/editor.spec.js` · Playwright; compare page and overlay geometry. |
 | 6 | Existing metadata confirmation, OCR freshness, redaction preview, final review, duplicate handling, and publication requirements still apply. | `frontend/tests/editor.spec.js` and `frontend/tests/review-publication-real-api.spec.js` · Playwright |
-| 7 | Desktop panes scroll independently; the small-screen layout has no horizontal overflow and keeps tabs/actions accessible. | Playwright across desktop/mobile and light/dark projects; inspect screenshots at 1600×900 and 320×740. |
+| 7 | Sidebar collapse retains the icon rail and leaves the Editor in the remaining workspace; expand restores labels. Desktop panes use available height and the small-screen layout has no horizontal overflow. | `frontend/tests/editor.spec.js` and `frontend/tests/appshell.spec.js` · Playwright |
 | 8 | The header shows the selected upload filename and available dossier number; save-draft uses existing persistence APIs without confirming or publishing. | `frontend/tests/editor.spec.js` · Playwright |
 | 9 | DS-004 opens the correct document in the Editor. | `frontend/tests/queue.spec.js` · Playwright |
+| 10 | Draft/page loading, OCR/PII saves, redaction preview, and publication show pending feedback and block duplicate submissions. Failures remain actionable. | `frontend/tests/editor.spec.js` · Playwright |
+| 11 | PII cards and controls remain compact; technical coordinates are available in expandable details. | Inspect Anonimizare screenshots at 1366×768 and 1600×900, light and dark. |
 
 Also run the repository’s full frontend Playwright command and `python3 docs/agents/tools/ledger-lint.py`. No backend changes are planned; rerun PHPUnit if implementation reveals any backend change is needed.
 

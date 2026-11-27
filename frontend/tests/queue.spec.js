@@ -44,7 +44,7 @@ test('shows counted review and quarantine tabs and hands off to DS-011 Editor', 
   await page.screenshot({ path: `test-results/DS-004.carantina.${viewport}.${colorScheme}.png`, fullPage: true });
   await page.getByRole('tab', { name: /Revizuire/ }).click();
   await page.getByRole('button', { name: 'Deschide editorul' }).click();
-  await expect(page.getByRole('heading', { name: 'Editor document' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: longName })).toBeVisible();
 });
 
 test('retry reports success, permanent failure requires confirmation, and stale items leave the list', async ({ page }) => {

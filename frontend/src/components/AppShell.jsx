@@ -40,7 +40,7 @@ export function AppShell({ user, screen, onNavigate, onLogout, busy, children })
   }
 
   return (
-    <div className="app-shell" data-sidebar={minimized ? 'minimized' : 'expanded'} role="application" aria-label="Arhivă digitală">
+    <div className={`app-shell${screen.startsWith('editor:') ? ' editor-mode' : ''}`} data-sidebar={minimized ? 'minimized' : 'expanded'} role="application" aria-label="Arhivă digitală">
       <header className="app-header">
         <button className="app-icon-button desktop-sidebar-toggle" type="button"
           aria-label={minimized ? 'Extinde meniul' : 'Minimizează meniul'} aria-expanded={!minimized}
@@ -89,7 +89,7 @@ export function AppShell({ user, screen, onNavigate, onLogout, busy, children })
           </nav>
         </aside>
         {mobileOpen && <button className="app-mobile-backdrop" type="button" aria-label="Închide meniul" onClick={() => setMobileOpen(false)} />}
-        <section className="app-workspace" key={screen}>{children}</section>
+        <section className={`app-workspace${screen.startsWith('editor:') ? ' editor-workspace' : ''}`} key={screen}>{children}</section>
       </div>
     </div>
   );

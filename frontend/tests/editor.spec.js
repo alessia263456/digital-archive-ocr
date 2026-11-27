@@ -20,20 +20,199 @@ const metadataState = {
 };
 const matchingDossier = { id: 101, physical_dossier_number: '29/2026', archival_indicator: 'IA 20', inventory_number: '29/2026', retention_time: '10 ani C.S.', description: 'Contracte de comodat' };
 
-async function openEditor(page, state = editorState, editorStatus = 200) {
+function deferred() {
+  let resolve;
+  const promise = new Promise((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+async function openEditor(page, state = editorState, editorStatus = 200, pending = {}) {
   await page.route('**/api/user', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: 'arhivar', role: 'arhivar' }) }));
   await page.route('**/api/drafts/queue', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ review: [draft], quarantine: [] }) }));
-  await page.route('**/api/drafts/editor-1/editor', (route) => route.fulfill({ status: editorStatus, contentType: 'application/json', body: JSON.stringify(editorStatus === 200 ? structuredClone(state) : { eroare: 'Editorul nu a putut fi încărcat.' }) }));
+  await page.route('**/api/drafts/editor-1/editor', async (route) => {
+    pending.editorStarted?.resolve();
+    if (pending.editor) await pending.editor.promise;
+    await route.fulfill({ status: editorStatus, contentType: 'application/json', body: JSON.stringify(editorStatus === 200 ? structuredClone(state) : { eroare: 'Editorul nu a putut fi încărcat.' }) });
+  });
   await page.route('**/api/drafts/editor-1/metadata', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(structuredClone(metadataState)) }));
   await page.route('**/api/physical-dossiers**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ dossiers: [matchingDossier] }) }));
   await page.route('**/api/drafts/editor-1/preview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }) }));
-  await page.route('**/api/drafts/editor-1/editor/pages/1/image', (route) => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="white"/><text x="8" y="18" font-family="sans-serif" font-size="5" fill="#072D5C">DECLARAȚIE SINTETICĂ</text><text x="8" y="32" font-family="sans-serif" font-size="4" fill="#072D5C">CNP 1960523123456</text><text x="8" y="46" font-family="sans-serif" font-size="4" fill="#072D5C">Semnatar · document pentru test</text></svg>' }));
+  await page.route('**/api/drafts/editor-1/editor/pages/*/image', async (route) => {
+    pending.imageStarted?.resolve();
+    if (pending.image) await pending.image.promise;
+    await route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="white"/><text x="8" y="18" font-family="sans-serif" font-size="5" fill="#072D5C">DECLARAȚIE SINTETICĂ</text><text x="8" y="32" font-family="sans-serif" font-size="4" fill="#072D5C">CNP 1960523123456</text><text x="8" y="46" font-family="sans-serif" font-size="4" fill="#072D5C">Semnatar · document pentru test</text></svg>' });
+  });
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
   await page.goto('/');
   await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
   await page.getByRole('button', { name: 'Deschide editorul' }).click();
-  if (editorStatus === 200) await expect(page.getByRole('heading', { name: 'Editor document' })).toBeVisible();
+  if (editorStatus === 200 && !pending.editor) await expect(page.getByRole('heading', { name: draft.name })).toBeVisible();
 }
+
+async function showTab(page, tab) {
+  const target = page.getByRole('tab', { name: new RegExp(tab) });
+  await target.focus();
+  await page.keyboard.press('Enter');
+}
+
+test('keeps the editor workspace usable when the AppShell sidebar collapses and expands', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openEditor(page);
+  const shell = page.locator('.app-shell');
+  const nav = page.getByRole('navigation', { name: 'Navigare principală' });
+  const workspace = page.locator('.editor-workspace');
+  await expect(nav).toBeVisible();
+  const expanded = await workspace.boundingBox();
+  await page.getByRole('button', { name: 'Minimizează meniul' }).click();
+  await expect(shell).toHaveAttribute('data-sidebar', 'minimized');
+  await expect(nav).toBeVisible();
+  const collapsed = await workspace.boundingBox();
+  expect(collapsed.width).toBeGreaterThan(1000);
+  expect(collapsed.height).toBeGreaterThan(600);
+  expect(collapsed.width).toBeGreaterThan(expanded.width - 200);
+  await expect(page.getByRole('heading', { name: draft.name })).toBeVisible();
+  await page.getByRole('button', { name: 'Extinde meniul' }).click();
+  await expect(shell).toHaveAttribute('data-sidebar', 'expanded');
+  await expect(page.getByRole('navigation', { name: 'Navigare principală' }).getByText('Cozi de lucru')).toBeVisible();
+  expect(await workspace.evaluate((element) => element.clientWidth)).toBeGreaterThan(1000);
+});
+
+test('uses the available pane for a default fit-to-page viewer and a one-row toolbar', async ({ page }) => {
+  await openEditor(page);
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    const geometry = await page.locator('.editor-preview-pages').first().evaluate((viewer) => {
+      const canvas = viewer.querySelector('.editor-page-canvas').getBoundingClientRect();
+      const heading = viewer.querySelector('.editor-source-page h3').getBoundingClientRect();
+      const toolbar = viewer.closest('.editor-card').querySelector('.editor-viewer-toolbar').getBoundingClientRect();
+      const box = viewer.getBoundingClientRect();
+      return { viewerHeight: box.height, canvasHeight: canvas.height, canvasTop: canvas.top, headingBottom: heading.bottom, viewerBottom: box.bottom, toolbarHeight: toolbar.height, scrollWidth: document.documentElement.scrollWidth, width: innerWidth };
+    });
+    expect(geometry.viewerHeight).toBeGreaterThan(300);
+    expect(geometry.toolbarHeight).toBeLessThanOrEqual(44);
+    expect(geometry.canvasTop).toBeGreaterThanOrEqual(geometry.headingBottom);
+    expect(geometry.canvasTop + geometry.canvasHeight).toBeLessThanOrEqual(geometry.viewerBottom);
+    expect(geometry.scrollWidth).toBe(geometry.width);
+  }
+  await expect(page.getByRole('button', { name: 'Potrivire la pagină' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Potrivire la lățime' })).toBeVisible();
+});
+
+test('shows loading feedback while the draft and its document page are pending', async ({ page }) => {
+  const editor = deferred(), editorStarted = deferred(), image = deferred(), imageStarted = deferred();
+  await openEditor(page, editorState, 200, { editor, editorStarted, image, imageStarted });
+  await expect(page.getByRole('status').filter({ hasText: 'Se încarcă documentul' })).toBeVisible();
+  editor.resolve();
+  await imageStarted.promise;
+  await expect(page.getByRole('status').filter({ hasText: 'Se încarcă pagina 1' })).toBeVisible();
+  image.resolve();
+  await expect(page.getByRole('status').filter({ hasText: 'Se încarcă pagina 1' })).toBeHidden();
+});
+
+test('shows draft and OCR saving feedback while the correction request is pending', async ({ page }) => {
+  await openEditor(page);
+  await showTab(page, 'Corectare OCR');
+  await page.getByLabel('Corectare OCR · Pagina 1').fill('CNP corectat');
+  const saveRequest = deferred(), saveStarted = deferred();
+  await page.route('**/api/drafts/editor-1/editor/ocr', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback();
+    saveStarted.resolve(); await saveRequest.promise;
+    await route.fulfill({ json: { ...editorState, ocr_revision: 2, detection_revision: 2, pages: [{ ...editorState.pages[0], corrected_text: 'CNP corectat' }] } });
+  });
+  await page.getByRole('button', { name: 'Salvează ciorna' }).click();
+  await saveStarted.promise;
+  await expect(page.getByRole('button', { name: 'Se salvează ciorna…' })).toBeDisabled();
+  await expect(page.getByRole('status').filter({ hasText: 'Se salvează textul OCR și se detectează din nou datele personale' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Se salvează…' })).toBeDisabled();
+  saveRequest.resolve();
+  await expect(page.getByRole('status').filter({ hasText: 'Ciorna a fost salvată' })).toBeVisible();
+});
+
+test('shows pending feedback and blocks duplicate PII and redaction preview requests', async ({ page }) => {
+  const candidate = { ...editorState.candidates[0], bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }], location_status: 'reliable' };
+  await openEditor(page, { ...editorState, candidates: [candidate] });
+  await showTab(page, 'Anonimizare');
+
+  const piiRequest = deferred(), piiStarted = deferred();
+  await page.route('**/api/drafts/editor-1/editor/pii-review', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback();
+    piiStarted.resolve(); await piiRequest.promise;
+    await route.fulfill({ json: { candidates: [{ ...candidate, review_status: 'accepted' }] } });
+  });
+  await page.getByRole('button', { name: 'Acceptă potrivirea' }).click();
+  await piiStarted.promise;
+  await expect(page.getByRole('button', { name: 'Se salvează…' }).first()).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Se salvează…' }).last()).toBeDisabled();
+  piiRequest.resolve();
+
+  const previewRequest = deferred(), previewStarted = deferred();
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    previewStarted.resolve(); await previewRequest.promise;
+    await route.fulfill({ json: { status: 'ready' } });
+  });
+  const preview = page.getByRole('button', { name: 'Previzualizează anonimizarea' });
+  await preview.click();
+  await previewStarted.promise;
+  await expect(page.getByRole('status').filter({ hasText: 'Se generează previzualizarea' })).toBeVisible();
+  await expect(preview).toBeDisabled();
+  previewRequest.resolve();
+});
+
+test('selects one workflow tab at a time and keeps the continuous viewer available', async ({ page }) => {
+  await openEditor(page);
+  await expect(page.getByRole('tabpanel', { name: 'Date document' })).toBeVisible();
+  await expect(page.locator('#editor-panel-ocr')).toBeHidden();
+  await expect(page.getByRole('application', { name: 'Document original, pagina 1' })).toBeVisible();
+  const tabs = page.getByRole('tablist', { name: 'Etapele editorului' });
+  await tabs.getByRole('tab', { name: /Corectare OCR/ }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(tabs.getByRole('tab', { name: /Anonimizare/ })).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: /Anonimizare/ })).toBeVisible();
+  await expect(page.locator('#editor-panel-metadata')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Salvează ciorna' })).toBeVisible();
+});
+
+test('navigates continuous pages, keeps zoom and saves draft without confirming or publishing', async ({ page }) => {
+  const twoPages = { ...editorState, pages: [...editorState.pages, { ...editorState.pages[0], page: 2 }] };
+  await openEditor(page, twoPages);
+  await expect(page.locator('.editor-source-page')).toHaveCount(2);
+  await expect.poll(async () => Number((await page.locator('.editor-zoom-value').textContent()).replace('%', ''))).toBeLessThan(100);
+  const initialZoom = Number((await page.locator('.editor-zoom-value').textContent()).replace('%', ''));
+  await page.getByRole('button', { name: 'Mărește' }).click();
+  await expect(page.locator('.editor-page-canvas').first()).toHaveAttribute('style', new RegExp(`inline-size: ${initialZoom + 10}%`));
+  const alignedAt110 = await page.locator('.editor-page-canvas').first().evaluate((canvas) => {
+    const container = canvas.getBoundingClientRect();
+    return ['img', 'svg'].map((selector) => { const bounds = canvas.querySelector(selector).getBoundingClientRect(); return [bounds.left - container.left, bounds.top - container.top, bounds.width - container.width, bounds.height - container.height]; });
+  });
+  for (const bounds of alignedAt110) for (const delta of bounds) expect(Math.abs(delta)).toBeLessThanOrEqual(2);
+  await page.getByRole('button', { name: 'Potrivire la pagină' }).click();
+  const fitZoom = Number((await page.locator('.editor-zoom-value').textContent()).replace('%', ''));
+  expect(fitZoom).toBeGreaterThan(0);
+  expect(fitZoom).toBeLessThanOrEqual(100);
+  await page.getByRole('button', { name: 'Potrivire la lățime' }).click();
+  await expect(page.locator('.editor-page-canvas').first()).toHaveAttribute('style', /inline-size: 100%/);
+  await page.getByLabel('Pagina documentului').selectOption('2');
+  await expect(page.getByLabel('Pagina documentului')).toHaveValue('2');
+  await showTab(page, 'Corectare OCR');
+  await page.getByLabel('Corectare OCR · Pagina 1').fill('CNP corectat');
+  await showTab(page, 'Date document');
+  await page.getByLabel('Numărul actului').fill('42');
+  let metadataSaved = false;
+  let ocrSaved = false;
+  let forbiddenCall = false;
+  page.on('request', (request) => { if (/metadata\/confirm|review\/confirm|\/publish/.test(request.url())) forbiddenCall = true; });
+  await page.route('**/api/drafts/editor-1/metadata', (route) => {
+    if (route.request().method() === 'PATCH') { metadataSaved = true; return route.fulfill({ json: { metadata: { act_number: '42' }, metadata_revision: 2, ocr_revision: 1, classification, retention: null } }); }
+    return route.fulfill({ json: structuredClone(metadataState) });
+  });
+  await page.route('**/api/drafts/editor-1/editor/ocr', (route) => { ocrSaved = true; return route.fulfill({ json: { ...twoPages, ocr_revision: 2, detection_revision: 2, pages: twoPages.pages.map((page, index) => ({ ...page, corrected_text: index ? page.corrected_text : 'CNP corectat' })) } }); });
+  await page.getByRole('button', { name: 'Salvează ciorna' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Ciorna a fost salvată' })).toBeVisible();
+  expect(metadataSaved).toBe(true);
+  expect(ocrSaved).toBe(true);
+  expect(forbiddenCall).toBe(false);
+});
 
 test('captures metadata in the approved order, selects by printed dossier number, and confirms with revision IDs', async ({ page }) => {
   let metadataBody;
@@ -83,6 +262,7 @@ test('confirms the current final review and publishes with an idempotency key', 
   let finalReviewBody;
   let publicationBody;
   let idempotencyKey;
+  const publicationRequest = deferred(), publicationStarted = deferred();
   await page.route('**/api/drafts/editor-1/metadata', async (route) => {
     if (route.request().method() === 'PATCH') await route.fulfill({ json: { metadata: { act_date: '2026-11-18', act_number: '41', physical_dossier_id: 101, inventory_number: '29/2026', tags: ['Contract'] }, metadata_confirmed: false, metadata_revision: 2, ocr_revision: 1, classification, retention: { status: 'calculated', first_eligible_date: '2036-01-01' } } });
     else await route.fulfill({ json: structuredClone(metadataState) });
@@ -98,6 +278,7 @@ test('confirms the current final review and publishes with an idempotency key', 
   await page.route('**/api/drafts/editor-1/publish', async (route) => {
     publicationBody = route.request().postDataJSON();
     idempotencyKey = route.request().headers()['idempotency-key'];
+    publicationStarted.resolve(); await publicationRequest.promise;
     await route.fulfill({ status: 201, json: { document_id: 'document-1', version_id: 'version-1', version_number: 1 } });
   });
   await page.getByLabel('Tip document').selectOption('Contract');
@@ -108,12 +289,17 @@ test('confirms the current final review and publishes with an idempotency key', 
   await page.getByLabel('Dosar fizic').selectOption('101');
   await page.getByRole('button', { name: 'Continuă' }).click();
   await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
+  await showTab(page, 'Anonimizare');
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
   await page.getByRole('button', { name: 'Marchează o zonă' }).click();
   await canvas.press('Enter'); await canvas.press('ArrowRight'); await canvas.press('ArrowDown'); await canvas.press('Enter');
   await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
+  await showTab(page, 'Verificare finală');
   await page.getByRole('button', { name: 'Confirmă revizuirea finală' }).click();
   await page.getByRole('button', { name: 'Aprobă și publică' }).click();
+  await publicationStarted.promise;
+  await expect(page.getByRole('button', { name: 'Se publică…' })).toBeDisabled();
+  publicationRequest.resolve();
   await expect(page.getByRole('status').filter({ hasText: 'Documentul a fost aprobat' })).toBeVisible();
   expect(finalReviewBody).toEqual({ metadata_revision: 2, ocr_revision: 1, detection_revision: 1, redaction_ocr_revision: 1, redaction_detection_revision: 1 });
   expect(publicationBody.review_snapshot).toBe('5ac61e6a-3fd5-45d2-890c-c026e01ad67a');
@@ -122,25 +308,36 @@ test('confirms the current final review and publishes with an idempotency key', 
 
 test('edits OCR with stale review disabled, saves, and persists a PII decision', async ({ page, colorScheme }, testInfo) => {
   await openEditor(page);
+  await showTab(page, 'Corectare OCR');
   const area = page.getByLabel('Corectare OCR · Pagina 1');
   await expect(area).toHaveValue('CNP 1960523123456');
   await expect(page.getByText('Casete de delimitare')).toBeVisible();
   const isDesktop = testInfo.project.name.startsWith('desktop');
   await page.setViewportSize(isDesktop ? { width: 1600, height: 900 } : { width: 320, height: 740 });
-  await page.locator('.app-shell').evaluate((element) => { element.style.blockSize = 'auto'; element.style.minBlockSize = '0'; element.style.maxBlockSize = 'none'; element.style.overflow = 'visible'; });
-  await page.locator('.app-shell-body').evaluate((element) => { element.style.display = 'block'; element.style.minBlockSize = '0'; });
-  await page.locator('.app-workspace').evaluate((element) => { element.style.overflow = 'visible'; element.style.blockSize = 'auto'; });
-  await page.screenshot({ path: `screens/DS-011.${isDesktop ? '1600x900' : '320x740'}.${colorScheme}.png`, fullPage: true });
+  await page.screenshot({ path: `screens/DS-011.${isDesktop ? '1600x900' : '320x740'}.${colorScheme}.png`, scale: 'css' });
+  await showTab(page, 'Anonimizare');
+  if (isDesktop) {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.screenshot({ path: `screens/DS-011.PII.1366x768.${colorScheme}.png`, scale: 'css' });
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.screenshot({ path: `screens/DS-011.PII.1600x900.${colorScheme}.png`, scale: 'css' });
+  } else {
+    await page.screenshot({ path: `screens/DS-011.PII.320x740.${colorScheme}.png`, scale: 'css' });
+  }
+  await showTab(page, 'Corectare OCR');
   await area.fill('CNP 1960523123456 corectat');
   await expect(page.getByText('Rezultatele detectării sunt neactualizate.')).toBeVisible();
+  await showTab(page, 'Anonimizare');
   await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toBeDisabled();
   let savedBody;
   await page.route('**/api/drafts/editor-1/editor/ocr', async (route) => {
     savedBody = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...editorState, ocr_revision: 2, detection_revision: 2, pages: [{ ...editorState.pages[0], corrected_text: 'CNP 1960523123456 corectat' }] }) });
   });
+  await showTab(page, 'Corectare OCR');
   await page.getByRole('button', { name: 'Salvează corecturile' }).click();
   await expect.poll(() => savedBody?.ocr_revision).toBe(1);
+  await showTab(page, 'Anonimizare');
   await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toBeEnabled();
   await page.route('**/api/drafts/editor-1/editor/pii-review', async (route) => {
     const body = route.request().postDataJSON();
@@ -152,6 +349,7 @@ test('edits OCR with stale review disabled, saves, and persists a PII decision',
 
 test('shows the empty candidate state', async ({ page }) => {
   await openEditor(page, { ...editorState, candidates: [] });
+  await showTab(page, 'Anonimizare');
   await expect(page.getByText('Nu au fost găsite potriviri PII.')).toBeVisible();
 });
 
@@ -161,6 +359,7 @@ test('keeps long OCR and many candidate rows usable at the narrow viewport', asy
     ...editorState.candidates[0], id: `candidate-${index}`, corrected_text_span: { start: 0, length: 25 },
   }));
   await openEditor(page, { ...editorState, pages: [{ ...editorState.pages[0], corrected_text: text }], candidates });
+  await showTab(page, 'Anonimizare');
   await page.setViewportSize({ width: 320, height: 740 });
   await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toHaveCount(12);
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 320);
@@ -172,9 +371,10 @@ test('shows an actionable editor load error', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Reîncearcă încărcarea' })).toBeVisible();
 });
 
-test('draws a revision-bound mark after scrolling, supports undo, and generates a preview', async ({ page }, testInfo) => {
+test('draws a revision-bound mark after scrolling, supports undo, and generates a preview', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
   await openEditor(page);
-  await page.setViewportSize(testInfo.project.name.startsWith('desktop') ? { width: 1600, height: 700 } : { width: 320, height: 600 });
+  await page.getByRole('button', { name: 'Mărește' }).click();
   await page.getByRole('button', { name: 'Marchează o zonă' }).click();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
@@ -186,22 +386,27 @@ test('draws a revision-bound mark after scrolling, supports undo, and generates 
     saved = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
   });
-  const bounds = await canvas.boundingBox();
-  await page.mouse.move(bounds.x + bounds.width * 0.2, bounds.y + bounds.height * 0.2);
+  const firstPoint = await canvas.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const viewport = element.closest('.editor-preview-pages').getBoundingClientRect();
+    const top = Math.max(bounds.top, viewport.top), bottom = Math.min(bounds.bottom, viewport.bottom);
+    return { x: bounds.left + bounds.width * 0.2, y: top + (bottom - top) * 0.2 };
+  });
+  await page.mouse.move(firstPoint.x, firstPoint.y);
   await page.mouse.down();
-  await page.setViewportSize(testInfo.project.name.startsWith('desktop') ? { width: 800, height: 600 } : { width: 360, height: 600 });
   const resized = await canvas.boundingBox();
-  await page.mouse.move(resized.x + resized.width * 0.4, resized.y + resized.height * 0.3);
+  await page.mouse.move(firstPoint.x + resized.width * 0.2, firstPoint.y + Math.min(60, resized.height * 0.1));
   await expect(page.locator('.editor-mark-rect.preview')).toBeVisible();
   await page.mouse.up();
   await expect.poll(() => saved?.marks?.length).toBe(1);
   expect(saved.ocr_revision).toBe(1);
   expect(saved.detection_revision).toBe(1);
-  await expect(page.getByText('Total: 1 marcaj')).toBeVisible();
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 1');
+  await page.getByText('Marcaje manuale · 1').click();
   await page.getByRole('button', { name: 'Elimină marcajul manual 1' }).click();
-  await expect(page.getByText('Total: 0 marcaje')).toBeVisible();
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 0');
   await page.getByRole('button', { name: 'Anulează eliminarea' }).click();
-  await expect(page.getByText('Total: 1 marcaj')).toBeVisible();
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 1');
   await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
     if (route.request().method() === 'POST') await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ready' }) });
     else await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
@@ -250,6 +455,7 @@ test('guides the reviewer to the page missing a manual location', async ({ page 
 
 test('records textarea correction operations with UTF-16 offsets', async ({ page }) => {
   await openEditor(page);
+  await showTab(page, 'Corectare OCR');
   const area = page.getByLabel('Corectare OCR · Pagina 1');
   await area.fill('CNP 1960523123450');
   let savedBody;

@@ -328,20 +328,45 @@ const piiCategoryLabels = {
   vehicle_identifier: 'Identificator vehicul', cui_cif: 'CUI / CIF',
 };
 
+function EditorGlyph({ name }) {
+  const paths = {
+    back: <><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></>,
+    previous: <><path d="m15 18-6-6 6-6" /><path d="M20 12H9" /></>,
+    next: <><path d="m9 18 6-6-6-6" /><path d="M4 12h11" /></>,
+    minus: <path d="M5 12h14" />,
+    plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
+    fitWidth: <><path d="M4 7V4h3M20 7V4h-3M4 17v3h3m13-3v3h-3" /><path d="M7 12h10m-3-3 3 3-3 3" /></>,
+    fitPage: <><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M8 7h8M8 17h8M8 12h8" /></>,
+    redact: <><path d="M4 20h4l11-11-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></>,
+    preview: <><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></>,
+  };
+  return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
+
 function DraftEditor({ item, onBack, role }) {
+  const [activeTab, setActiveTab] = useState('metadata');
+  const [zoom, setZoom] = useState(100);
+  const [fitMode, setFitMode] = useState('page');
+  const [currentPage, setCurrentPage] = useState(1);
+  const viewerRef = useRef(null);
   const [editor, setEditor] = useState(null);
   const [metadataState, setMetadataState] = useState(null);
   const [metadataValues, setMetadataValues] = useState(null);
   const [dossiers, setDossiers] = useState([]);
   const [metadataSaving, setMetadataSaving] = useState(false);
+  const [metadataConfirming, setMetadataConfirming] = useState(false);
+  const [metadataDirty, setMetadataDirty] = useState(false);
   const [metadataConfirmed, setMetadataConfirmed] = useState(false);
   const [dossierDialog, setDossierDialog] = useState(false);
   const [dossierForm, setDossierForm] = useState({ physical_dossier_number: '', inventory_number: '', description: '' });
   const [finalSnapshot, setFinalSnapshot] = useState('');
+  const [finalReviewSaving, setFinalReviewSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [publicationMessage, setPublicationMessage] = useState('');
   const [possibleMatches, setPossibleMatches] = useState([]);
   const [pages, setPages] = useState([]);
   const [manualMarks, setManualMarks] = useState([]);
+  const [pageImageStatus, setPageImageStatus] = useState({});
   const [drawing, setDrawing] = useState(false);
   const [anchor, setAnchor] = useState(null);
   const [cursor, setCursor] = useState(null);
@@ -350,13 +375,77 @@ function DraftEditor({ item, onBack, role }) {
   const [previewError, setPreviewError] = useState('');
   const [previewReady, setPreviewReady] = useState(false);
   const [markSaving, setMarkSaving] = useState(false);
+  const [piiSaving, setPiiSaving] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [reloadRequired, setReloadRequired] = useState(false);
   const dirty = Boolean(editor && pages.some((page, index) => page.text !== editor.pages[index]?.corrected_text));
   const stale = dirty || editor?.detection_status !== 'ready' || editor?.detection_revision !== editor?.ocr_revision;
+
+  function fitToWidth() {
+    setFitMode('width');
+    setZoom(100);
+  }
+
+  function fitToPage() {
+    const viewer = viewerRef.current;
+    const page = editor?.pages.find((entry) => entry.page === currentPage) || editor?.pages[0];
+    if (!viewer || !page || !viewer.clientWidth || !viewer.clientHeight) return;
+    const style = getComputedStyle(viewer);
+    const paddingBlock = parseFloat(style.paddingBlockStart) + parseFloat(style.paddingBlockEnd);
+    const paddingInline = parseFloat(style.paddingInlineStart) + parseFloat(style.paddingInlineEnd);
+    const heading = viewer.querySelector(`[data-page="${page.page}"] h3`);
+    const labelHeight = heading?.getBoundingClientRect().height || 0;
+    const rowGap = parseFloat(style.rowGap) || 0;
+    const availableWidth = Math.max(1, viewer.clientWidth - paddingInline);
+    const pageGap = parseFloat(getComputedStyle(viewer.querySelector('.editor-source-page') || viewer).rowGap) || 0;
+    const availableHeight = Math.max(1, viewer.clientHeight - paddingBlock - labelHeight - rowGap - pageGap - 16);
+    const pageHeightAtWidth = availableWidth * page.height / page.width;
+    setFitMode('page');
+    setZoom(Math.max(10, Math.min(100, Math.floor(availableHeight / pageHeightAtWidth * 100))));
+  }
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!editor || !viewer) return undefined;
+    const updateFit = () => {
+      if (fitMode === 'page') fitToPage();
+      else if (fitMode === 'width') setZoom(100);
+    };
+    updateFit();
+    const observer = new ResizeObserver(updateFit);
+    observer.observe(viewer);
+    window.addEventListener('resize', updateFit);
+    return () => { observer.disconnect(); window.removeEventListener('resize', updateFit); };
+  }, [editor, currentPage, fitMode]);
+
+  function goToPage(pageNumber) {
+    const target = document.getElementById(`editor-source-page-${pageNumber}`);
+    const viewer = target?.closest('.editor-preview-pages');
+    if (target && viewer) {
+      const delta = target.getBoundingClientRect().top - viewer.getBoundingClientRect().top;
+      viewer.scrollTop += delta;
+    }
+    setCurrentPage(Number(pageNumber));
+  }
+
+  async function saveDraft() {
+    if (draftSaving || loading || metadataSaving || saving) return;
+    setDraftSaving(true);
+    setError('');
+    setFeedback('Se salvează ciorna…');
+    try {
+      if (metadataDirty && metadataValues && metadataState && !metadataSaving && !(await saveMetadata())) throw new Error('Metadatele nu au putut fi salvate.');
+      if (dirty && !(await saveCorrections())) throw new Error('Corecturile nu au putut fi salvate.');
+      setFeedback('Ciorna a fost salvată. Metadatele, verificarea finală și publicarea rămân neconfirmate.');
+    } catch (requestError) {
+      setFeedback('');
+      setError(requestError.message || 'Ciorna nu a putut fi salvată. Încercați din nou.');
+    } finally { setDraftSaving(false); }
+  }
 
   function recordTextEdit(before, after) {
     const oldChars = Array.from(before);
@@ -407,8 +496,10 @@ function DraftEditor({ item, onBack, role }) {
         ...(metadata.metadata || {}),
       });
       setMetadataConfirmed(Boolean(metadata.metadata_confirmed));
+      setMetadataDirty(false);
       setDossiers(metadata.classification?.id ? (await api.physicalDossiers(metadata.classification.id)).dossiers : []);
       setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text, operations: [] })));
+      setPageImageStatus(Object.fromEntries(result.pages.map((page) => [page.page, 'loading'])));
       setManualMarks(result.manual_marks || []);
       setUndoMarks(null);
       setDrawing(false);
@@ -440,6 +531,7 @@ function DraftEditor({ item, onBack, role }) {
 
   function changeMetadata(update) {
     setMetadataValues((current) => ({ ...current, ...update }));
+    setMetadataDirty(true);
     setMetadataConfirmed(false); setFinalSnapshot('');
   }
 
@@ -452,6 +544,7 @@ function DraftEditor({ item, onBack, role }) {
       next.nomenclature_entry_id = row.id;
       setMetadataState((current) => ({ ...current, classification: row, retention: null }));
       setMetadataValues(next); setMetadataConfirmed(false); setFinalSnapshot('');
+      setMetadataDirty(true);
       try {
         const matching = (await api.physicalDossiers(row.id)).dossiers;
         setDossiers(matching);
@@ -464,11 +557,12 @@ function DraftEditor({ item, onBack, role }) {
       setMetadataState((current) => ({ ...current, classification: null, retention: null }));
       setDossiers([]);
       setMetadataValues(next); setMetadataConfirmed(false); setFinalSnapshot('');
+      setMetadataDirty(true);
     }
   }
 
   async function saveMetadata() {
-    if (!metadataValues || metadataSaving) return;
+    if (!metadataValues || metadataSaving) return false;
     setMetadataSaving(true); setError('');
     try {
       const entry = chosenEntry || classificationOptions.find((row) => String(row.id) === String(metadataValues.nomenclature_entry_id));
@@ -476,19 +570,22 @@ function DraftEditor({ item, onBack, role }) {
       const result = await api.updateDraftMetadata(item.id, metadata, entry?.id);
       setMetadataState((current) => ({ ...current, metadata: result.metadata, metadata_confirmed: false, metadata_revision: result.metadata_revision, ocr_revision: result.ocr_revision, classification: result.classification, retention: result.retention }));
       setMetadataValues((current) => ({ ...current, ...result.metadata }));
-      setMetadataConfirmed(false); setFinalSnapshot(''); setFeedback('Metadatele au fost salvate. Confirmați-le înainte de aprobarea finală.');
-    } catch (requestError) { setError(requestError.message || 'Metadatele nu au putut fi salvate.'); }
+      setMetadataDirty(false); setMetadataConfirmed(false); setFinalSnapshot(''); setFeedback('Metadatele au fost salvate. Confirmați-le înainte de aprobarea finală.');
+      return true;
+    } catch (requestError) { setError(requestError.message || 'Metadatele nu au putut fi salvate.'); return false; }
     finally { setMetadataSaving(false); }
   }
 
   async function toggleMetadataConfirmation(checked) {
     setMetadataConfirmed(checked);
     if (!checked || !metadataState) return;
+    setMetadataConfirming(true);
     try {
       await api.confirmDraftMetadata(item.id, metadataState.metadata_revision, editor.ocr_revision);
       setMetadataState((current) => ({ ...current, metadata_confirmed: true }));
       setFeedback('Metadatele au fost confirmate.');
     } catch (requestError) { setMetadataConfirmed(false); setError(requestError.message || 'Metadatele nu au putut fi confirmate.'); }
+    finally { setMetadataConfirming(false); }
   }
 
   async function createDossier(event) {
@@ -497,6 +594,7 @@ function DraftEditor({ item, onBack, role }) {
       const result = await api.createPhysicalDossier({ nomenclature_entry_id: selectedClassification.id, ...dossierForm });
       setDossiers((current) => [...current, result.dossier].sort((a, b) => a.physical_dossier_number.localeCompare(b.physical_dossier_number)));
       setMetadataValues((current) => ({ ...current, physical_dossier_id: result.dossier.id, physical_dossier_number: result.dossier.physical_dossier_number, inventory_number: result.dossier.inventory_number }));
+      setMetadataDirty(true);
       setFinalSnapshot(''); setMetadataConfirmed(false);
       setDossierDialog(false); setDossierForm({ physical_dossier_number: '', inventory_number: '', description: '' });
       setFeedback('Dosarul fizic a fost creat și selectat.');
@@ -504,7 +602,8 @@ function DraftEditor({ item, onBack, role }) {
   }
 
   async function confirmFinalReview() {
-    if (!editor || !metadataState || !metadataConfirmed || dirty || stale || !previewReady) return;
+    if (!editor || !metadataState || !metadataConfirmed || dirty || stale || !previewReady || finalReviewSaving) return;
+    setFinalReviewSaving(true);
     try {
       const result = await api.confirmDraftReview(item.id, {
         metadata_revision: metadataState.metadata_revision, ocr_revision: editor.ocr_revision,
@@ -513,10 +612,12 @@ function DraftEditor({ item, onBack, role }) {
       });
       setFinalSnapshot(result.review_snapshot); setFeedback('Revizuirea finală a fost confirmată.');
     } catch (requestError) { setError(requestError.message || 'Revizuirea finală nu a putut fi confirmată.'); }
+    finally { setFinalReviewSaving(false); }
   }
 
   async function publishDocument(duplicateAction = null) {
-    if (!finalSnapshot) return;
+    if (!finalSnapshot || publishing) return;
+    setPublishing(true);
     try {
       const result = await api.publishDraft(item.id, finalSnapshot, duplicateAction);
       setPublicationMessage(`Documentul a fost aprobat. Versiunea ${result.version_number || result.version?.version_number || ''} este disponibilă.`);
@@ -525,11 +626,11 @@ function DraftEditor({ item, onBack, role }) {
       if (requestError.body?.cod === 'possible_duplicate') { setPossibleMatches(requestError.body.matches || []); setPublicationMessage('Există documente cu același număr și aceeași dată sau o colecție de imagini reordonată. Verificați rezultatele înainte de alegere.'); }
       else if (requestError.body?.cod === 'exact_duplicate') setPublicationMessage('Documentul este identic cu o versiune publicată. Publicarea este blocată.');
       else setError(requestError.message || 'Documentul nu a putut fi aprobat.');
-    }
+    } finally { setPublishing(false); }
   }
 
   async function saveCorrections() {
-    if (!editor || !dirty || saving) return;
+    if (!editor || !dirty || saving) return !dirty;
     setSaving(true);
     setError('');
     setFeedback('Se salvează corecturile și se detectează din nou datele personale…');
@@ -541,6 +642,7 @@ function DraftEditor({ item, onBack, role }) {
       setUndoMarks(null);
       setPreviewReady(false);
       setFeedback('Corecturile au fost salvate. Rezultatele PII sunt actualizate.');
+      return true;
     } catch (requestError) {
       if (requestError.body?.detection_status === 'failed') {
         setEditor((current) => ({ ...current, ocr_revision: requestError.body.ocr_revision, detection_status: 'failed', candidates: [] }));
@@ -549,6 +651,7 @@ function DraftEditor({ item, onBack, role }) {
         setPreviewReady(false);
         setReloadRequired(true);
         setFeedback('Textul a fost salvat, dar detectarea PII a eșuat. Revizuirea este dezactivată.');
+        return false;
       } else {
         if (requestError.status === 409) {
           setEditor((current) => ({ ...current, detection_status: 'stale' }));
@@ -556,6 +659,7 @@ function DraftEditor({ item, onBack, role }) {
         }
         setFeedback('');
         setError(requestError.message || 'Corecturile nu au putut fi salvate. Încercați din nou.');
+        return false;
       }
     } finally {
       setSaving(false);
@@ -563,7 +667,8 @@ function DraftEditor({ item, onBack, role }) {
   }
 
   async function decide(candidate, reviewStatus) {
-    if (!editor || stale) return;
+    if (!editor || stale || piiSaving) return;
+    setPiiSaving(candidate.id);
     setError('');
     try {
       const result = await api.reviewDraftEditorPii(item.id, editor.ocr_revision, editor.detection_revision, [{ id: candidate.id, review_status: reviewStatus }]);
@@ -576,7 +681,7 @@ function DraftEditor({ item, onBack, role }) {
         setReloadRequired(true);
       }
       setError(requestError.message || 'Decizia nu a putut fi salvată. Reîncărcați editorul și încercați din nou.');
-    }
+    } finally { setPiiSaving(''); }
   }
 
   async function saveMarks(next, undo = null) {
@@ -631,26 +736,27 @@ function DraftEditor({ item, onBack, role }) {
   }
 
   return (
-    <main className="editor-wrap" aria-busy={loading || saving}>
+    <main className="editor-wrap" data-step={activeTab} aria-busy={loading || saving || draftSaving || publishing}>
       <div className="editor-heading">
-        <button className="button secondary" type="button" onClick={onBack}>Înapoi la cozi</button>
-        <div><h1>Editor document</h1><p className="muted">Ciornă privată · corecturile și revizuirea PII nu aprobă documentul.</p></div>
+        <button className="button secondary editor-back" type="button" aria-label="Înapoi la cozi" title="Înapoi la cozi" onClick={onBack}><EditorGlyph name="back" /></button>
+        <div className="editor-title"><h1 title={item.name}>{item.name}</h1><p className="muted">{metadataValues?.physical_dossier_number || 'Dosar fizic necompletat'} · Ciornă privată</p></div>
+        <button className="button editor-save-draft" type="button" onClick={saveDraft} disabled={loading || metadataSaving || saving || draftSaving} aria-busy={draftSaving}>{draftSaving && <span className="editor-spinner" aria-hidden="true" />}{draftSaving ? 'Se salvează ciorna…' : 'Salvează ciorna'}</button>
       </div>
-      <nav className="editor-steps" aria-label="Pașii revizuirii">
-        <ol>
-          <li><span>1</span><strong>Date document</strong><small>În așteptare</small></li>
-          <li aria-current="step"><span>2</span><strong>Corectare OCR</strong><small>{dirty ? 'Corecturi nesalvate' : 'Text extras'}</small></li>
-          <li><span>3</span><strong>Revizuire PII</strong><small>{stale ? 'Rezultate neactualizate' : 'De revizuit'}</small></li>
-          <li><span>4</span><strong>Verificare finală</strong><small>În așteptare</small></li>
-        </ol>
+      <nav className="editor-steps" role="tablist" aria-label="Etapele editorului">
+        {[
+          ['metadata', 'Date document', metadataConfirmed ? 'Confirmate' : 'În așteptare'],
+          ['ocr', 'Corectare OCR', dirty ? 'Corecturi nesalvate' : 'Text extras'],
+          ['pii', 'Anonimizare / Revizuire PII', stale ? 'Rezultate neactualizate' : 'De revizuit'],
+          ['final', 'Verificare finală', finalSnapshot ? 'Confirmată' : 'În așteptare'],
+        ].map(([key, label, status], index, tabs) => <button key={key} id={`editor-tab-${key}`} className="editor-tab" type="button" role="tab" aria-selected={activeTab === key} aria-controls={`editor-panel-${key}`} tabIndex={activeTab === key ? 0 : -1} onClick={() => setActiveTab(key)} onKeyDown={(event) => { if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? tabs[0][0] : event.key === 'End' ? tabs[tabs.length - 1][0] : tabs[(index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length][0]; setActiveTab(next); document.getElementById(`editor-tab-${next}`)?.focus(); }}>{label}<small>{status}</small></button>)}
       </nav>
-      {loading ? <p className="editor-state" role="status">Se încarcă editorul…</p>
+      {loading ? <p className="editor-state" role="status"><span className="editor-spinner" aria-hidden="true" />Se încarcă documentul…</p>
         : error && !editor ? <section className="editor-state editor-error"><p role="alert">{error}</p><button className="button secondary" type="button" onClick={load}>Reîncearcă încărcarea</button></section>
           : editor && <>
             {error && <p className="editor-feedback error" role="alert">{error}</p>}
             {reloadRequired && <div className="editor-actions"><button className="button secondary" type="button" onClick={load}>Reîncarcă editorul</button></div>}
             {feedback && <p className="editor-feedback" role="status" aria-live="polite">{feedback}</p>}
-            {metadataState && metadataValues && <section className="editor-card metadata-workflow" aria-labelledby="metadata-workflow-title">
+            {metadataState && metadataValues && <section id="editor-panel-metadata" role="tabpanel" aria-labelledby="editor-tab-metadata" hidden={activeTab !== 'metadata'} className="editor-card metadata-workflow">
               <header><h2 id="metadata-workflow-title">Date document</h2><p className="muted">Completați clasificarea și identificarea înainte de continuarea revizuirii.</p></header>
               <div className="metadata-form">
                 <section className="metadata-section">
@@ -687,35 +793,57 @@ function DraftEditor({ item, onBack, role }) {
                 </section>
                 {metadataState.suggestions && <p className="muted metadata-suggestions">Sugestii OCR: {[metadataState.suggestions.act_date && `Data ${metadataState.suggestions.act_date}`, metadataState.suggestions.act_number && `Număr ${metadataState.suggestions.act_number}`, ...(metadataState.suggestions.tags || [])].filter(Boolean).join(' · ') || 'Nu există sugestii.'}</p>}
                 <div className="metadata-form-actions"><button className="button" type="button" onClick={saveMetadata} disabled={metadataSaving || !chosenEntry}>{metadataSaving ? 'Se salvează…' : 'Continuă'}</button></div>
-                <label className="metadata-confirmation"><input type="checkbox" checked={metadataConfirmed} disabled={!metadataState.metadata_revision || metadataSaving} onChange={(event) => toggleMetadataConfirmation(event.target.checked)} />Confirmă metadatele</label>
+                <label className="metadata-confirmation"><input type="checkbox" checked={metadataConfirmed} disabled={!metadataState.metadata_revision || metadataSaving || metadataConfirming} onChange={(event) => toggleMetadataConfirmation(event.target.checked)} />{metadataConfirming && <span className="editor-spinner" aria-hidden="true" />}Confirmă metadatele</label>
                 {metadataState.metadata_confirmed && <p className="muted">Metadate confirmate</p>}
               </div>
               {dossierDialog && <dialog open className="dossier-dialog"><form onSubmit={createDossier}><h3>Creează dosarul fizic</h3><label>Numărul dosarului fizic<input required value={dossierForm.physical_dossier_number} onChange={(event) => setDossierForm((current) => ({ ...current, physical_dossier_number: event.target.value }))} /></label><label>Număr inventar dosar<input required value={dossierForm.inventory_number} onChange={(event) => setDossierForm((current) => ({ ...current, inventory_number: event.target.value }))} /></label><label>Descriere scurtă (opțional)<input value={dossierForm.description} onChange={(event) => setDossierForm((current) => ({ ...current, description: event.target.value }))} /></label><p className="muted">Indicativul și termenul de păstrare sunt preluate din clasificare.</p><div className="editor-actions"><button className="button secondary" type="button" onClick={() => setDossierDialog(false)}>Renunță</button><button className="button" type="submit">Creează dosarul</button></div></form></dialog>}
             </section>}
             <div className="editor-grid">
               <section className="editor-card" aria-labelledby="editor-preview-title">
-                <header><h2 id="editor-preview-title">Document original</h2><p className="muted">Trasați peste fiecare zonă care trebuie anonimizată. Marcajele sunt în coordonatele paginii originale.</p></header>
-                <div className="editor-actions">
-                  <button className="button secondary" type="button" aria-pressed={drawing} onClick={() => { setDrawing((value) => !value); setAnchor(null); setCursor(null); }} disabled={stale || saving || markSaving}>{drawing ? 'Renunță la marcaj' : 'Marchează o zonă'}</button>
-                  <span className="editor-mark-count" aria-live="polite">Total: {manualMarks.length + editor.candidates.filter((candidate) => candidate.review_status === 'accepted').reduce((count, candidate) => count + candidate.bounding_boxes.length, 0)} marcaje · Automate: {editor.candidates.filter((candidate) => candidate.review_status === 'accepted').reduce((count, candidate) => count + candidate.bounding_boxes.length, 0)} · Manuale: {manualMarks.length}</span>
-                  {undoMarks && <button className="button secondary" type="button" onClick={() => saveMarks(undoMarks, null)} disabled={markSaving}>Anulează eliminarea</button>}
+                <header className="editor-viewer-heading"><h2 id="editor-preview-title">Document original</h2><details className="editor-viewer-help"><summary>Ajutor</summary><span>Activați marcarea și trasați peste fiecare zonă de anonimizat. Marcajele se salvează în coordonatele paginii originale.</span></details></header>
+                <div className="editor-viewer-toolbar">
+                  <button className="editor-icon-button" type="button" aria-pressed={drawing} onClick={() => { setDrawing((value) => !value); setAnchor(null); setCursor(null); }} disabled={stale || saving || markSaving} aria-label={drawing ? 'Renunță la marcaj' : 'Marchează o zonă'} title={drawing ? 'Renunță la marcaj' : 'Marchează o zonă'}><EditorGlyph name="redact" /></button>
+                  <span className="editor-mark-count" aria-live="polite">Marcaje {manualMarks.length + editor.candidates.filter((candidate) => candidate.review_status === 'accepted').reduce((count, candidate) => count + candidate.bounding_boxes.length, 0)}</span>
+                  <span className="editor-toolbar-divider" aria-hidden="true" />
+                  <button className="editor-icon-button" type="button" onClick={() => goToPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1} aria-label="Pagina anterioară" title="Pagina anterioară"><EditorGlyph name="previous" /></button>
+                  <label className="editor-page-picker"><span className="screen-reader-only">Pagina documentului</span><select aria-label="Pagina documentului" value={currentPage} onChange={(event) => goToPage(event.target.value)}>{editor.pages.map((page) => <option key={page.page} value={page.page}>{page.page}</option>)}</select><span aria-hidden="true">/ {editor.pages.length}</span></label>
+                  <button className="editor-icon-button" type="button" onClick={() => goToPage(Math.min(editor.pages.length, currentPage + 1))} disabled={currentPage >= editor.pages.length} aria-label="Pagina următoare" title="Pagina următoare"><EditorGlyph name="next" /></button>
+                  <span className="editor-toolbar-divider" aria-hidden="true" />
+                  <button className="editor-icon-button" type="button" onClick={() => { setFitMode('custom'); setZoom((value) => Math.max(25, value - 10)); }} aria-label="Micșorează" title="Micșorează"><EditorGlyph name="minus" /></button>
+                  <output className="editor-zoom-value" aria-live="polite">{zoom}%</output>
+                  <button className="editor-icon-button" type="button" onClick={() => { setFitMode('custom'); setZoom((value) => Math.min(200, value + 10)); }} aria-label="Mărește" title="Mărește"><EditorGlyph name="plus" /></button>
+                  <button className="editor-icon-button" type="button" onClick={fitToWidth} aria-label="Potrivire la lățime" title="Potrivire la lățime"><EditorGlyph name="fitWidth" /></button>
+                  <button className="editor-icon-button" type="button" onClick={fitToPage} aria-label="Potrivire la pagină" title="Potrivire la pagină"><EditorGlyph name="fitPage" /></button>
+                  <button className="editor-icon-button editor-preview-action" type="button" onClick={generatePreview} disabled={missingManualPages.length > 0 || generatingPreview || stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))} aria-label="Previzualizează anonimizarea" title="Previzualizează anonimizarea"><EditorGlyph name="preview" />{generatingPreview && <span className="editor-spinner" aria-hidden="true" />}</button>
+                  {markSaving && <span className="editor-toolbar-status" role="status"><span className="editor-spinner" aria-hidden="true" />Se salvează marcajele…</span>}
+                  {generatingPreview && <span className="editor-toolbar-status" role="status"><span className="editor-spinner" aria-hidden="true" />Se generează previzualizarea…</span>}
                 </div>
-                {drawing && <p className="editor-warning" id="editor-drawing-help" role="status">Trasați zona pe pagină. De la tastatură, mutați cursorul cu săgețile și apăsați Enter pentru fiecare colț. Escape renunță.</p>}
-                <div className="editor-preview-pages">
+                {drawing && <p className="editor-drawing-state" id="editor-drawing-help" role="status">Trasați zona pe pagină. Folosiți săgețile și Enter pentru tastatură.</p>}
+                <div className="editor-preview-pages editor-source-pages" ref={viewerRef} aria-label="Pagini documentului" onScroll={(event) => {
+                  const viewport = event.currentTarget.getBoundingClientRect();
+                  const visiblePages = [...event.currentTarget.querySelectorAll('.editor-source-page')].filter((node) => { const rect = node.getBoundingClientRect(); return rect.bottom > viewport.top && rect.top < viewport.bottom; });
+                  const center = viewport.top + viewport.height / 2;
+                  const current = visiblePages.sort((left, right) => {
+                    const leftRect = left.getBoundingClientRect(), rightRect = right.getBoundingClientRect();
+                    return Math.abs((leftRect.top + leftRect.bottom) / 2 - center) - Math.abs((rightRect.top + rightRect.bottom) / 2 - center);
+                  })[0];
+                  if (current) setCurrentPage(Number(current.dataset.page));
+                }}>
                   {editor.pages.map((page) => {
                     const boxes = [
                       ...editor.candidates.filter((candidate) => candidate.page === page.page && candidate.review_status === 'accepted').flatMap((candidate) => candidate.bounding_boxes.map((box) => ({ ...box, kind: 'automatic' }))),
                       ...manualMarks.filter((mark) => mark.page === page.page).map((mark) => ({ ...mark.box, kind: 'manual' })),
                     ];
                     const active = anchor?.page === page.page ? { left: Math.min(anchor.point.x, (cursor?.page === page.page ? cursor.point.x : anchor.point.x)), top: Math.min(anchor.point.y, (cursor?.page === page.page ? cursor.point.y : anchor.point.y)), width: Math.abs((cursor?.page === page.page ? cursor.point.x : anchor.point.x) - anchor.point.x), height: Math.abs((cursor?.page === page.page ? cursor.point.y : anchor.point.y) - anchor.point.y) } : null;
-                    return <div className="editor-source-page" key={page.page}>
+                    return <div id={`editor-source-page-${page.page}`} data-page={page.page} className="editor-source-page" key={page.page}>
                       <h3>Pagina {page.page}</h3>
-                      <div className={`editor-page-canvas${drawing ? ' drawing' : ''}`} style={{ aspectRatio: `${page.width} / ${page.height}` }}>
-                        <img src={api.draftEditorPageImage(item.id, page.page)} alt={`Document original, pagina ${page.page}`} draggable="false" onError={() => setError('Imaginea paginii nu a putut fi încărcată. Reîncărcați editorul.')} />
+                      <div className={`editor-page-canvas${drawing ? ' drawing' : ''}`} style={{ aspectRatio: `${page.width} / ${page.height}`, inlineSize: `${zoom}%` }}
+                        onPointerDown={(event) => { if (!drawing || stale || event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const point = pointFor(event, page); if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } }}
+                        onPointerMove={(event) => { if (drawing && anchor?.page === page.page) setCursor({ page: page.page, point: pointFor(event, page) }); }}
+                        onPointerUp={(event) => { if (!drawing || !anchor || anchor.page !== page.page) return; const point = pointFor(event, page); if (anchor.point.x !== point.x || anchor.point.y !== point.y) completeMark(page, anchor.point, point); }}>
+                        <img src={api.draftEditorPageImage(item.id, page.page)} alt={`Document original, pagina ${page.page}`} draggable="false" onLoad={() => setPageImageStatus((current) => ({ ...current, [page.page]: 'loaded' }))} onError={() => { setPageImageStatus((current) => ({ ...current, [page.page]: 'error' })); setError('Imaginea paginii nu a putut fi încărcată. Reîncărcați editorul.'); }} />
+                        {pageImageStatus[page.page] === 'loading' && <span className="editor-page-loading" role="status"><span className="editor-spinner" aria-hidden="true" />Se încarcă pagina {page.page}…</span>}
                         <svg id={`editor-canvas-${page.page}`} viewBox={`0 0 ${page.width} ${page.height}`} role="application" aria-label={`Document original, pagina ${page.page}`} aria-describedby={drawing ? 'editor-drawing-help' : undefined} tabIndex="0"
-                          onPointerDown={(event) => { if (!drawing || stale || event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const point = pointFor(event, page); if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } }}
-                          onPointerMove={(event) => { if (drawing && anchor?.page === page.page) setCursor({ page: page.page, point: pointFor(event, page) }); }}
-                          onPointerUp={(event) => { if (!drawing || !anchor || anchor.page !== page.page) return; const point = pointFor(event, page); if (anchor.point.x !== point.x || anchor.point.y !== point.y) completeMark(page, anchor.point, point); }}
                           onKeyDown={(event) => { if (!drawing) return; if (event.key === 'Escape') { setDrawing(false); setAnchor(null); setCursor(null); event.preventDefault(); return; } if (event.key.startsWith('Arrow')) { const step = Math.max(1, Math.round(Math.min(page.width, page.height) / 100)); const current = cursor?.page === page.page ? cursor.point : { x: Math.round(page.width / 2), y: Math.round(page.height / 2) }; const next = { x: Math.max(0, Math.min(page.width - 1, current.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0))), y: Math.max(0, Math.min(page.height - 1, current.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0))) }; setCursor({ page: page.page, point: next }); event.preventDefault(); } else if (event.key === 'Enter') { event.preventDefault(); const point = cursor?.page === page.page ? cursor.point : { x: Math.round(page.width / 2), y: Math.round(page.height / 2) }; if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } } }}>
                           {boxes.map((box, index) => <rect key={`${box.kind}-${index}`} className={`editor-mark-rect ${box.kind}`} x={box.left} y={box.top} width={box.width} height={box.height} />)}
                           {active && <rect className="editor-mark-rect preview" x={active.left} y={active.top} width={Math.max(active.width, 1)} height={Math.max(active.height, 1)} />}
@@ -725,17 +853,17 @@ function DraftEditor({ item, onBack, role }) {
                     </div>;
                   })}
                 </div>
-                {manualMarks.length > 0 && <ul className="editor-manual-mark-list" aria-label="Marcaje manuale">{manualMarks.map((mark, index) => <li key={`${mark.page}-${mark.box.left}-${mark.box.top}-${index}`}><span>Manual · Pagina {mark.page} · {mark.box.left}, {mark.box.top} · {mark.box.width} × {mark.box.height} px</span><button className="button secondary" type="button" aria-label={`Elimină marcajul manual ${index + 1}`} onClick={() => saveMarks(manualMarks.filter((_, position) => position !== index), manualMarks)} disabled={markSaving}>Elimină</button></li>)}</ul>}
+                {manualMarks.length > 0 && <details className="editor-manual-mark-details"><summary>Marcaje manuale · {manualMarks.length}</summary><ul className="editor-manual-mark-list" aria-label="Marcaje manuale">{manualMarks.map((mark, index) => <li key={`${mark.page}-${mark.box.left}-${mark.box.top}-${index}`}><span>Pagina {mark.page} · {mark.box.left}, {mark.box.top} · {mark.box.width} × {mark.box.height} px</span><button className="button secondary" type="button" aria-label={`Elimină marcajul manual ${index + 1}`} onClick={() => saveMarks(manualMarks.filter((_, position) => position !== index), manualMarks)} disabled={markSaving}>Elimină</button></li>)}</ul></details>}
+                {undoMarks && <button type="button" className="button secondary editor-undo-mark" onClick={() => saveMarks(undoMarks)} disabled={markSaving}>{markSaving && <span className="editor-spinner" aria-hidden="true" />}Anulează eliminarea</button>}
                 {!stale && missingManualPages.map(page => <div className="editor-actions" key={page}>
                   <span>Pe pagina {page}, trasați o casetă peste fiecare zonă confirmată care necesită localizare manuală.</span>
                   <button type="button" className="button secondary" disabled={markSaving} onClick={() => drawOnPage(page)}>Marchează pe pagina {page}</button>
                 </div>)}
-                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={missingManualPages.length > 0 || generatingPreview || stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : generatingPreview ? 'Se generează PDF-ul…' : 'Previzualizează anonimizarea'}</button></div>
                 {previewError && <p className="editor-warning" role="alert">{previewError}</p>}
-                {!stale && !manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted') && <p className="muted">Pentru previzualizare, marcați o zonă sau acceptați o potrivire PII.</p>}
+                {!stale && !manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted') && <p className="screen-reader-only">Pentru previzualizare, marcați o zonă sau acceptați o potrivire PII.</p>}
                 {previewReady && !stale && <div className="editor-preview-pages"><h3>Previzualizare PDF anonimizat</h3><iframe title="Previzualizare PDF anonimizat" src={api.draftRedactedPdf(item.id)} /></div>}
               </section>
-              <section className="editor-card" aria-labelledby="ocr-edit-title">
+              <section id="editor-panel-ocr" role="tabpanel" aria-labelledby="editor-tab-ocr" hidden={activeTab !== 'ocr'} className="editor-card">
                 <header><h2 id="ocr-edit-title">Corectare OCR</h2><p className="muted">Textul extras rămâne păstrat separat. Corectați textul folosind documentul original.</p></header>
                 <div className="editor-pages">{pages.map((page, index) => {
                   const source = editor.pages[index];
@@ -749,10 +877,11 @@ function DraftEditor({ item, onBack, role }) {
                 })}</div>
                 {dirty && <p className="editor-warning" role="status">Rezultatele detectării sunt neactualizate.</p>}
                 {editor.detection_status === 'failed' && <p className="editor-warning" role="alert">Detectarea PII a eșuat. Rezultatele anterioare nu pot fi revizuite.</p>}
-                <div className="editor-actions"><button className="button" type="button" onClick={saveCorrections} disabled={!dirty || saving}>{saving ? 'Se salvează…' : 'Salvează corecturile'}</button></div>
+                {saving && <p className="editor-feedback" role="status"><span className="editor-spinner" aria-hidden="true" />Se salvează textul OCR și se detectează din nou datele personale…</p>}
+                <div className="editor-actions"><button className="button" type="button" onClick={saveCorrections} disabled={!dirty || saving}>{saving && <span className="editor-spinner" aria-hidden="true" />}{saving ? 'Se salvează…' : 'Salvează corecturile'}</button></div>
               </section>
             </div>
-            <section className="editor-card editor-review" aria-labelledby="pii-review-title">
+            <section id="editor-panel-pii" role="tabpanel" aria-labelledby="editor-tab-pii" hidden={activeTab !== 'pii'} className="editor-card editor-review">
               <header><h2 id="pii-review-title">Revizuire PII</h2><p className="muted">Verificați fiecare potrivire înainte de anonimizare.</p></header>
               {stale && <p className="editor-warning">Salvați textul și așteptați o detectare reușită înainte de a revizui potrivirile.</p>}
               {!stale && editor.candidates.length === 0 && <p className="editor-state">Nu au fost găsite potriviri PII.</p>}
@@ -763,20 +892,20 @@ function DraftEditor({ item, onBack, role }) {
                 return <li key={candidate.id}>
                   <div className="editor-candidate-copy"><strong>{piiCategoryLabels[candidate.category] || candidate.category}</strong><span>{excerpt}</span><small>Pagina {candidate.page} · Încredere {Math.round(candidate.confidence)}%</small>
                     <small>{candidate.location_status === 'reliable' ? 'Casete de delimitare asociate' : 'Necesită verificarea manuală a localizării'}</small>
-                    {candidate.bounding_boxes.length > 0 && <code>{candidate.bounding_boxes.map((box) => `${box.left}, ${box.top} · ${box.width} × ${box.height} px`).join(' | ')}</code>}
+                    {candidate.bounding_boxes.length > 0 && <details className="editor-coordinate-details"><summary>Detalii de poziționare</summary><code>{candidate.bounding_boxes.map((box) => `${box.left}, ${box.top} · ${box.width} × ${box.height} px`).join(' | ')}</code></details>}
                     {candidate.location_status === 'manual_review_required' && <span className="editor-warning">Localizarea nu este sigură pentru anonimizare automată.</span>}
                     {candidate.review_status !== 'pending' && <span className="editor-review-status">{candidate.review_status === 'accepted' ? 'Acceptată' : 'Respinsă'}</span>}
                   </div>
-                  <div className="editor-actions"><button className="button secondary" type="button" onClick={() => decide(candidate, 'accepted')} disabled={stale || candidate.review_status === 'accepted'}>Acceptă potrivirea</button><button className="button secondary" type="button" onClick={() => decide(candidate, 'rejected')} disabled={stale || candidate.review_status === 'rejected'}>Respinge potrivirea</button></div>
+                  <div className="editor-actions"><button className="button secondary" type="button" onClick={() => decide(candidate, 'accepted')} disabled={stale || Boolean(piiSaving) || candidate.review_status === 'accepted'}>{piiSaving === candidate.id && <span className="editor-spinner" aria-hidden="true" />}{piiSaving === candidate.id ? 'Se salvează…' : 'Acceptă potrivirea'}</button><button className="button secondary" type="button" onClick={() => decide(candidate, 'rejected')} disabled={stale || Boolean(piiSaving) || candidate.review_status === 'rejected'}>{piiSaving === candidate.id && <span className="editor-spinner" aria-hidden="true" />}{piiSaving === candidate.id ? 'Se salvează…' : 'Respinge potrivirea'}</button></div>
                 </li>;
               })}</ul>
             </section>
-            <section className="editor-card editor-final-review" aria-labelledby="final-review-title">
+            <section id="editor-panel-final" role="tabpanel" aria-labelledby="editor-tab-final" hidden={activeTab !== 'final'} className="editor-card editor-final-review">
               <header><h2 id="final-review-title">Verificare finală</h2><p className="muted">Metadatele confirmate, OCR-ul și anonimizarea trebuie să corespundă revizuirii curente.</p></header>
               {publicationMessage && <p className="editor-feedback" role="status">{publicationMessage}</p>}
-              {!finalSnapshot ? <div className="editor-actions"><button className="button" type="button" onClick={confirmFinalReview} disabled={!metadataConfirmed || dirty || stale || !previewReady}>Confirmă revizuirea finală</button></div>
-                : <div className="editor-actions"><button className="button" type="button" onClick={() => publishDocument()} >Aprobă și publică</button></div>}
-              {possibleMatches.length > 0 && <div className="editor-duplicate-options"><h3>Posibil document duplicat</h3><ul>{possibleMatches.map((match) => <li key={match.id}>Document existent · {match.reason === 'reordered_image_collection' ? 'colecție de imagini reordonată' : 'număr și dată identice'}</li>)}</ul><p className="muted">O versiune nouă necesită selectarea explicită a documentului și versiunii curente. Puteți publica separat documentul sau anula.</p><div className="editor-actions"><button className="button secondary" type="button" onClick={() => publishDocument('separate')}>Publică separat</button><button className="button secondary" type="button" onClick={() => { setPossibleMatches([]); setFinalSnapshot(''); setPublicationMessage('Publicarea a fost anulată.'); }}>Anulează publicarea</button></div></div>}
+              {!finalSnapshot ? <div className="editor-actions"><button className="button" type="button" onClick={confirmFinalReview} disabled={!metadataConfirmed || dirty || stale || !previewReady || finalReviewSaving}>{finalReviewSaving && <span className="editor-spinner" aria-hidden="true" />}{finalReviewSaving ? 'Se confirmă…' : 'Confirmă revizuirea finală'}</button></div>
+                : <div className="editor-actions"><button className="button" type="button" onClick={() => publishDocument()} disabled={publishing}>{publishing && <span className="editor-spinner" aria-hidden="true" />}{publishing ? 'Se publică…' : 'Aprobă și publică'}</button></div>}
+              {possibleMatches.length > 0 && <div className="editor-duplicate-options"><h3>Posibil document duplicat</h3><ul>{possibleMatches.map((match) => <li key={match.id}>Document existent · {match.reason === 'reordered_image_collection' ? 'colecție de imagini reordonată' : 'număr și dată identice'}</li>)}</ul><p className="muted">O versiune nouă necesită selectarea explicită a documentului și versiunii curente. Puteți publica separat documentul sau anula.</p><div className="editor-actions"><button className="button secondary" type="button" onClick={() => publishDocument('separate')} disabled={publishing}>{publishing && <span className="editor-spinner" aria-hidden="true" />}Publică separat</button><button className="button secondary" type="button" onClick={() => { setPossibleMatches([]); setFinalSnapshot(''); setPublicationMessage('Publicarea a fost anulată.'); }} disabled={publishing}>Anulează publicarea</button></div></div>}
             </section>
           </>}
     </main>
@@ -1158,6 +1287,7 @@ function Application() {
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState('');
   const [screen, setScreen] = useState('home');
+  const [selectedDraft, setSelectedDraft] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -1218,11 +1348,11 @@ function Application() {
   const content = staffRole && screen === 'upload'
     ? <UploadScreen onBack={() => setScreen('home')} />
     : staffRole && screen === 'queue'
-      ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => setScreen(`editor:${item.id}`)} />
+      ? <DraftQueue onUpload={() => setScreen('upload')} onBack={() => setScreen('home')} onReview={(item) => { setSelectedDraft(item); setScreen(`editor:${item.id}`); }} />
       : staffRole && screen.startsWith('review:')
         ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
         : staffRole && screen.startsWith('editor:')
-          ? <DraftEditor item={{ id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} role={user.role} />
+          ? <DraftEditor item={selectedDraft?.id === screen.slice('editor:'.length) ? selectedDraft : { id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} role={user.role} />
         : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
 
   return <AppShell user={user} screen={screen} onNavigate={setScreen} onLogout={logout} busy={busy}>{content}</AppShell>;
