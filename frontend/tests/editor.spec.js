@@ -136,3 +136,32 @@ test('draws a mark from the keyboard using page coordinates', async ({ page }) =
   expect(saved.marks[0].box.width).toBeGreaterThan(0);
   expect(saved.marks[0].box.height).toBeGreaterThan(0);
 });
+
+test('guides the reviewer to the page missing a manual location', async ({ page }) => {
+  await openEditor(page, { ...editorState, candidates: [{ ...editorState.candidates[0], review_status: 'accepted' }] });
+  const preview = page.getByRole('button', { name: 'Previzualizează anonimizarea' });
+  await expect(preview).toBeDisabled();
+  await page.getByRole('button', { name: 'Marchează pe pagina 1' }).click();
+  const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
+  await expect(canvas).toBeFocused();
+  await page.route('**/editor/redaction-marks', route => route.fulfill({ json: { marks: route.request().postDataJSON().marks } }));
+  await canvas.press('Enter');
+  await canvas.press('ArrowRight');
+  await canvas.press('ArrowDown');
+  await canvas.press('Enter');
+  await expect(preview).toBeEnabled();
+});
+
+test('records textarea correction operations with UTF-16 offsets', async ({ page }) => {
+  await openEditor(page);
+  const area = page.getByLabel('Corectare OCR · Pagina 1');
+  await area.fill('CNP 1960523123450');
+  let savedBody;
+  await page.route('**/api/drafts/editor-1/editor/ocr', async (route) => {
+    savedBody = route.request().postDataJSON();
+    await route.fulfill({ json: { ...editorState, ocr_revision: 2, detection_revision: 2 } });
+  });
+  await page.getByRole('button', { name: 'Salvează corecturile' }).click();
+  await expect.poll(() => savedBody?.pages?.[0]?.operations?.length).toBe(1);
+  expect(savedBody.pages[0].operations[0]).toEqual({ start: 16, deleted: '6', inserted: '0' });
+});

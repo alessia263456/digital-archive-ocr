@@ -39,6 +39,22 @@ final class ReaderRedactionProjectionTest extends TestCase
         ], [], ['year' => '2024']);
     }
 
+    public function test_corrected_token_and_overlapping_original_box_are_removed(): void
+    {
+        $pages = $this->pages();
+        $pages[0]['source_text'] = $pages[0]['text'];
+        $pages[0]['base_text'] = $pages[0]['text'];
+        $pages[0]['text'] = 'CNP Jonn Doe pentru contract';
+        $pages[0]['operations'] = [['start' => 6, 'deleted' => 'h', 'inserted' => 'n']];
+        $result = (new ReaderRedactionProjection)->project($pages, [
+            ['review_status' => 'accepted', 'page' => 1, 'location_status' => 'reliable',
+                'bounding_boxes' => [['left' => 20, 'top' => 10, 'width' => 20, 'height' => 10]],
+                'corrected_text_span' => ['start' => 4, 'length' => 8]],
+        ], [], ['titlu' => 'Jonn Doe', 'original' => 'John Doe']);
+        self::assertSame('CNP pentru contract', $result['pages'][0]['text']);
+        self::assertSame([], $result['metadata']);
+    }
+
     private function pages(): array
     {
         return [[

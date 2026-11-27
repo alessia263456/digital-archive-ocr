@@ -6,6 +6,7 @@ use App\Models\DocumentDraft;
 use App\Models\User;
 use App\Services\DocumentDraftPiiReview;
 use App\Services\DocumentPageRenderer;
+use App\Services\ReaderRedactionProjection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
@@ -78,6 +79,52 @@ final class DocumentDraftOcrReviewTest extends TestCase
         self::assertSame([], $response->json('candidates.0.bounding_boxes'));
         self::assertSame('review', $response->json('candidates.0.disposition'));
         self::assertArrayNotHasKey('text', $response->json('candidates.0'));
+    }
+
+    public function test_corrected_number_keeps_its_source_box_through_edit_operations(): void
+    {
+        $draft = $this->readyDraft();
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update([
+            'text' => 'CNP 1960523123450',
+            'words' => json_encode([
+                ['text' => 'CNP', 'confidence' => 99, 'left' => 1, 'top' => 1, 'width' => 20, 'height' => 10],
+                ['text' => '1960523123450', 'confidence' => 99, 'left' => 22, 'top' => 1, 'width' => 50, 'height' => 10],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+        $response = $this->staff()->patchJson('/api/drafts/'.$draft->id.'/editor/ocr', [
+            'ocr_revision' => 1,
+            'pages' => [['page' => 1, 'text' => 'CNP 1960523123456', 'operations' => [
+                ['start' => 16, 'deleted' => '0', 'inserted' => '6'],
+            ]]],
+        ])->assertOk();
+        self::assertSame('reliable', $response->json('candidates.0.location_status'));
+        self::assertSame(22, $response->json('candidates.0.bounding_boxes.0.left'));
+    }
+
+    public function test_invalid_edit_replay_is_rejected_without_advancing_revision(): void
+    {
+        $draft = $this->readyDraft();
+        $this->staff()->patchJson('/api/drafts/'.$draft->id.'/editor/ocr', [
+            'ocr_revision' => 1,
+            'pages' => [['page' => 1, 'text' => 'CNP 1960523123456 nou', 'operations' => [
+                ['start' => 4, 'deleted' => 'wrong', 'inserted' => 'nou'],
+            ]]],
+        ])->assertUnprocessable();
+        self::assertSame(1, $draft->fresh()->ocr_revision);
+    }
+
+    public function test_genuinely_missing_source_geometry_keeps_only_candidate_unlocated(): void
+    {
+        $draft = $this->readyDraft();
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update([
+            'words' => json_encode([
+                ['text' => 'CNP', 'confidence' => 99, 'left' => 1, 'top' => 1, 'width' => 20, 'height' => 10],
+                ['text' => '1960523123456', 'confidence' => 99],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+        $response = $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk();
+        self::assertSame('manual_review_required', $response->json('candidates.0.location_status'));
+        self::assertSame([], $response->json('candidates.0.bounding_boxes'));
     }
 
     public function test_failed_detection_invalidates_candidates_and_disables_review(): void
@@ -257,6 +304,56 @@ final class DocumentDraftOcrReviewTest extends TestCase
         ])->assertOk();
         $this->postJson($url.'/redaction-preview')->assertOk();
         $this->get($url.'/redaction-preview')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_corrected_pii_flows_through_acceptance_pdf_preview_and_reader_projection(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        $sourcePath = base_path('tests/Fixtures/rendering/mark.pdf');
+        Storage::disk('documents')->put('private/source.pdf', file_get_contents($sourcePath));
+        $draft = $this->readyDraft();
+        $work = sys_get_temp_dir().'/corrected-flow-'.Str::uuid();
+        $rendered = (new DocumentPageRenderer)->render($sourcePath, $work);
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update([
+            'width' => $rendered[0]['width'], 'height' => $rendered[0]['height'],
+            'text' => 'CNP 1960523123450',
+            'words' => json_encode([
+                ['text' => 'CNP', 'confidence' => 99, 'left' => 1, 'top' => 1, 'width' => 20, 'height' => 10],
+                ['text' => '1960523123450', 'confidence' => 99, 'left' => 22, 'top' => 1, 'width' => 50, 'height' => 10],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+        try {
+            $url = '/api/drafts/'.$draft->id.'/editor';
+            $editor = $this->staff()->getJson($url)->assertOk();
+            $corrected = $this->patchJson($url.'/ocr', [
+                'ocr_revision' => $editor->json('ocr_revision'),
+                'pages' => [['page' => 1, 'text' => 'CNP 1960523123456', 'operations' => [
+                    ['start' => 16, 'deleted' => '0', 'inserted' => '6'],
+                ]]],
+            ])->assertOk()->assertJsonPath('candidates.0.location_status', 'reliable');
+            $this->patchJson($url.'/pii-review', [
+                'ocr_revision' => $corrected->json('ocr_revision'),
+                'detection_revision' => $corrected->json('detection_revision'),
+                'decisions' => [['id' => $corrected->json('candidates.0.id'), 'review_status' => 'accepted']],
+            ])->assertOk();
+            $this->postJson($url.'/redaction-preview')->assertOk();
+            $this->get($url.'/redaction-preview')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+            $record = $draft->fresh();
+            $projection = (new ReaderRedactionProjection)->project([[
+                'page' => 1, 'width' => $rendered[0]['width'], 'height' => $rendered[0]['height'],
+                'source_text' => 'CNP 1960523123450',
+                'text' => $record->corrected_ocr[0]['text'],
+                'base_text' => $record->corrected_ocr[0]['base_text'],
+                'operations' => $record->corrected_ocr[0]['operations'],
+                'words' => json_decode(DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->value('words'), true, flags: JSON_THROW_ON_ERROR),
+            ]], $record->pii_candidates, [], ['value' => '1960523123456']);
+            self::assertSame('CNP', $projection['pages'][0]['text']);
+            self::assertSame([], $projection['metadata']);
+        } finally {
+            \Illuminate\Support\Facades\File::deleteDirectory($work);
+        }
     }
 
     private function readyDraft(): DocumentDraft
