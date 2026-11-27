@@ -255,6 +255,10 @@ final class DocumentDraftController
             'pages' => 'required|array|min:1',
             'pages.*.page' => 'required|integer|min:1|distinct',
             'pages.*.text' => 'required|string|max:1000000',
+            'pages.*.operations' => 'sometimes|array|max:10000',
+            'pages.*.operations.*.start' => 'required|integer|min:0',
+            'pages.*.operations.*.deleted' => 'present|string',
+            'pages.*.operations.*.inserted' => 'present|string',
         ]);
         if ($validator->fails()) return response()->json(['eroare' => 'Textul OCR sau versiunea trimisă nu sunt valide.'], 422);
         $inputPages = $validator->validated()['pages'];
@@ -262,13 +266,35 @@ final class DocumentDraftController
         if ($pages->count() !== count($inputPages) || array_column($inputPages, 'page') !== $pages->pluck('page')->map(fn ($page) => (int) $page)->all()) {
             return response()->json(['eroare' => 'Trimiteți textul corectat pentru toate paginile, în ordinea documentului.'], 422);
         }
-        [$record, $pages, $stale] = DB::transaction(function () use ($draft, $request, $inputPages, $audit): array {
+        $previous = collect($record->corrected_ocr ?? [])->keyBy('page');
+        $prepared = [];
+        try {
+            foreach ($inputPages as $index => $input) {
+                $sourcePage = $pages[$index];
+                $sourceWords = json_decode($sourcePage->words, true, flags: JSON_THROW_ON_ERROR);
+                $old = $previous->get((int) $input['page']) ?? ['text' => $sourcePage->text];
+                if (array_key_exists('operations', $input)) {
+                    $base = $old['base_text'] ?? $old['text'];
+                    $operations = array_merge($old['operations'] ?? [], $input['operations']);
+                    if (count($operations) > 10000) throw new \InvalidArgumentException();
+                    $association = (new \App\Services\CorrectedOcrAssociation)->map($sourcePage->text, $sourceWords, $base, $operations);
+                    if ($association['text'] !== $input['text']) throw new \InvalidArgumentException();
+                } else {
+                    $base = $input['text'];
+                    $operations = [];
+                }
+                $prepared[] = ['page' => (int) $input['page'], 'text' => $input['text'], 'base_text' => $base, 'operations' => $operations];
+            }
+        } catch (\InvalidArgumentException $exception) {
+            return response()->json(['eroare' => 'Operațiile de corectare nu corespund textului. Reîncărcați editorul.'], 422);
+        }
+        [$record, $pages, $stale] = DB::transaction(function () use ($draft, $request, $inputPages, $prepared, $audit): array {
             $record = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
             if ($record === null || $record->status !== 'review_ready' || !$record->ocr_extraction_id) return [null, collect(), true];
             if ((int) $request->input('ocr_revision') !== (int) $record->ocr_revision) return [$record, collect(), true];
             $pages = DB::table('ocr_pages')->where('extraction', $record->ocr_extraction_id)->orderBy('page')->get();
             if ($pages->count() !== count($inputPages) || array_column($inputPages, 'page') !== $pages->pluck('page')->map(fn ($page) => (int) $page)->all()) return [$record, collect(), true];
-            $record->corrected_ocr = array_map(static fn (array $page): array => ['page' => (int) $page['page'], 'text' => $page['text']], $inputPages);
+            $record->corrected_ocr = $prepared;
             $record->ocr_revision = (int) $record->ocr_revision + 1;
             $record->detection_status = 'pending';
             $record->detection_revision = 0;

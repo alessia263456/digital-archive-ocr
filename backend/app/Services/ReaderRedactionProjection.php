@@ -17,6 +17,7 @@ final class ReaderRedactionProjection
 
         $regions = [];
         $phrases = [];
+        $candidateSpans = [];
         foreach ($candidates as $candidate) {
             if (($candidate['review_status'] ?? null) !== 'accepted') continue;
             if (($candidate['location_status'] ?? null) !== 'reliable' || !is_array($candidate['bounding_boxes'] ?? null) || $candidate['bounding_boxes'] === []
@@ -30,6 +31,7 @@ final class ReaderRedactionProjection
             $end = $this->utf16ByteOffset((string) $page['text'], (int) ($span['start'] + $span['length']));
             if ($end <= $start) throw new \RuntimeException('Pasajul anonimizat nu este valid.');
             $phrases[] = substr((string) $page['text'], $start, $end - $start);
+            $candidateSpans[$pageNumber][] = [$start, $end];
             foreach ($candidate['bounding_boxes'] as $box) $regions[$pageNumber][] = $this->validatedBox($box, $page);
         }
         foreach ($manualMarks as $mark) {
@@ -44,7 +46,12 @@ final class ReaderRedactionProjection
             $text = (string) $page['text'];
             $tokens = $this->textTokens($text);
             $words = $page['words'];
-            if (count($tokens) !== count($words)) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+            $sourceText = (string) ($page['source_text'] ?? $text);
+            $association = (new CorrectedOcrAssociation)->map(
+                $sourceText, $words, (string) ($page['base_text'] ?? $text), $page['operations'] ?? []
+            );
+            if ($association['text'] !== $text) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+            $redactedWords = [];
             $spans = [];
             foreach ($words as $index => $word) {
                 if (!is_string($word['text'] ?? null) || !is_int($word['left'] ?? null) || !is_int($word['top'] ?? null)
@@ -53,15 +60,28 @@ final class ReaderRedactionProjection
                     || $word['left'] + $word['width'] > $page['width'] || $word['top'] + $word['height'] > $page['height']) {
                     throw new \RuntimeException('Geometria OCR nu este completă.');
                 }
-                if ($tokens[$index]['text'] !== (string) $word['text']) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
                 foreach ($boxes as $box) {
                     if ($this->overlaps($box, $word)) {
-                        $spans[] = [$tokens[$index]['start'], $tokens[$index]['end']];
+                        $redactedWords[$index] = true;
+                        $phrases[] = (string) $word['text'];
                         break;
                     }
                 }
             }
-            if ($spans === []) throw new \RuntimeException('O regiune anonimizată nu corespunde unui cuvânt OCR.');
+            if ($redactedWords === []) throw new \RuntimeException('O regiune anonimizată nu corespunde unui cuvânt OCR.');
+            foreach ($tokens as $index => $token) {
+                $mapped = $association['mapping'][$index] ?? [];
+                $inCandidate = false;
+                foreach ($candidateSpans[$pageNumber] ?? [] as [$start, $end]) {
+                    if ($token['start'] < $end && $token['end'] > $start) $inCandidate = true;
+                }
+                if ($mapped === [] && !$inCandidate) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+                foreach ($mapped as $sourceIndex) {
+                    if (isset($redactedWords[$sourceIndex])) $inCandidate = true;
+                }
+                if ($inCandidate) $spans[] = [$token['start'], $token['end']];
+            }
+            if ($spans === []) throw new \RuntimeException('O regiune anonimizată nu corespunde textului OCR.');
             foreach ($spans as [$start, $end]) $phrases[] = substr($text, $start, $end - $start);
             usort($spans, static fn (array $a, array $b): int => $b[0] <=> $a[0]);
             foreach ($spans as [$start, $end]) $text = substr_replace($text, '', $start, $end - $start);

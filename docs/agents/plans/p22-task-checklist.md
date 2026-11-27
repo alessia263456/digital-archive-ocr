@@ -189,6 +189,8 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [ ] P22-26 · Retention calculation and validation
 - [x] P22-27a · Draw and preview manual Redaction
   - DS-011 now draws revision-bound manual marks over private original page rasters, supports pointer and keyboard placement, rescales coordinates across viewport changes, lists and removes marks with undo, and invalidates stale previews. The staff-only raster endpoint checks renderer/OCR dimensions, audits access, and uses private no-store delivery. Backend PHPUnit passed (149 tests, 1,117 assertions, 3 OCR-only skips); frontend Playwright passed (140 tests, 24 opt-in real-API checks skipped). Screenshots at 1600×900 and 320×740 in light and dark were inspected and saved under `docs/design/screens/DS-011.*.png`.
+- [x] OCR word-to-Bounding-Box correction follow-up for P22-21a/b and P22-27a
+  - DS-011 keeps free-text editing and records UTF-16 edit operations. The backend validates their replay and derives corrected-token associations from original OCR words; repeated words, character corrections, splits, and merges retain known positions. Legacy text-only corrections and genuinely new words remain conservatively unlocated. Reader projection uses these associations and fails closed for unsafe accepted PII. The integrated regression passes correction → detection → acceptance → private PDF preview → reader projection. Full PHPUnit and default Playwright results, plus screenshot inspection, are recorded in the [follow-up plan](p22-21a-21b-27a-redaction-and-reader-safety.md).
 - [ ] P22-27b · Capture metadata and review confirmation
 - [ ] P22-28a · Implement immutable version publication
 - [ ] P22-28b · Wire Editor publication and verify

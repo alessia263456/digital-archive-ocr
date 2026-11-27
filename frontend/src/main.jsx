@@ -348,13 +348,47 @@ function DraftEditor({ item, onBack }) {
   const dirty = Boolean(editor && pages.some((page, index) => page.text !== editor.pages[index]?.corrected_text));
   const stale = dirty || editor?.detection_status !== 'ready' || editor?.detection_revision !== editor?.ocr_revision;
 
+  function recordTextEdit(before, after) {
+    const oldChars = Array.from(before);
+    const newChars = Array.from(after);
+    let prefix = 0;
+    while (prefix < oldChars.length && prefix < newChars.length && oldChars[prefix] === newChars[prefix]) prefix++;
+    let suffix = 0;
+    while (suffix < oldChars.length - prefix && suffix < newChars.length - prefix
+      && oldChars[oldChars.length - 1 - suffix] === newChars[newChars.length - 1 - suffix]) suffix++;
+    return {
+      start: oldChars.slice(0, prefix).join('').length,
+      deleted: oldChars.slice(prefix, oldChars.length - suffix).join(''),
+      inserted: newChars.slice(prefix, newChars.length - suffix).join(''),
+    };
+  }
+
+  function updatePageText(index, value) {
+    setPages(current => current.map((entry, position) => position === index
+      ? { ...entry, text: value, operations: [...entry.operations, recordTextEdit(entry.text, value)] }
+      : entry));
+  }
+
+  const missingManualPages = [...new Set((editor?.candidates || [])
+    .filter(candidate => candidate.review_status === 'accepted'
+      && (candidate.location_status !== 'reliable' || !candidate.bounding_boxes.length)
+      && !manualMarks.some(mark => mark.page === candidate.page))
+    .map(candidate => candidate.page))];
+
+  function drawOnPage(page) {
+    setDrawing(true);
+    setAnchor(null);
+    setCursor(null);
+    document.getElementById(`editor-canvas-${page}`)?.focus();
+  }
+
   async function load() {
     setLoading(true);
     setError('');
     try {
       const result = await api.draftEditor(item.id);
       setEditor(result);
-      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text, operations: [] })));
       setManualMarks(result.manual_marks || []);
       setUndoMarks(null);
       setDrawing(false);
@@ -379,7 +413,7 @@ function DraftEditor({ item, onBack }) {
     try {
       const result = await api.saveDraftEditorOcr(item.id, editor.ocr_revision, pages);
       setEditor(result);
-      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text })));
+      setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text, operations: [] })));
       setManualMarks(result.manual_marks || []);
       setUndoMarks(null);
       setPreviewReady(false);
@@ -429,6 +463,7 @@ function DraftEditor({ item, onBack }) {
     try {
       const result = await api.saveDraftRedactionMarks(item.id, editor.ocr_revision, editor.detection_revision, next);
       setManualMarks(result.marks);
+      setPreviewError('');
       setUndoMarks(undo);
       setPreviewReady(false);
       setFeedback('Marcajele au fost salvate. Previzualizarea anterioară a fost invalidată.');
@@ -512,7 +547,7 @@ function DraftEditor({ item, onBack }) {
                       <h3>Pagina {page.page}</h3>
                       <div className={`editor-page-canvas${drawing ? ' drawing' : ''}`} style={{ aspectRatio: `${page.width} / ${page.height}` }}>
                         <img src={api.draftEditorPageImage(item.id, page.page)} alt={`Document original, pagina ${page.page}`} draggable="false" onError={() => setError('Imaginea paginii nu a putut fi încărcată. Reîncărcați editorul.')} />
-                        <svg viewBox={`0 0 ${page.width} ${page.height}`} role="application" aria-label={`Document original, pagina ${page.page}`} aria-describedby={drawing ? 'editor-drawing-help' : undefined} tabIndex="0"
+                        <svg id={`editor-canvas-${page.page}`} viewBox={`0 0 ${page.width} ${page.height}`} role="application" aria-label={`Document original, pagina ${page.page}`} aria-describedby={drawing ? 'editor-drawing-help' : undefined} tabIndex="0"
                           onPointerDown={(event) => { if (!drawing || stale || event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const point = pointFor(event, page); if (anchor?.page === page.page) completeMark(page, anchor.point, point); else { setAnchor({ page: page.page, point }); setCursor({ page: page.page, point }); } }}
                           onPointerMove={(event) => { if (drawing && anchor?.page === page.page) setCursor({ page: page.page, point: pointFor(event, page) }); }}
                           onPointerUp={(event) => { if (!drawing || !anchor || anchor.page !== page.page) return; const point = pointFor(event, page); if (anchor.point.x !== point.x || anchor.point.y !== point.y) completeMark(page, anchor.point, point); }}
@@ -526,7 +561,11 @@ function DraftEditor({ item, onBack }) {
                   })}
                 </div>
                 {manualMarks.length > 0 && <ul className="editor-manual-mark-list" aria-label="Marcaje manuale">{manualMarks.map((mark, index) => <li key={`${mark.page}-${mark.box.left}-${mark.box.top}-${index}`}><span>Manual · Pagina {mark.page} · {mark.box.left}, {mark.box.top} · {mark.box.width} × {mark.box.height} px</span><button className="button secondary" type="button" aria-label={`Elimină marcajul manual ${index + 1}`} onClick={() => saveMarks(manualMarks.filter((_, position) => position !== index), manualMarks)} disabled={markSaving}>Elimină</button></li>)}</ul>}
-                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={generatingPreview || stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : generatingPreview ? 'Se generează PDF-ul…' : 'Previzualizează anonimizarea'}</button></div>
+                {!stale && missingManualPages.map(page => <div className="editor-actions" key={page}>
+                  <span>Pe pagina {page}, trasați o casetă peste fiecare zonă confirmată care necesită localizare manuală.</span>
+                  <button type="button" className="button secondary" disabled={markSaving} onClick={() => drawOnPage(page)}>Marchează pe pagina {page}</button>
+                </div>)}
+                <div className="editor-actions"><button className="button" type="button" onClick={generatePreview} disabled={missingManualPages.length > 0 || generatingPreview || stale || dirty || markSaving || (!manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted'))}>{markSaving ? 'Se salvează marcajele…' : generatingPreview ? 'Se generează PDF-ul…' : 'Previzualizează anonimizarea'}</button></div>
                 {previewError && <p className="editor-warning" role="alert">{previewError}</p>}
                 {!stale && !manualMarks.length && !editor.candidates.some((candidate) => candidate.review_status === 'accepted') && <p className="muted">Pentru previzualizare, marcați o zonă sau acceptați o potrivire PII.</p>}
                 {previewReady && !stale && <div className="editor-preview-pages"><h3>Previzualizare PDF anonimizat</h3><iframe title="Previzualizare PDF anonimizat" src={api.draftRedactedPdf(item.id)} /></div>}
@@ -537,7 +576,7 @@ function DraftEditor({ item, onBack }) {
                   const source = editor.pages[index];
                   return <article className="editor-page" key={page.page}>
                     <label htmlFor={`editor-ocr-${page.page}`}>Corectare OCR · Pagina {page.page}</label>
-                    <textarea id={`editor-ocr-${page.page}`} rows="12" value={page.text} spellCheck="false" onChange={(event) => setPages((current) => current.map((entry, position) => position === index ? { ...entry, text: event.target.value } : entry))} />
+                    <textarea id={`editor-ocr-${page.page}`} rows="12" value={page.text} spellCheck="false" onChange={(event) => updatePageText(index, event.target.value)} />
                     <details><summary>Casete de delimitare · {source.words.length} cuvinte</summary>
                       {source.words.length ? <ul className="editor-word-list">{source.words.map((word, wordIndex) => <li key={`${word.left}-${word.top}-${wordIndex}`}><span>{word.text}</span><code>{word.left}, {word.top} · {word.width} × {word.height} px · {word.confidence}%</code></li>)}</ul> : <p className="muted">Nu există casete de delimitare pentru această pagină.</p>}
                     </details>

@@ -130,5 +130,5 @@
 
 ## PATTERN-019 · Keep corrected-OCR locations conservative and revision-bound
 - **Status:** candidate
-- **How:** Detect against corrected OCR tokens, but retain source Bounding Boxes only for exact tokens with a unique source occurrence and unchanged neighboring-token evidence. Store a JavaScript UTF-16 offset span into corrected text for every candidate. If candidate tokens split, merge, repeat ambiguously, or fail alignment, keep the candidate reviewable with no boxes and disable automatic Redaction. Bind every review decision to both the OCR revision and successful detection revision.
-- **Example:** [Draft PII review service](../../backend/app/Services/DocumentDraftPiiReview.php) and [OCR review tests](../../backend/tests/Feature/DocumentDraftOcrReviewTest.php).
+- **How:** Record UTF-16 textarea edit operations against the saved OCR revision. Replay and validate them on the backend, then derive corrected-token associations from immutable source OCR words and edit history. Keep known positions for repeated words, character corrections, splits, and merges; leave only ambiguous or newly inserted spans unlocated. Never accept browser geometry. Bind detection, decisions, and previews to current OCR and detection revisions. Reconstruct legacy text-only corrections conservatively.
+- **Example:** [Association service](../../backend/app/Services/CorrectedOcrAssociation.php), [draft PII review](../../backend/app/Services/DocumentDraftPiiReview.php), and [association tests](../../backend/tests/Feature/CorrectedOcrAssociationTest.php).

@@ -13,11 +13,18 @@ class DocumentDraftPiiReview
             $text = (string) ($correctedPages[$position]['text'] ?? '');
             $tokens = $this->tokens($text);
             $source = json_decode($page->words, true, flags: JSON_THROW_ON_ERROR);
-            $mapping = $this->alignment($source, $tokens);
+            $corrected = $correctedPages[$position] ?? [];
+            $sourceText = (string) ($page->text ?? implode(' ', array_column($source, 'text')));
+            $association = (new CorrectedOcrAssociation)->map(
+                $sourceText, $source, (string) ($corrected['base_text'] ?? $text),
+                $corrected['operations'] ?? []
+            );
+            if ($association['text'] !== $text) throw new \RuntimeException('Corecturile OCR nu corespund textului.');
+            $mapping = $association['mapping'];
             $detectorWords = [];
             $line = 1;
             foreach ($tokens as $index => $token) {
-                $sourceWord = $mapping[$index] !== null ? ($source[$mapping[$index]] ?? []) : [];
+                $sourceWord = count($mapping[$index]) === 1 ? ($source[$mapping[$index][0]] ?? []) : [];
                 $line += substr_count(substr($text, $tokens[$index - 1]['byte_end'] ?? 0, $token['byte_start'] - ($tokens[$index - 1]['byte_end'] ?? 0)), "\n");
                 $detectorWords[] = [
                     'text' => $token['text'], 'confidence' => (float) ($sourceWord['confidence'] ?? 0),
@@ -36,9 +43,10 @@ class DocumentDraftPiiReview
                 }
                 $start = min(array_map(static fn (int $index): int => $tokens[$index]['start'], $selected));
                 $end = max(array_map(static fn (int $index): int => $tokens[$index]['end'], $selected));
-                $sourceIndexes = array_map(static fn (int $index): ?int => $mapping[$index] ?? null, $selected);
-                $reliable = !in_array(null, $sourceIndexes, true)
-                    && count(array_unique($sourceIndexes)) === count($sourceIndexes)
+                $mapped = array_map(static fn (int $index): array => $mapping[$index] ?? [], $selected);
+                $sourceIndexes = array_values(array_unique(array_merge(...$mapped)));
+                sort($sourceIndexes);
+                $reliable = !in_array([], $mapped, true) && $sourceIndexes !== []
                     && $sourceIndexes === range(min($sourceIndexes), max($sourceIndexes));
                 $boxes = [];
                 if ($reliable) {
@@ -82,23 +90,4 @@ class DocumentDraftPiiReview
         return intdiv(strlen(mb_convert_encoding($value, 'UTF-16LE', 'UTF-8')), 2);
     }
 
-    private function alignment(array $source, array $tokens): array
-    {
-        $sourceTexts = array_map(static fn (array $word): string => (string) ($word['text'] ?? ''), $source);
-        $positions = [];
-        foreach ($sourceTexts as $index => $value) $positions[$value][] = $index;
-        $tokenPositions = [];
-        foreach ($tokens as $index => $token) $tokenPositions[$token['text']][] = $index;
-
-        $map = array_fill(0, count($tokens), null);
-        foreach ($tokens as $index => $token) {
-            $found = $positions[$token['text']] ?? [];
-            if (count($found) !== 1 || count($tokenPositions[$token['text']] ?? []) !== 1) continue;
-            $sourceIndex = $found[0];
-            $hasNeighbor = ($index > 0 && isset($map[$index - 1]) && $map[$index - 1] === $sourceIndex - 1)
-                || ($index + 1 < count($tokens) && ($sourceTexts[$sourceIndex + 1] ?? null) === $tokens[$index + 1]['text']);
-            if ($hasNeighbor || (count($tokens) === 1 && count($source) === 1)) $map[$index] = $sourceIndex;
-        }
-        return $map;
-    }
 }

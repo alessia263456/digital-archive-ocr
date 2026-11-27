@@ -12,7 +12,8 @@
 - C-001 · Expiring Signed URL document delivery endpoint · provided
 - C-002 · Username/password bearer authentication and role-protected API · provided · _superseded-by C-003_
 - C-003 · Username/password session authentication and role-protected API · provided
-- C-004 · Protected draft OCR correction and PII review API · provided
+- C-004 · Protected draft OCR correction and PII review API · provided · _superseded-by C-005_
+- C-005 · Revision-bound OCR edits and validated word associations · provided
 
 ---
 
@@ -43,7 +44,7 @@
 - **Confirmed:** 2026-11-26
 
 ### C-004 · Protected draft OCR correction and PII review API
-- **Status:** approved
+- **Status:** superseded-by C-005
 - **Date:** 2026-11-26
 - **Interface:** These routes require the live C-003 session, its CSRF protection for state-changing requests, and the `admin` or `arhivar` role. `GET /api/drafts/{draft}/editor` returns the private draft ID and status, current `ocr_revision`, `detection_status`, `detection_revision`, ordered pages with dimensions, source OCR text, corrected OCR text and OCR words, plus current PII candidates. A candidate contains an opaque `id`, category, disposition, confidence, page, `bounding_boxes` (possibly empty), `location_status` (`reliable` or `manual_review_required`), a `corrected_text_span` (`start` and `length` offsets into that page's corrected OCR text), and `review_status` (`pending`, `accepted`, or `rejected`). Candidate records never contain matched OCR text. Candidates with `manual_review_required` location status are identifiable from their corrected-text span, but cannot be treated as safe for automatic Redaction. `PATCH /api/drafts/{draft}/editor/ocr` accepts the expected `ocr_revision` and the complete ordered corrected text for each page. A matching revision saves the corrected text, invalidates prior candidates, advances the OCR revision, and runs detection against the corrected OCR. On success it returns the new OCR and detection revisions, `detection_status: ready`, and candidates. A stale expected revision returns HTTP 409. If detection fails, the corrected text remains saved, prior candidates remain invalidated, the response is an error with `detection_status: failed`, the new `ocr_revision`, and no reviewable candidates. `PATCH /api/drafts/{draft}/editor/pii-review` accepts `ocr_revision`, `detection_revision`, and candidate ID/review-status decisions. It saves decisions only when both revisions match the current successful detection; stale or failed results return HTTP 409. The editor GET reports detection failure and returns no reviewable candidates until a successful detection run.
 
@@ -53,6 +54,15 @@
   All responses use Romanian `eroare` messages for errors and expose no private storage keys or Signed URLs.
 - **Evidence:** Owner-approved P22-24a/b and P22-45 plan clarifications in chat on 2026-11-26.
 - **Consumers:** `backend/app/Http/Controllers/DocumentDraftController.php`, `backend/routes/api.php`, `backend/app/Services/ReaderRedactionProjection.php`, `frontend/src/api.js`, `frontend/src/main.jsx`, backend draft-review feature tests, and frontend Editor/queue Playwright tests.
+
+### C-005 · Revision-bound OCR edits and validated word associations
+- **Status:** approved
+- **Date:** 2026-11-26
+- **Interface:** Retains C-004's staff-only Editor, PII review, manual-mark, private page-image, and PDF-preview routes, response fields, C-003 session/CSRF protection, role restrictions, revision guards, and Romanian errors. PATCH /api/drafts/{draft}/editor/ocr additionally accepts, on each ordered page, operations: [{start, deleted, inserted}]. Each operation is applied in order to the previous saved corrected text; start is a JavaScript UTF-16 offset, and deleted and inserted are exact UTF-8 strings, including empty strings for insertion or deletion. The request still supplies the complete final page text. The backend replays the operations, validates every deleted substring and the final text, and returns HTTP 422 without changing the OCR revision on a mismatch. The server stores the revision-bound base text and accumulated operations in the existing private corrected_ocr JSONB; original OCR and TSV remain immutable. An omitted operations field remains a conservative legacy text-only correction.
+
+  The backend derives corrected-token to original-word associations from immutable source OCR and the validated edit history. It does not accept client geometry. Repeated unchanged words retain their distinct positions; character corrections, splits and merges retain the affected original word boxes when the edit history identifies them. New words or ambiguous legacy spans remain unlocated while unaffected spans retain boxes. Detection runs against corrected text and emits only validated source Bounding Boxes or manual_review_required with an exact corrected-text span. Review and PDF preview remain guarded by the OCR and detection revisions. The reader projection applies accepted regions to corrected tokens through validated associations, removes overlapping source-word and corrected-token values from metadata, and fails closed if accepted PII or affected text cannot be located safely. C-004's private storage and cititor restrictions remain in force.
+- **Evidence:** Owner-approved follow-up in [redaction and reader safety plan](plans/p22-21a-21b-27a-redaction-and-reader-safety.md).
+- **Consumers:** backend/app/Http/Controllers/DocumentDraftController.php, backend/app/Services/CorrectedOcrAssociation.php, backend/app/Services/DocumentDraftPiiReview.php, backend/app/Services/ReaderRedactionProjection.php, backend/routes/api.php, frontend/src/api.js, frontend/src/main.jsx, backend/tests/Feature/CorrectedOcrAssociationTest.php, backend/tests/Feature/DocumentDraftOcrReviewTest.php, backend/tests/Feature/ReaderRedactionProjectionTest.php, and frontend/tests/editor.spec.js.
 - **Confirmed:** 2026-11-26
 
 ## Consumed

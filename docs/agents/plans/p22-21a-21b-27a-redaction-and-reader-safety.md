@@ -2,6 +2,28 @@
 
 **Status:** Implemented and verified.
 
+## Follow-up plan — preserve OCR word associations during correction (owner-approved 2026-11-26)
+
+**Status:** Implemented and verified on 2026-11-27.
+
+Retain the approved DS-011 free-text textarea and corrected-OCR PII detection. Track edits against the original OCR word sequence so unchanged words, repeated words with known positions, and ordinary spelling/character corrections retain their original Bounding Boxes. Record edit operations and derive associations independently on the backend from those operations and the original OCR data; validate each association and never accept frontend geometry as authoritative. When an edit cannot be mapped reliably, mark only the affected span unlocated when possible. Preserve manual placement as fallback for genuinely unlocatable PII.
+
+Keep this implementation small: no custom rich-text editor, individual word fields, dependency, or broad architecture change. Investigate a minimal edit-operation representation compatible with the existing textarea, including insertion, deletion, split, merge, undo, paste, spellcheck, composition input, and Unicode offsets. Keep original OCR/TSV immutable and bind corrected text, edit operations, derived associations, detection, review, and preview to existing revision guards. Use the existing `corrected_ocr` JSONB where feasible; decide on a migration only if existing schema cannot safely represent the data. Existing drafts without operations need conservative reconstruction from unchanged text and original OCR positions; ambiguous spans remain unlocated.
+
+Update reader-safe projection to use validated associations, including corrected token text and overlapping original boxes, while failing closed for accepted PII without reliable location. Add regression coverage for the three previously observed false-uncertainty shapes in the reported three-JPG draft, repeated words, corrected PII, genuinely missing geometry, split/merge/insertion/deletion behavior, and reader projection. Test the full flow from correction through detection, acceptance, PDF preview, and reader-safe projection.
+
+The matcher-only alternative is insufficient: position-based matching can resolve unchanged repeated words, but the saved API currently contains only full page text, so spelling corrections, deletions, splits, and merges cannot be attributed reliably after the fact. Do not use it as the complete solution.
+
+### Approved knowledge changes
+
+- D-004 and D-022 were confirmed by the owner for this approach; no rule change was requested.
+- PATTERN-019 revision is approved, retaining candidate status. Revise it during implementation to document edit-derived, backend-validated associations and span-local uncertainty.
+- C-004 supersession is approved. Prepare a superseding contract for revision-bound correction/edit-operation data, backend-derived associations, and updated projection behavior. Keep the existing C-004 entry as superseded history and list all frontend/backend/API/projection/test consumers.
+- Preserve approved DS-011 free-text editing; do not alter the screen layout or editing interaction without approval.
+- Update architecture and task checklist after implementation and verification. Do not mark follow-up work complete before end-to-end tests pass.
+
+Implementation keeps the DS-011 textarea and stores validated UTF-16 edit operations in existing `corrected_ocr` JSONB. `CorrectedOcrAssociation` derives source-word positions on the backend; corrected PII candidates and reader projection consume those associations. No migration or new dependency was needed. A backend integration test covers correction, detection, acceptance, private PDF preview, and reader projection. Full backend PHPUnit passed (160 tests, 1,168 assertions; three OCR-worker-only skips) and default Playwright passed (148 tests; 24 opt-in real-API skips). The frontend production build, Ledger lint, and four DS-011 desktop/mobile light/dark screenshots passed inspection. Existing text-only corrections use conservative source reconstruction.
+
 ## Size and sequencing
 
 M · One builder, in order: P22-21a → P22-21b → P22-27a. Each task is implemented and verified separately. Do not mark a task complete until its relevant tests pass.
