@@ -150,6 +150,34 @@ final class DocumentPublicationTest extends TestCase
         self::assertDatabaseCount('documents', 2);
     }
 
+    public function test_reordered_image_collection_warns_and_cancel_does_not_publish(): void
+    {
+        $first = $this->readyDraft($this->source."\n% ordered images", 'drafts/ordered-images.pdf', 'ordered-act');
+        $first->image_sha256s = [hash('sha256', 'page one'), hash('sha256', 'page two')];
+        $first->save();
+        $firstSnapshot = $this->prepareReview($first);
+        $this->withHeader('Idempotency-Key', 'ordered-images-first')->postJson('/api/drafts/'.$first->id.'/publish', [
+            'review_snapshot' => $firstSnapshot,
+        ])->assertCreated();
+
+        $reordered = $this->readyDraft($this->source."\n% reordered images", 'drafts/reordered-images.pdf', 'different-act');
+        $reordered->image_sha256s = [hash('sha256', 'page two'), hash('sha256', 'page one')];
+        $reordered->save();
+        $snapshot = $this->prepareReview($reordered);
+
+        $this->withHeader('Idempotency-Key', 'ordered-images-warning')->postJson('/api/drafts/'.$reordered->id.'/publish', [
+            'review_snapshot' => $snapshot,
+        ])->assertStatus(409)->assertJsonPath('cod', 'possible_duplicate')
+            ->assertJsonPath('matches.0.reason', 'reordered_image_collection');
+        $this->withHeader('Idempotency-Key', 'ordered-images-cancel')->postJson('/api/drafts/'.$reordered->id.'/publish', [
+            'review_snapshot' => $snapshot, 'duplicate_action' => 'cancel',
+        ])->assertStatus(409)->assertJsonPath('cod', 'publication_cancelled');
+
+        self::assertDatabaseCount('documents', 1);
+        self::assertDatabaseCount('document_versions', 1);
+        self::assertSame('review_ready', $reordered->fresh()->status);
+    }
+
     public function test_replacement_appends_version_and_stale_review_requires_reconfirmation(): void
     {
         $first = $this->readyDraft($this->source, 'drafts/replace-first.pdf', 'replace-act');

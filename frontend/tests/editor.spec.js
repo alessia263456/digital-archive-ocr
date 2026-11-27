@@ -55,6 +55,63 @@ async function showTab(page, tab) {
   await page.keyboard.press('Enter');
 }
 
+async function confirmEditorForPublication(page) {
+  await openEditor(page, { ...editorState, candidates: [] });
+  await page.route('**/api/drafts/editor-1/metadata', async (route) => {
+    if (route.request().method() === 'PATCH') await route.fulfill({ json: { metadata: { act_date: '2026-11-18', act_number: '41', physical_dossier_id: 101, inventory_number: '29/2026', tags: [] }, metadata_confirmed: false, metadata_revision: 2, ocr_revision: 1, classification, retention: { status: 'calculated', first_eligible_date: '2036-01-01' } } });
+    else await route.fulfill({ json: structuredClone(metadataState) });
+  });
+  await page.route('**/api/drafts/editor-1/metadata/confirm', (route) => route.fulfill({ json: { metadata_confirmed: true, metadata_revision: 2, ocr_revision: 1 } }));
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', (route) => route.fulfill({ json: { status: 'ready' } }));
+  await page.route('**/api/drafts/editor-1/review/confirm', (route) => route.fulfill({ json: { review_confirmed: true, review_snapshot: 'review-snapshot-duplicate' } }));
+  await page.getByLabel('Tip document').selectOption('Contract');
+  await page.getByLabel('Subtip').selectOption('contract de comodat');
+  await page.getByLabel('Context de arhivare').selectOption('Act de sine stătător');
+  await page.getByLabel('Data actului').fill('2026-11-18');
+  await page.getByLabel('Numărul actului').fill('41');
+  await page.getByLabel('Dosar fizic').selectOption('101');
+  await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
+  await showTab(page, 'Verificare finală');
+  await page.getByRole('button', { name: 'Confirmă revizuirea finală' }).click();
+  await expect(page.getByRole('button', { name: 'Aprobă și publică' })).toBeVisible();
+}
+
+const possibleDuplicate = { id: 'document-existing', reason: 'act_number_and_date' };
+
+test('shows possible duplicate matches and publishes separately when selected', async ({ page }) => {
+  await confirmEditorForPublication(page);
+  const publicationBodies = [];
+  await page.route('**/api/drafts/editor-1/publish', async (route) => {
+    const body = route.request().postDataJSON();
+    publicationBodies.push(body);
+    if (publicationBodies.length === 1) return route.fulfill({ status: 409, json: { cod: 'possible_duplicate', matches: [possibleDuplicate], options: ['version', 'separate', 'cancel'], eroare: 'Posibil document duplicat.' } });
+    return route.fulfill({ status: 201, json: { document_id: 'document-separate', version_id: 'version-separate', version_number: 1 } });
+  });
+
+  await page.getByRole('button', { name: 'Aprobă și publică' }).click();
+  await expect(page.getByRole('heading', { name: 'Posibil document duplicat' })).toBeVisible();
+  await expect(page.getByText('număr și dată identice')).toBeVisible();
+  await page.getByRole('button', { name: 'Publică separat' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Documentul a fost aprobat' })).toBeVisible();
+  expect(publicationBodies.map((body) => body.duplicate_action)).toEqual([null, 'separate']);
+});
+
+test('cancels publication from the possible duplicate warning without another request', async ({ page }) => {
+  await confirmEditorForPublication(page);
+  let publicationCalls = 0;
+  await page.route('**/api/drafts/editor-1/publish', async (route) => {
+    publicationCalls += 1;
+    await route.fulfill({ status: 409, json: { cod: 'possible_duplicate', matches: [possibleDuplicate], options: ['version', 'separate', 'cancel'], eroare: 'Posibil document duplicat.' } });
+  });
+
+  await page.getByRole('button', { name: 'Aprobă și publică' }).click();
+  await expect(page.getByRole('heading', { name: 'Posibil document duplicat' })).toBeVisible();
+  await page.getByRole('button', { name: 'Anulează publicarea' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Publicarea a fost anulată' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Posibil document duplicat' })).toHaveCount(0);
+  expect(publicationCalls).toBe(1);
+});
+
 test('keeps the editor workspace usable when the AppShell sidebar collapses and expands', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openEditor(page);
