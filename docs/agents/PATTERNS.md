@@ -7,7 +7,7 @@
 
 ## Index
 - PATTERN-001 · Isolate Laravel migration smoke tests in PostgreSQL · candidate
-- PATTERN-002 · Run frontend browser checks against the containerized production build · candidate
+- PATTERN-002 · Run frontend browser checks against the containerized production build · approved
 - PATTERN-003 · Publish complete page sets with a directory rename · candidate
 - PATTERN-004 · Publish a local derivative with a create-only hard link · candidate
 - PATTERN-005 · Rehearse a public listener handoff with a disposable TLS volume · candidate
@@ -34,9 +34,10 @@
 - **Example:** [Migration smoke test](../../backend/tests/Feature/MigrationSmokeTest.php) and [PHPUnit configuration](../../backend/phpunit.xml).
 
 ## PATTERN-002 · Run frontend browser checks against the containerized production build
-- **Status:** candidate
+- **Status:** approved
 - **How:** Build the frontend in a disposable Compose service. Let Playwright start the preview on container loopback and run the same Compose command locally and in CI. Mount the results directory to inspect screenshots after the container exits.
 - **Example:** [Compose service](../../compose.yaml), [Playwright configuration](../../frontend/playwright.config.js) and [frontend workflow](../../.github/workflows/frontend.yml).
+- **Confirmed:** 2026-11-27
 
 
 ## PATTERN-003 · Publish complete page sets with a directory rename
