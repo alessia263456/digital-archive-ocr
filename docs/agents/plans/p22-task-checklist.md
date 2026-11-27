@@ -180,23 +180,24 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [x] P22-19 · Part 1 Notarial Nomenclature import
   - Added the PostgreSQL classification table, model, and transactional CSV seeder. The backend images include the checked-in CSV; identical re-import preserves IDs, while duplicate source classifications and conflicting stored rules fail with source-row context.
   - PHPUnit `NomenclatureImportTest.php`: 4 tests, 308 assertions passed, including all 49 source rows, all six Retention Computation Bases, repeated Archival Indicators, retention terms, C.S. flags, rollback, and re-import IDs.
-- [ ] P22-22 · Metadata suggestions and classification
-  - Backend extraction, draft persistence, role-protected metadata endpoints, and derived classification are implemented and tested. Production DS-011 UI wiring remains for the later DS-011 tasks, as requested by the owner; this item stays open until that work is complete.
+- [x] P22-22 · Metadata suggestions and classification
+  - Backend extraction, draft persistence, protected metadata endpoints, and derived classification are connected to the approved DS-011 form. The form captures classification, act identifiers, matching physical dossier, inventory number, tags, and explicit metadata confirmation. Verified by focused Editor Playwright coverage and the real API workflow.
 - [x] P22-24a · Build DS-011 OCR editing
   - Persisted corrected OCR separately from source OCR/TSV. OCR edits advance a guarded revision and run the detector on corrected text. Unique, neighbor-supported token matches retain source Bounding Boxes; uncertain matches use JavaScript UTF-16 text spans without boxes. PHPUnit covers source preservation, revisions, split-token handling, and Unicode spans. Full PHPUnit passed: 142 tests, 1,083 assertions, 3 OCR-only skips.
 - [x] P22-24b · Build DS-011 candidate review
   - Added protected editor load, correction and PII review endpoints under C-004. Candidate values are absent from records and audits; stale/failed results invalidate review. Manual-location candidates have no boxes and cannot be automatically redacted. Reviewer decisions persist under OCR and detection revision guards. Frontend Playwright passed: 132 passed, 24 opt-in real API checks skipped. Desktop and 320px mobile screenshots in light and dark are saved under `docs/design/screens/DS-011*`.
-- [ ] P22-26 · Retention calculation and validation
+- [x] P22-26 · Retention calculation and validation
 - [x] P22-27a · Draw and preview manual Redaction
   - DS-011 now draws revision-bound manual marks over private original page rasters, supports pointer and keyboard placement, rescales coordinates across viewport changes, lists and removes marks with undo, and invalidates stale previews. The staff-only raster endpoint checks renderer/OCR dimensions, audits access, and uses private no-store delivery. Backend PHPUnit passed (149 tests, 1,117 assertions, 3 OCR-only skips); frontend Playwright passed (140 tests, 24 opt-in real-API checks skipped). Screenshots at 1600×900 and 320×740 in light and dark were inspected and saved under `docs/design/screens/DS-011.*.png`.
 - [x] OCR word-to-Bounding-Box correction follow-up for P22-21a/b and P22-27a
   - DS-011 keeps free-text editing and records UTF-16 edit operations. The backend validates their replay and derives corrected-token associations from original OCR words; repeated words, character corrections, splits, and merges retain known positions. Legacy text-only corrections and genuinely new words remain conservatively unlocated. Reader projection uses these associations and fails closed for unsafe accepted PII. The integrated regression passes correction → detection → acceptance → private PDF preview → reader projection. Full PHPUnit and default Playwright results, plus screenshot inspection, are recorded in the [follow-up plan](p22-21a-21b-27a-redaction-and-reader-safety.md).
-- [ ] P22-27b · Capture metadata and review confirmation
-- [ ] P22-28a · Implement immutable version publication
-- [ ] P22-28b · Wire Editor publication and verify
+- [x] P22-27b · Capture metadata and review confirmation
+- [x] P22-28a · Implement immutable version publication
+- [x] P22-28b · Wire Editor publication and verify
+  - Admin-only physical dossier creation and stable dossier IDs are wired through the API. DS-004 review-ready handoff opens the Editor and the opt-in real API test passes through metadata confirmation, PII review, redaction preview, final review, and publication. Backend PHPUnit passed (177 tests, 1,339 assertions, 3 skipped); frontend Playwright passed (156 passed, 28 opt-in skips) with one worker. The four DS-011 screenshots at 1600×900 and 320×740 in light and dark were saved; desktop and mobile light screenshots were inspected. Ledger lint and whitespace checks pass.
 - [ ] P22-29 · Possible duplicates
 - [x] P22-45 · DS-004 review and quarantine queues
-  - DS-004 review-ready actions open or resume the selected draft in DS-011. Existing quarantine, retry and permanent-failure actions remain covered by queue feature tests and Playwright. Browser queue handoff passed in desktop and mobile, light and dark.
+  - DS-004 review-ready actions open or resume the selected draft in DS-011. Existing quarantine, retry and permanent-failure actions remain covered by queue feature tests and Playwright. The real API handoff and publication now pass end to end.
 
 ## M3 · Search, permissions and document viewing · target Nov 28–29
 

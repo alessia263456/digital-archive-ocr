@@ -6,6 +6,7 @@ services:
       dockerfile: ../docker/frontend-test/Dockerfile
     volumes:
       - ./frontend/test-results:/app/test-results
+      - ./docs/design/screens:/app/screens
       - ./backend/tests/Fixtures/rendering/romanian.png:/app/fixtures/romanian.png:ro
       - ./backend/tests/Fixtures/quarantine/synthetic-malformed.pdf:/app/fixtures/synthetic-malformed.pdf:ro
 

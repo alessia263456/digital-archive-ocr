@@ -328,8 +328,18 @@ const piiCategoryLabels = {
   vehicle_identifier: 'Identificator vehicul', cui_cif: 'CUI / CIF',
 };
 
-function DraftEditor({ item, onBack }) {
+function DraftEditor({ item, onBack, role }) {
   const [editor, setEditor] = useState(null);
+  const [metadataState, setMetadataState] = useState(null);
+  const [metadataValues, setMetadataValues] = useState(null);
+  const [dossiers, setDossiers] = useState([]);
+  const [metadataSaving, setMetadataSaving] = useState(false);
+  const [metadataConfirmed, setMetadataConfirmed] = useState(false);
+  const [dossierDialog, setDossierDialog] = useState(false);
+  const [dossierForm, setDossierForm] = useState({ physical_dossier_number: '', inventory_number: '', description: '' });
+  const [finalSnapshot, setFinalSnapshot] = useState('');
+  const [publicationMessage, setPublicationMessage] = useState('');
+  const [possibleMatches, setPossibleMatches] = useState([]);
   const [pages, setPages] = useState([]);
   const [manualMarks, setManualMarks] = useState([]);
   const [drawing, setDrawing] = useState(false);
@@ -386,8 +396,18 @@ function DraftEditor({ item, onBack }) {
     setLoading(true);
     setError('');
     try {
-      const result = await api.draftEditor(item.id);
+      const [result, metadata] = await Promise.all([api.draftEditor(item.id), api.draftMetadata(item.id)]);
       setEditor(result);
+      setMetadataState(metadata);
+      setMetadataValues({
+        act_date: '', act_number: '', physical_dossier_id: null, physical_dossier_number: '', inventory_number: '',
+        amount: '', contract_expiry: '', dossier_resolution_date: '', deposit_date: '', deposit_release_date: '', tags: [],
+        document_type: metadata.classification?.document_type || '', subtype: metadata.classification?.subtype || '', storage_context: metadata.classification?.storage_context || '',
+        nomenclature_entry_id: metadata.classification?.id || null,
+        ...(metadata.metadata || {}),
+      });
+      setMetadataConfirmed(Boolean(metadata.metadata_confirmed));
+      setDossiers(metadata.classification?.id ? (await api.physicalDossiers(metadata.classification.id)).dossiers : []);
       setPages(result.pages.map((page) => ({ page: page.page, text: page.corrected_text, operations: [] })));
       setManualMarks(result.manual_marks || []);
       setUndoMarks(null);
@@ -404,6 +424,109 @@ function DraftEditor({ item, onBack }) {
   }
 
   useEffect(() => { load(); }, [item.id]);
+
+  const classificationOptions = metadataState?.classification_options || [];
+  const selectedClassification = classificationOptions.find((entry) => String(entry.id) === String(metadataState?.classification?.id ?? metadataValues?.nomenclature_entry_id ?? '')) || null;
+  const documentTypes = [...new Set(classificationOptions.map((entry) => entry.document_type))];
+  const subtypes = [...new Set(classificationOptions.filter((entry) => !metadataValues?.document_type || entry.document_type === metadataValues.document_type).map((entry) => entry.subtype))];
+  const contexts = [...new Set(classificationOptions.filter((entry) => (!metadataValues?.document_type || entry.document_type === metadataValues.document_type) && (!metadataValues?.subtype || entry.subtype === metadataValues.subtype)).map((entry) => entry.storage_context))];
+  const chosenEntry = classificationOptions.find((entry) => entry.document_type === metadataValues?.document_type && entry.subtype === metadataValues?.subtype && entry.storage_context === metadataValues?.storage_context);
+  const retention = metadataState?.retention;
+  const retentionBase = String(retention?.computation_base || '').toLowerCase();
+  const retentionDateKey = retentionBase.includes('contract') ? 'contract_expiry'
+    : retentionBase.includes('soluțion') ? 'dossier_resolution_date'
+      : retentionBase.includes('depun') ? 'deposit_date'
+        : retentionBase.includes('eliber') ? 'deposit_release_date' : 'act_date';
+
+  function changeMetadata(update) {
+    setMetadataValues((current) => ({ ...current, ...update }));
+    setMetadataConfirmed(false); setFinalSnapshot('');
+  }
+
+  async function chooseClassification(field, value) {
+    const next = { ...metadataValues, [field]: value };
+    const row = classificationOptions.find((entry) => entry.document_type === (field === 'document_type' ? value : next.document_type)
+      && entry.subtype === (field === 'subtype' ? value : next.subtype)
+      && entry.storage_context === (field === 'storage_context' ? value : next.storage_context));
+    if (row) {
+      next.nomenclature_entry_id = row.id;
+      setMetadataState((current) => ({ ...current, classification: row, retention: null }));
+      setMetadataValues(next); setMetadataConfirmed(false); setFinalSnapshot('');
+      try {
+        const matching = (await api.physicalDossiers(row.id)).dossiers;
+        setDossiers(matching);
+        setMetadataValues((current) => current.physical_dossier_id && !matching.some((entry) => String(entry.id) === String(current.physical_dossier_id))
+          ? { ...current, physical_dossier_id: null, physical_dossier_number: '', inventory_number: '' }
+          : current);
+      } catch (requestError) { setError(requestError.message); }
+    } else {
+      delete next.nomenclature_entry_id;
+      setMetadataState((current) => ({ ...current, classification: null, retention: null }));
+      setDossiers([]);
+      setMetadataValues(next); setMetadataConfirmed(false); setFinalSnapshot('');
+    }
+  }
+
+  async function saveMetadata() {
+    if (!metadataValues || metadataSaving) return;
+    setMetadataSaving(true); setError('');
+    try {
+      const entry = chosenEntry || classificationOptions.find((row) => String(row.id) === String(metadataValues.nomenclature_entry_id));
+      const metadata = Object.fromEntries(['act_date', 'act_number', 'physical_dossier_id', 'inventory_number', 'amount', 'contract_expiry', 'dossier_resolution_date', 'deposit_date', 'deposit_release_date', 'tags'].map((key) => [key, key === 'tags' ? (metadataValues.tags || []).filter(Boolean) : (metadataValues[key] ?? null)]));
+      const result = await api.updateDraftMetadata(item.id, metadata, entry?.id);
+      setMetadataState((current) => ({ ...current, metadata: result.metadata, metadata_confirmed: false, metadata_revision: result.metadata_revision, ocr_revision: result.ocr_revision, classification: result.classification, retention: result.retention }));
+      setMetadataValues((current) => ({ ...current, ...result.metadata }));
+      setMetadataConfirmed(false); setFinalSnapshot(''); setFeedback('Metadatele au fost salvate. Confirmați-le înainte de aprobarea finală.');
+    } catch (requestError) { setError(requestError.message || 'Metadatele nu au putut fi salvate.'); }
+    finally { setMetadataSaving(false); }
+  }
+
+  async function toggleMetadataConfirmation(checked) {
+    setMetadataConfirmed(checked);
+    if (!checked || !metadataState) return;
+    try {
+      await api.confirmDraftMetadata(item.id, metadataState.metadata_revision, editor.ocr_revision);
+      setMetadataState((current) => ({ ...current, metadata_confirmed: true }));
+      setFeedback('Metadatele au fost confirmate.');
+    } catch (requestError) { setMetadataConfirmed(false); setError(requestError.message || 'Metadatele nu au putut fi confirmate.'); }
+  }
+
+  async function createDossier(event) {
+    event.preventDefault();
+    try {
+      const result = await api.createPhysicalDossier({ nomenclature_entry_id: selectedClassification.id, ...dossierForm });
+      setDossiers((current) => [...current, result.dossier].sort((a, b) => a.physical_dossier_number.localeCompare(b.physical_dossier_number)));
+      setMetadataValues((current) => ({ ...current, physical_dossier_id: result.dossier.id, physical_dossier_number: result.dossier.physical_dossier_number, inventory_number: result.dossier.inventory_number }));
+      setFinalSnapshot(''); setMetadataConfirmed(false);
+      setDossierDialog(false); setDossierForm({ physical_dossier_number: '', inventory_number: '', description: '' });
+      setFeedback('Dosarul fizic a fost creat și selectat.');
+    } catch (requestError) { setError(requestError.message || 'Dosarul fizic nu a putut fi creat.'); }
+  }
+
+  async function confirmFinalReview() {
+    if (!editor || !metadataState || !metadataConfirmed || dirty || stale || !previewReady) return;
+    try {
+      const result = await api.confirmDraftReview(item.id, {
+        metadata_revision: metadataState.metadata_revision, ocr_revision: editor.ocr_revision,
+        detection_revision: editor.detection_revision, redaction_ocr_revision: editor.ocr_revision,
+        redaction_detection_revision: editor.detection_revision,
+      });
+      setFinalSnapshot(result.review_snapshot); setFeedback('Revizuirea finală a fost confirmată.');
+    } catch (requestError) { setError(requestError.message || 'Revizuirea finală nu a putut fi confirmată.'); }
+  }
+
+  async function publishDocument(duplicateAction = null) {
+    if (!finalSnapshot) return;
+    try {
+      const result = await api.publishDraft(item.id, finalSnapshot, duplicateAction);
+      setPublicationMessage(`Documentul a fost aprobat. Versiunea ${result.version_number || result.version?.version_number || ''} este disponibilă.`);
+      setFinalSnapshot('');
+    } catch (requestError) {
+      if (requestError.body?.cod === 'possible_duplicate') { setPossibleMatches(requestError.body.matches || []); setPublicationMessage('Există documente cu același număr și aceeași dată sau o colecție de imagini reordonată. Verificați rezultatele înainte de alegere.'); }
+      else if (requestError.body?.cod === 'exact_duplicate') setPublicationMessage('Documentul este identic cu o versiune publicată. Publicarea este blocată.');
+      else setError(requestError.message || 'Documentul nu a putut fi aprobat.');
+    }
+  }
 
   async function saveCorrections() {
     if (!editor || !dirty || saving) return;
@@ -527,6 +650,48 @@ function DraftEditor({ item, onBack }) {
             {error && <p className="editor-feedback error" role="alert">{error}</p>}
             {reloadRequired && <div className="editor-actions"><button className="button secondary" type="button" onClick={load}>Reîncarcă editorul</button></div>}
             {feedback && <p className="editor-feedback" role="status" aria-live="polite">{feedback}</p>}
+            {metadataState && metadataValues && <section className="editor-card metadata-workflow" aria-labelledby="metadata-workflow-title">
+              <header><h2 id="metadata-workflow-title">Date document</h2><p className="muted">Completați clasificarea și identificarea înainte de continuarea revizuirii.</p></header>
+              <div className="metadata-form">
+                <section className="metadata-section">
+                  <h3>Clasificare arhivistică</h3>
+                  <div className="metadata-fields">
+                    <label>Tip document<select value={metadataValues.document_type || ''} onChange={(event) => chooseClassification('document_type', event.target.value)}><option value="">Selectați tipul</option>{documentTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+                    <label>Subtip<select value={metadataValues.subtype || ''} onChange={(event) => chooseClassification('subtype', event.target.value)}><option value="">Selectați subtipul</option>{subtypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+                    <label>Context de arhivare<select value={metadataValues.storage_context || ''} onChange={(event) => chooseClassification('storage_context', event.target.value)}><option value="">Selectați contextul</option>{contexts.map((value) => <option key={value}>{value}</option>)}</select></label>
+                    <label>Indicativ arhivistic<input value={selectedClassification?.archival_indicator || ''} readOnly /></label>
+                  </div>
+                  <div className="metadata-retention"><h3>Retenție</h3>{retention ? <>
+                    <p>{retention.status === 'permanent' ? 'Păstrare permanentă' : retention.status === 'pending' ? 'Dată de retenție în așteptare' : `Prima dată eligibilă: ${retention.first_eligible_date}`}</p>
+                    <p className="muted">{selectedClassification?.retention_term || ''} · {retention.computation_base}</p>
+                    <p className="muted">Data indică eligibilitatea pentru analiză, nu autorizează distrugerea. Distrugerea necesită confirmarea separată a Adminului.</p>
+                  </> : <p className="muted">Alegeți tipul, subtipul și contextul pentru a vedea termenul de păstrare.</p>}</div>
+                  {retention?.status === 'pending' && retentionDateKey !== 'act_date' && <label className="metadata-event-date">{retention.computation_base}<input type="date" value={metadataValues[retentionDateKey] || ''} onChange={(event) => {
+                    changeMetadata({ [retentionDateKey]: event.target.value });
+                  }} /></label>}
+                </section>
+                <section className="metadata-section"><h3>Identificarea actului</h3><div className="metadata-fields metadata-identification">
+                  <label>Data actului<input type="date" value={metadataValues.act_date || ''} onChange={(event) => changeMetadata({ act_date: event.target.value })} /></label>
+                  <label>Numărul actului<input value={metadataValues.act_number || ''} onChange={(event) => changeMetadata({ act_number: event.target.value })} /></label>
+                </div></section>
+                <section className="metadata-section"><h3>Dosar fizic</h3>
+                  <label>Dosar fizic<select value={metadataValues.physical_dossier_id || ''} onChange={(event) => {
+                    const dossier = dossiers.find((entry) => String(entry.id) === event.target.value);
+                    changeMetadata({ physical_dossier_id: dossier?.id || null, physical_dossier_number: dossier?.physical_dossier_number || '', inventory_number: dossier?.inventory_number || '' });
+                  }}><option value="">Selectați dosarul fizic</option>{dossiers.map((dossier) => <option key={dossier.id} value={dossier.id}>{dossier.physical_dossier_number}</option>)}</select></label>
+                  {!dossiers.length && selectedClassification && (role === 'admin' ? <button className="button secondary" type="button" onClick={() => setDossierDialog(true)}>Creează dosarul fizic</button> : <p className="muted">Solicitați unui Admin să creeze dosarul fizic.</p>)}
+                  <label>Număr de inventar<input value={metadataValues.inventory_number || ''} readOnly={Boolean(metadataValues.physical_dossier_id)} onChange={(event) => changeMetadata({ inventory_number: event.target.value })} /></label>
+                </section>
+                <section className="metadata-section"><h3>Etichete</h3>{(metadataValues.tags || []).map((tag, index) => <label key={index}>Etichetă {index + 1}<select value={tag} onChange={(event) => changeMetadata({ tags: metadataValues.tags.map((item, position) => position === index ? event.target.value : item) })}><option value="">Selectați eticheta</option>{documentTypes.map((value) => <option key={value}>{value}</option>)}</select></label>)}
+                  <button className="button secondary" type="button" onClick={() => changeMetadata({ tags: [...(metadataValues.tags || []), ''] })}>Adaugă etichetă</button>
+                </section>
+                {metadataState.suggestions && <p className="muted metadata-suggestions">Sugestii OCR: {[metadataState.suggestions.act_date && `Data ${metadataState.suggestions.act_date}`, metadataState.suggestions.act_number && `Număr ${metadataState.suggestions.act_number}`, ...(metadataState.suggestions.tags || [])].filter(Boolean).join(' · ') || 'Nu există sugestii.'}</p>}
+                <div className="metadata-form-actions"><button className="button" type="button" onClick={saveMetadata} disabled={metadataSaving || !chosenEntry}>{metadataSaving ? 'Se salvează…' : 'Continuă'}</button></div>
+                <label className="metadata-confirmation"><input type="checkbox" checked={metadataConfirmed} disabled={!metadataState.metadata_revision || metadataSaving} onChange={(event) => toggleMetadataConfirmation(event.target.checked)} />Confirmă metadatele</label>
+                {metadataState.metadata_confirmed && <p className="muted">Metadate confirmate</p>}
+              </div>
+              {dossierDialog && <dialog open className="dossier-dialog"><form onSubmit={createDossier}><h3>Creează dosarul fizic</h3><label>Numărul dosarului fizic<input required value={dossierForm.physical_dossier_number} onChange={(event) => setDossierForm((current) => ({ ...current, physical_dossier_number: event.target.value }))} /></label><label>Număr inventar dosar<input required value={dossierForm.inventory_number} onChange={(event) => setDossierForm((current) => ({ ...current, inventory_number: event.target.value }))} /></label><label>Descriere scurtă (opțional)<input value={dossierForm.description} onChange={(event) => setDossierForm((current) => ({ ...current, description: event.target.value }))} /></label><p className="muted">Indicativul și termenul de păstrare sunt preluate din clasificare.</p><div className="editor-actions"><button className="button secondary" type="button" onClick={() => setDossierDialog(false)}>Renunță</button><button className="button" type="submit">Creează dosarul</button></div></form></dialog>}
+            </section>}
             <div className="editor-grid">
               <section className="editor-card" aria-labelledby="editor-preview-title">
                 <header><h2 id="editor-preview-title">Document original</h2><p className="muted">Trasați peste fiecare zonă care trebuie anonimizată. Marcajele sunt în coordonatele paginii originale.</p></header>
@@ -605,6 +770,13 @@ function DraftEditor({ item, onBack }) {
                   <div className="editor-actions"><button className="button secondary" type="button" onClick={() => decide(candidate, 'accepted')} disabled={stale || candidate.review_status === 'accepted'}>Acceptă potrivirea</button><button className="button secondary" type="button" onClick={() => decide(candidate, 'rejected')} disabled={stale || candidate.review_status === 'rejected'}>Respinge potrivirea</button></div>
                 </li>;
               })}</ul>
+            </section>
+            <section className="editor-card editor-final-review" aria-labelledby="final-review-title">
+              <header><h2 id="final-review-title">Verificare finală</h2><p className="muted">Metadatele confirmate, OCR-ul și anonimizarea trebuie să corespundă revizuirii curente.</p></header>
+              {publicationMessage && <p className="editor-feedback" role="status">{publicationMessage}</p>}
+              {!finalSnapshot ? <div className="editor-actions"><button className="button" type="button" onClick={confirmFinalReview} disabled={!metadataConfirmed || dirty || stale || !previewReady}>Confirmă revizuirea finală</button></div>
+                : <div className="editor-actions"><button className="button" type="button" onClick={() => publishDocument()} >Aprobă și publică</button></div>}
+              {possibleMatches.length > 0 && <div className="editor-duplicate-options"><h3>Posibil document duplicat</h3><ul>{possibleMatches.map((match) => <li key={match.id}>Document existent · {match.reason === 'reordered_image_collection' ? 'colecție de imagini reordonată' : 'număr și dată identice'}</li>)}</ul><p className="muted">O versiune nouă necesită selectarea explicită a documentului și versiunii curente. Puteți publica separat documentul sau anula.</p><div className="editor-actions"><button className="button secondary" type="button" onClick={() => publishDocument('separate')}>Publică separat</button><button className="button secondary" type="button" onClick={() => { setPossibleMatches([]); setFinalSnapshot(''); setPublicationMessage('Publicarea a fost anulată.'); }}>Anulează publicarea</button></div></div>}
             </section>
           </>}
     </main>
@@ -1050,7 +1222,7 @@ function Application() {
       : staffRole && screen.startsWith('review:')
         ? <DraftOcrResults item={{ id: screen.slice('review:'.length) }} onBack={() => setScreen('queue')} />
         : staffRole && screen.startsWith('editor:')
-          ? <DraftEditor item={{ id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} />
+          ? <DraftEditor item={{ id: screen.slice('editor:'.length) }} onBack={() => setScreen('queue')} role={user.role} />
         : <ArchiveHome user={user} onUpload={() => setScreen('upload')} onQueue={() => setScreen('queue')} />;
 
   return <AppShell user={user} screen={screen} onNavigate={setScreen} onLogout={logout} busy={busy}>{content}</AppShell>;

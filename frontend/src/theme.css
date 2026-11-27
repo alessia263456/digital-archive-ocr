@@ -367,6 +367,24 @@ p {
 .editor-warning { margin: var(--space-sm) var(--space-md); padding: var(--space-sm); background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
 .editor-feedback, .editor-state { margin: var(--space-sm) 0; padding: var(--space-md); }
 .editor-feedback.error, .editor-error { color: var(--color-text-primary); border: thin solid var(--color-archival-label-border); }
+.metadata-workflow { overflow: visible; }
+.metadata-form { display: grid; gap: var(--space-md); padding: var(--space-md); }
+.metadata-section { display: grid; gap: var(--space-sm); padding-block-end: var(--space-md); border-block-end: thin solid var(--color-border); }
+.metadata-section h3, .metadata-retention h3, .editor-duplicate-options h3 { font: var(--text-h3); }
+.metadata-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); }
+.metadata-fields label, .metadata-section > label, .metadata-event-date, .dossier-dialog label { display: grid; gap: var(--space-xs); min-inline-size: 0; font: var(--text-small); }
+.metadata-fields input, .metadata-fields select, .metadata-section input, .metadata-section select, .metadata-event-date input, .dossier-dialog input { min-inline-size: 0; min-block-size: var(--space-2xl); padding: var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-surface); color: var(--color-text-primary); font: var(--text-body); }
+.metadata-identification { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.metadata-retention { padding: var(--space-sm); background: var(--color-bg-subtle); border-inline-start: var(--space-xs) solid var(--color-accent-amber); }
+.metadata-retention p { margin-block-start: var(--space-xs); }
+.metadata-form-actions { display: flex; justify-content: flex-end; }
+.metadata-confirmation { display: flex; align-items: center; gap: var(--space-sm); min-block-size: var(--space-2xl); font: var(--text-small); }
+.metadata-confirmation input { inline-size: var(--space-md); block-size: var(--space-md); accent-color: var(--color-primary); }
+.metadata-suggestions { overflow-wrap: anywhere; }
+.dossier-dialog { position: fixed; inset: 50% auto auto 50%; z-index: 10; width: min(calc(100% - var(--space-lg)), calc(var(--space-3xl) * 12)); max-height: calc(100% - var(--space-lg)); transform: translate(-50%, -50%); padding: var(--space-lg); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); color: var(--color-text-primary); box-shadow: var(--shadow-card); }
+.dossier-dialog form { display: grid; gap: var(--space-md); }
+.editor-final-review { padding-block-end: var(--space-sm); }
+.editor-duplicate-options { margin: var(--space-md); padding: var(--space-md); border: thin solid var(--color-archival-label-border); background: var(--color-archival-label-bg); color: var(--color-archival-label-text); }
 
 .queue-heading {
   display: flex;
@@ -975,6 +993,8 @@ p {
   .editor-candidates > li { display: grid; }
   .editor-candidates .editor-actions { padding: 0; }
   .editor-candidates .editor-actions > .button { flex: 1 1 100%; }
+  .metadata-fields, .metadata-identification { grid-template-columns: minmax(0, 1fr); }
+  .metadata-form-actions > .button { inline-size: 100%; }
 
   .queue-heading h1 {
     font: var(--text-h2);

@@ -1,10 +1,10 @@
 # Plan — M2 · Review to publication
 
-**Status:** Approved by the repository owner on 2026-11-27 with D-044 and C-006. The DS-011 mock is updated and awaits explicit Screen approval before React UI implementation. Backend publication must be completed and verified before wiring the full React Editor. No push or deployment is authorized.
+**Status:** Approved by the repository owner on 2026-11-27 with D-044 and C-006; C-007 was subsequently approved to extend the dossier catalogue contract. The owner explicitly approved the DS-011 mock for React implementation. Backend M2 implementation and verification completed before frontend integration (177 PHPUnit tests, 1,339 assertions, 3 skipped). React Editor wiring and DS-004 handoff are implemented and verified through the real API. No push or deployment is authorized.
 
 ## Size
 
-**L** — Connect the existing metadata and review APIs to DS-011, add retention calculation and immutable publication, and complete the DS-004 handoff. The checklist confirms P22-22's backend exists; its Editor UI wiring remains pending.
+**L** — Connect the existing metadata and review APIs to DS-011, add retention calculation and immutable publication, and complete the DS-004 handoff. P22-22 backend and Editor UI wiring are complete.
 
 ## Approach
 
@@ -48,17 +48,17 @@ After Screen and plan approval, run PHPUnit, the frontend Playwright suite, Ledg
 
 ## Design (UI only)
 
-**DS-011 and DS-004.** DS-011's approved four-step mock already covers metadata, retention, final review, and approval. The revised mock adds stable Physical Dossier record selection and Admin-only creation when none exists, plus a clear distinction between first eligibility date and destruction approval. The updated mock is pending explicit Screen approval; do not implement the changed React UI until it is approved. DS-004's existing handoff remains intact. Use existing Design Tokens and Romanian copy. Cover loading, empty, error, success, long text, light/dark, keyboard, and desktop/mobile states.
+**DS-011 and DS-004.** DS-011's approved four-step mock covers metadata, retention, final review, and approval. The revised mock adds stable Physical Dossier record selection and Admin-only creation when none exists, plus a clear distinction between first eligibility date and destruction approval. The owner explicitly approved the mock for React implementation. DS-004 hands off to the Editor; the real API flow is covered end to end. Use existing Design Tokens and Romanian copy. Cover loading, empty, error, success, long text, light/dark, keyboard, and desktop/mobile states.
 
 ## Sequencing
 
 One builder, sequentially:
 
-1. Record approved D-044 and C-006, update the DS-011 mock, run its mock tests, and request explicit Screen approval.
-2. Write backend tests first. Implement dossier records, retention calculation, revision-bound review confirmation, idempotency, audit enforcement, and publication. Complete and verify this backend workflow before frontend integration.
-3. Wait for explicit DS-011 Screen approval before implementing the changed React UI.
-4. Wire DS-011 and verify the DS-004 handoff with the real API.
-5. Run the complete verification matrix, inspect screenshots, and update the registry, Architecture, and checklist.
+1. Record approved D-044 and C-006, update the DS-011 mock, run its mock tests, and obtain explicit Screen approval. Complete; the mock passed 36/36 and the owner approved React implementation.
+2. Write backend tests first. Implement dossier records, retention calculation, revision-bound review confirmation, idempotency, audit enforcement, and publication. Complete and verify this backend workflow before frontend integration (177 PHPUnit tests, 1,339 assertions, 3 skipped).
+3. Wait for explicit DS-011 Screen approval before implementing the changed React UI. Approval was received before UI work.
+4. Wire DS-011 and verify the DS-004 handoff with the real API. Complete; the opt-in real API test traverses the flow through publication.
+5. Run the complete verification matrix, inspect screenshots, and update the registry, Architecture, and checklist. Complete: frontend Playwright 156 passed, 28 opt-in skips using one worker; ledger lint and whitespace checks pass. DS-011 screenshots were inspected in desktop and mobile light mode; the full matrix generated all four viewport/theme screenshots.
 
 ## Risks
 
@@ -81,8 +81,8 @@ Previously confirmed and unchanged: D-001, D-002, D-003, D-004, D-006, D-018, D-
 | D-035 / D-044 | Retention follows the nomenclature base; unknown dates may remain pending; Permanent Preservation has no deadline. D-044 defines calendar-year arithmetic and keeps eligibility separate from destruction approval. | Governs the calculator and publication gate. | D-044 approved 2026-11-27 |
 | D-037 / D-038 | Metadata changes are audited; required metadata and explicit PII review precede publication; initial and replacement approvals create immutable versions. | Governs confirmation, versioning, and audit behavior. | Confirmed previously |
 | D-025 / D-040 | Exact matches block saving; approved act-number/Act Date choices remain; ordered-image duplicates are checked. | Governs publication duplicate outcomes. | Confirmed previously; exact blocking cannot be overridden |
-| C-005 | Defines revision-bound OCR, PII, and Redaction API behavior. | Reuse unchanged; C-006 covers metadata, retention, review, and publication. | Confirmed previously |
-| C-006 | Defines authorization, revision requirements, duplicate outcomes, idempotency, and errors for the M2 API. | Connects the Laravel provider to the React consumer. | Approved 2026-11-27 |
+| C-005 | Defines revision-bound OCR, PII, and Redaction API behavior. | Reuse unchanged; C-006 and its approved extension C-007 cover metadata, retention, review, dossiers, and publication. | Confirmed previously |
+| C-006 / C-007 | Defines authorization, revision requirements, duplicate outcomes, idempotency, errors, and dossier catalogue behavior for the M2 API. | Connects the Laravel provider to the React consumer. | Approved 2026-11-27 |
 | PATTERN-018 / PATTERN-019 | Candidate practices for contextual metadata suggestions and revision-bound OCR locations. | For awareness only; neither is approved. | Candidate |
 | Q-014 / Q-016 | Pending retention is allowed; classification is corrected through type, subtype, or Storage Context. | Existing answers remain applicable. | Answered |
 | Q-021 | OCR similarity criterion remains open. | Keep OCR-similarity warnings out of scope. | Open; unchanged |

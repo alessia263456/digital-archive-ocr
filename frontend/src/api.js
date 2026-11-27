@@ -70,6 +70,26 @@ export const api = {
   draftStatus: (id) => request(`/api/drafts/${encodeURIComponent(id)}`),
   draftOcr: (id) => request(`/api/drafts/${encodeURIComponent(id)}/ocr`),
   draftEditor: (id) => request(`/api/drafts/${encodeURIComponent(id)}/editor`),
+  draftMetadata: (id) => request(`/api/drafts/${encodeURIComponent(id)}/metadata`),
+  updateDraftMetadata: (id, metadata, nomenclatureEntryId) => request(`/api/drafts/${encodeURIComponent(id)}/metadata`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ metadata, nomenclature_entry_id: nomenclatureEntryId || null }),
+  }),
+  confirmDraftMetadata: (id, metadataRevision, ocrRevision) => request(`/api/drafts/${encodeURIComponent(id)}/metadata/confirm`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ metadata_revision: metadataRevision, ocr_revision: ocrRevision }),
+  }),
+  confirmDraftReview: (id, revisions) => request(`/api/drafts/${encodeURIComponent(id)}/review/confirm`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(revisions),
+  }),
+  publishDraft: (id, reviewSnapshot, duplicateAction = null) => request(`/api/drafts/${encodeURIComponent(id)}/publish`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+    body: JSON.stringify({ review_snapshot: reviewSnapshot, duplicate_action: duplicateAction }),
+  }),
+  physicalDossiers: (nomenclatureEntryId) => request(`/api/physical-dossiers?nomenclature_entry_id=${encodeURIComponent(nomenclatureEntryId)}`),
+  createPhysicalDossier: (values) => request('/api/physical-dossiers', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values),
+  }),
   saveDraftEditorOcr: (id, ocrRevision, pages) => request(`/api/drafts/${encodeURIComponent(id)}/editor/ocr`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ocr_revision: ocrRevision, pages }),

@@ -11,10 +11,21 @@ const editorState = {
   candidates: [{ id: 'candidate-1', category: 'cnp', disposition: 'review', confidence: 99, page: 1, bounding_boxes: [], location_status: 'manual_review_required', corrected_text_span: { start: 4, length: 13 }, review_status: 'pending' }],
 };
 
+const classification = { id: 21, document_type: 'Contract', subtype: 'contract de comodat', storage_context: 'Act de sine stătător', archival_indicator: 'IA 20', retention_term: '10 ani C.S.', retention_base: 'act_date' };
+const metadataState = {
+  id: draft.id, suggestions: { act_date: null, act_number: null, tags: [] },
+  metadata: { act_date: '', act_number: '', physical_dossier_id: null, inventory_number: '', amount: '', tags: [], contract_expiry: null, dossier_resolution_date: null, deposit_date: null, deposit_release_date: null },
+  metadata_confirmed: false, metadata_revision: 1, ocr_revision: 1, classification: null, selected_dossier: null, retention: null,
+  classification_options: [classification],
+};
+const matchingDossier = { id: 101, physical_dossier_number: '29/2026', archival_indicator: 'IA 20', inventory_number: '29/2026', retention_time: '10 ani C.S.', description: 'Contracte de comodat' };
+
 async function openEditor(page, state = editorState, editorStatus = 200) {
   await page.route('**/api/user', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: 'arhivar', role: 'arhivar' }) }));
   await page.route('**/api/drafts/queue', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ review: [draft], quarantine: [] }) }));
   await page.route('**/api/drafts/editor-1/editor', (route) => route.fulfill({ status: editorStatus, contentType: 'application/json', body: JSON.stringify(editorStatus === 200 ? structuredClone(state) : { eroare: 'Editorul nu a putut fi încărcat.' }) }));
+  await page.route('**/api/drafts/editor-1/metadata', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(structuredClone(metadataState)) }));
+  await page.route('**/api/physical-dossiers**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ dossiers: [matchingDossier] }) }));
   await page.route('**/api/drafts/editor-1/preview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }) }));
   await page.route('**/api/drafts/editor-1/editor/pages/1/image', (route) => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="200"><rect width="100" height="200" fill="white"/><text x="8" y="18" font-family="sans-serif" font-size="5" fill="#072D5C">DECLARAȚIE SINTETICĂ</text><text x="8" y="32" font-family="sans-serif" font-size="4" fill="#072D5C">CNP 1960523123456</text><text x="8" y="46" font-family="sans-serif" font-size="4" fill="#072D5C">Semnatar · document pentru test</text></svg>' }));
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
@@ -23,6 +34,91 @@ async function openEditor(page, state = editorState, editorStatus = 200) {
   await page.getByRole('button', { name: 'Deschide editorul' }).click();
   if (editorStatus === 200) await expect(page.getByRole('heading', { name: 'Editor document' })).toBeVisible();
 }
+
+test('captures metadata in the approved order, selects by printed dossier number, and confirms with revision IDs', async ({ page }) => {
+  let metadataBody;
+  let confirmationBody;
+  await openEditor(page);
+  await page.route('**/api/physical-dossiers**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await route.fulfill({ json: { dossiers: [matchingDossier] } });
+  });
+  await page.route('**/api/drafts/editor-1/metadata', async (route) => {
+    if (route.request().method() === 'PATCH') {
+      metadataBody = route.request().postDataJSON();
+      await route.fulfill({ json: { metadata: { ...metadataBody.metadata, physical_dossier_number: '29/2026', inventory_number: '29/2026' }, metadata_confirmed: false, metadata_revision: 2, ocr_revision: 1, classification, retention: { status: 'ready', first_eligible_date: null } } });
+    } else await route.fulfill({ json: structuredClone(metadataState) });
+  });
+  await page.route('**/api/drafts/editor-1/metadata/confirm', async (route) => {
+    confirmationBody = route.request().postDataJSON();
+    await route.fulfill({ json: { metadata_confirmed: true, metadata_revision: 2, ocr_revision: 1 } });
+  });
+  const sections = page.locator('.metadata-section');
+  await expect(sections.nth(0).getByRole('heading', { name: 'Clasificare arhivistică' })).toBeVisible();
+  await expect(sections.nth(1).getByRole('heading', { name: 'Identificarea actului' })).toBeVisible();
+  await expect(sections.nth(2).getByRole('heading', { name: 'Dosar fizic' })).toBeVisible();
+  await page.getByLabel('Tip document').selectOption('Contract');
+  await page.getByLabel('Subtip').selectOption('contract de comodat');
+  await page.getByLabel('Context de arhivare').selectOption('Act de sine stătător');
+  await page.getByLabel('Data actului').fill('2026-11-18');
+  await page.getByLabel('Numărul actului').fill('41');
+  await page.getByLabel('Dosar fizic').selectOption('101');
+  await expect(page.getByLabel('Număr de inventar')).toHaveValue('29/2026');
+  await page.getByRole('button', { name: 'Adaugă etichetă' }).click();
+  await page.getByLabel('Etichetă 1').selectOption('Contract');
+  await page.getByRole('button', { name: 'Continuă' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Confirmă metadatele' })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
+  await expect.poll(() => confirmationBody?.metadata_revision).toBe(2);
+  expect(confirmationBody.ocr_revision).toBe(1);
+  expect(metadataBody.nomenclature_entry_id).toBe(21);
+  expect(metadataBody.metadata.physical_dossier_id).toBe(101);
+  expect(metadataBody.metadata.physical_dossier_number).toBeUndefined();
+  expect(metadataBody.metadata.act_date).toBe('2026-11-18');
+  expect(metadataBody.metadata.act_number).toBe('41');
+});
+
+test('confirms the current final review and publishes with an idempotency key', async ({ page }) => {
+  await openEditor(page, { ...editorState, candidates: [] });
+  let finalReviewBody;
+  let publicationBody;
+  let idempotencyKey;
+  await page.route('**/api/drafts/editor-1/metadata', async (route) => {
+    if (route.request().method() === 'PATCH') await route.fulfill({ json: { metadata: { act_date: '2026-11-18', act_number: '41', physical_dossier_id: 101, inventory_number: '29/2026', tags: ['Contract'] }, metadata_confirmed: false, metadata_revision: 2, ocr_revision: 1, classification, retention: { status: 'calculated', first_eligible_date: '2036-01-01' } } });
+    else await route.fulfill({ json: structuredClone(metadataState) });
+  });
+  await page.route('**/api/drafts/editor-1/metadata/confirm', (route) => route.fulfill({ json: { metadata_confirmed: true, metadata_revision: 2, ocr_revision: 1 } }));
+  await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => route.fulfill({ json: { marks: route.request().postDataJSON().marks } }));
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', (route) => route.request().method() === 'POST'
+    ? route.fulfill({ json: { status: 'ready' } }) : route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }));
+  await page.route('**/api/drafts/editor-1/review/confirm', async (route) => {
+    finalReviewBody = route.request().postDataJSON();
+    await route.fulfill({ json: { review_confirmed: true, review_snapshot: '5ac61e6a-3fd5-45d2-890c-c026e01ad67a' } });
+  });
+  await page.route('**/api/drafts/editor-1/publish', async (route) => {
+    publicationBody = route.request().postDataJSON();
+    idempotencyKey = route.request().headers()['idempotency-key'];
+    await route.fulfill({ status: 201, json: { document_id: 'document-1', version_id: 'version-1', version_number: 1 } });
+  });
+  await page.getByLabel('Tip document').selectOption('Contract');
+  await page.getByLabel('Subtip').selectOption('contract de comodat');
+  await page.getByLabel('Context de arhivare').selectOption('Act de sine stătător');
+  await page.getByLabel('Data actului').fill('2026-11-18');
+  await page.getByLabel('Numărul actului').fill('41');
+  await page.getByLabel('Dosar fizic').selectOption('101');
+  await page.getByRole('button', { name: 'Continuă' }).click();
+  await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
+  const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
+  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  await canvas.press('Enter'); await canvas.press('ArrowRight'); await canvas.press('ArrowDown'); await canvas.press('Enter');
+  await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
+  await page.getByRole('button', { name: 'Confirmă revizuirea finală' }).click();
+  await page.getByRole('button', { name: 'Aprobă și publică' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Documentul a fost aprobat' })).toBeVisible();
+  expect(finalReviewBody).toEqual({ metadata_revision: 2, ocr_revision: 1, detection_revision: 1, redaction_ocr_revision: 1, redaction_detection_revision: 1 });
+  expect(publicationBody.review_snapshot).toBe('5ac61e6a-3fd5-45d2-890c-c026e01ad67a');
+  expect(idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+});
 
 test('edits OCR with stale review disabled, saves, and persists a PII decision', async ({ page, colorScheme }, testInfo) => {
   await openEditor(page);
@@ -34,7 +130,7 @@ test('edits OCR with stale review disabled, saves, and persists a PII decision',
   await page.locator('.app-shell').evaluate((element) => { element.style.blockSize = 'auto'; element.style.minBlockSize = '0'; element.style.maxBlockSize = 'none'; element.style.overflow = 'visible'; });
   await page.locator('.app-shell-body').evaluate((element) => { element.style.display = 'block'; element.style.minBlockSize = '0'; });
   await page.locator('.app-workspace').evaluate((element) => { element.style.overflow = 'visible'; element.style.blockSize = 'auto'; });
-  await page.screenshot({ path: `test-results/DS-011.${isDesktop ? '1600x900' : '320x740'}.${colorScheme}.png`, fullPage: true });
+  await page.screenshot({ path: `screens/DS-011.${isDesktop ? '1600x900' : '320x740'}.${colorScheme}.png`, fullPage: true });
   await area.fill('CNP 1960523123456 corectat');
   await expect(page.getByText('Rezultatele detectării sunt neactualizate.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toBeDisabled();

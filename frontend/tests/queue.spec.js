@@ -28,6 +28,11 @@ test('shows counted review and quarantine tabs and hands off to DS-011 Editor', 
   await page.route('**/api/drafts/review-1/editor', (route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'review-1', status: 'review_ready', ocr_revision: 1, detection_status: 'ready', detection_revision: 1, pages: [], candidates: [] }),
   }));
+  await page.route('**/api/drafts/review-1/metadata', (route) => route.fulfill({ json: {
+    id: 'review-1', suggestions: {}, metadata: {}, metadata_confirmed: false, metadata_revision: 1, ocr_revision: 1,
+    classification: null, selected_dossier: null, retention: null, classification_options: [],
+  } }));
+  await page.route('**/api/physical-dossiers**', (route) => route.fulfill({ json: { dossiers: [] } }));
   await page.route('**/api/drafts/review-1/preview', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pages: [] }) }));
   await expect(page.getByRole('tab', { name: 'Revizuire (1)' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText(longName)).toBeVisible();
