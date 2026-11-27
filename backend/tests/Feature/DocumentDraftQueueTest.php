@@ -17,7 +17,7 @@ final class DocumentDraftQueueTest extends TestCase
     {
         parent::setUp();
         $this->artisan('migrate')->assertExitCode(0);
-        DB::table('draft_access_events')->delete();
+        DB::table('draft_access_events')->truncate();
         DocumentDraft::query()->delete();
         Storage::fake('documents');
         config(['filesystems.default_document_disk' => 'documents']);

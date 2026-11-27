@@ -62,16 +62,25 @@ final class AccountAndPhysicalDossierTest extends TestCase
         self::assertTrue(Hash::check($password, $user->password));
     }
 
-    public function test_physical_dossier_preserves_the_printed_number_and_allows_repeats(): void
+    public function test_physical_dossier_stores_catalogue_fields_and_rejects_duplicate_numbers(): void
     {
         $printedNumber = 'Dosar nr. 029/02014';
-        $first = PhysicalDossier::create(['physical_dossier_number' => $printedNumber]);
-        $second = PhysicalDossier::create(['physical_dossier_number' => $printedNumber]);
+        $catalogue = [
+            'physical_dossier_number' => $printedNumber,
+            'archival_indicator' => 'IA 20',
+            'inventory_number' => '29/2026',
+            'retention_time' => '10 ani C.S.',
+            'description' => 'Contracte de comodat',
+        ];
+        $first = PhysicalDossier::create($catalogue);
 
         self::assertSame($printedNumber, $first->physical_dossier_number);
-        self::assertSame($printedNumber, $second->fresh()->physical_dossier_number);
-        self::assertNotSame($first->getKey(), $second->getKey());
-        self::assertGreaterThanOrEqual(2, PhysicalDossier::query()->where('physical_dossier_number', $printedNumber)->count());
+        self::assertSame('IA 20', $first->archival_indicator);
+        self::assertSame('29/2026', $first->inventory_number);
+        self::assertSame('10 ani C.S.', $first->retention_time);
+        self::assertSame('Contracte de comodat', $first->description);
+        self::assertNotSame($first->getKey(), PhysicalDossier::query()->create(array_replace($catalogue, ['physical_dossier_number' => 'unrelated']))->getKey());
+        $this->assertInsertIsRejected('physical_dossiers', $catalogue, '23505');
     }
 
     /** @param array<string, mixed> $attributes */

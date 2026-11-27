@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentDraft;
 use App\Models\NomenclatureEntry;
+use App\Models\PhysicalDossier;
 use App\Jobs\ProcessDocumentDraft;
 use App\Services\MetadataSuggestionExtractor;
 use App\Services\DocumentDraftIntakeService;
@@ -298,6 +299,11 @@ final class DocumentDraftController
             $record->ocr_revision = (int) $record->ocr_revision + 1;
             $record->detection_status = 'pending';
             $record->detection_revision = 0;
+            $record->metadata_revision = (int) $record->metadata_revision + 1;
+            $record->metadata_confirmed_at = null;
+            $record->metadata_confirmed_revision = null;
+            $record->metadata_confirmed_ocr_revision = null;
+            $record->review_snapshot = null;
             $record->pii_candidates = [];
             $record->redaction_marks = null;
             $record->redacted_pdf_storage_key = null;
@@ -374,6 +380,7 @@ final class DocumentDraftController
             }
             $locked->pii_candidates = $candidates;
             $locked->redacted_pdf_storage_key = null;
+            $locked->review_snapshot = null;
             $locked->save();
             $audit->record($request, $locked, 'pii_review_updated');
             return [$candidates, true];
@@ -408,6 +415,7 @@ final class DocumentDraftController
             $locked->redaction_ocr_revision = $locked->ocr_revision;
             $locked->redaction_detection_revision = $locked->detection_revision;
             $locked->redacted_pdf_storage_key = null;
+            $locked->review_snapshot = null;
             $locked->save();
             $audit->record($request, $locked, 'redaction_marks_saved');
             return [true, false];
@@ -440,7 +448,11 @@ final class DocumentDraftController
             foreach ($candidate['bounding_boxes'] as $box) $boxes[$candidate['page']][] = $box;
         }
         foreach ($record->redaction_marks ?? [] as $mark) $boxes[$mark['page']][] = $mark['box'];
-        if ($boxes === []) return response()->json(['eroare' => 'Adăugați sau acceptați cel puțin un marcaj de anonimizare.'], 422);
+        foreach ($record->pii_candidates ?? [] as $candidate) {
+            if (!in_array($candidate['review_status'] ?? null, ['accepted', 'rejected'], true)) {
+                return response()->json(['eroare' => 'Revizuiți fiecare rezultat de detectare înainte de generarea PDF-ului.'], 422);
+            }
+        }
 
         $sourceKey = match ($record->source_format) {
             'docx' => $record->derived_pdf_storage_key,
@@ -477,7 +489,11 @@ final class DocumentDraftController
                     || (int) $current->detection_revision !== (int) $record->detection_revision
                     || $current->redaction_marks !== $record->redaction_marks
                     || $current->pii_candidates !== $record->pii_candidates) return false;
-                $current->redacted_pdf_storage_key = $key; $current->save();
+                $current->redacted_pdf_storage_key = $key;
+                $current->redaction_ocr_revision = $current->ocr_revision;
+                $current->redaction_detection_revision = $current->detection_revision;
+                $current->review_snapshot = null;
+                $current->save();
                 $audit->record($request, $current, 'redaction_pdf_generated');
                 return true;
             });
@@ -583,7 +599,7 @@ final class DocumentDraftController
         ];
     }
 
-    public function metadata(Request $request, string $draft, MetadataSuggestionExtractor $extractor, DraftAccessLogger $audit): JsonResponse
+    public function metadata(Request $request, string $draft, MetadataSuggestionExtractor $extractor, DraftAccessLogger $audit, \App\Services\RetentionCalculator $retention): JsonResponse
     {
         $record = $this->metadataDraft($draft);
         if ($record instanceof JsonResponse) {
@@ -605,14 +621,22 @@ final class DocumentDraftController
             'suggestions' => $record->metadata_suggestions,
             'metadata' => $record->metadata ?? [],
             'metadata_confirmed' => $record->metadata_confirmed_at !== null,
+            'metadata_revision' => (int) $record->metadata_revision,
+            'ocr_revision' => (int) $record->ocr_revision,
             'classification' => $this->classificationData($record->nomenclatureEntry),
+            'selected_dossier' => isset($record->metadata['physical_dossier_id'])
+                ? PhysicalDossier::query()->find($record->metadata['physical_dossier_id'])
+                : null,
+            'retention' => $record->nomenclatureEntry
+                ? $retention->calculate($record->nomenclatureEntry, $record->metadata ?? [])
+                : null,
             'classification_options' => NomenclatureEntry::query()
                 ->orderBy('document_type')->orderBy('subtype')->orderBy('storage_context')->get()
                 ->map(fn (NomenclatureEntry $entry) => $this->classificationData($entry))->values(),
         ]);
     }
 
-    public function updateMetadata(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
+    public function updateMetadata(Request $request, string $draft, DraftAccessLogger $audit, \App\Services\RetentionCalculator $retention): JsonResponse
     {
         $record = $this->metadataDraft($draft);
         if ($record instanceof JsonResponse) {
@@ -621,13 +645,17 @@ final class DocumentDraftController
 
         $types = NomenclatureEntry::query()->distinct()->pluck('document_type')->all();
         $validator = Validator::make($request->all(), [
-            'metadata' => 'required|array:act_date,act_number,physical_dossier_number,inventory_number,amount,contract_expiry,tags',
+            'metadata' => 'required|array:act_date,act_number,physical_dossier_id,physical_dossier_number,inventory_number,amount,contract_expiry,dossier_resolution_date,deposit_date,deposit_release_date,tags',
             'metadata.act_date' => 'sometimes|nullable|date_format:Y-m-d',
             'metadata.act_number' => 'sometimes|nullable|string|max:255',
-            'metadata.physical_dossier_number' => 'sometimes|nullable|string|max:255',
+            'metadata.physical_dossier_id' => 'sometimes|nullable|integer|exists:physical_dossiers,id',
+            'metadata.physical_dossier_number' => 'prohibited',
             'metadata.inventory_number' => 'sometimes|nullable|string|max:255',
             'metadata.amount' => 'sometimes|nullable|string|max:255',
             'metadata.contract_expiry' => 'sometimes|nullable|date_format:Y-m-d',
+            'metadata.dossier_resolution_date' => 'sometimes|nullable|date_format:Y-m-d',
+            'metadata.deposit_date' => 'sometimes|nullable|date_format:Y-m-d',
+            'metadata.deposit_release_date' => 'sometimes|nullable|date_format:Y-m-d',
             'metadata.tags' => 'sometimes|array',
             'metadata.tags.*' => ['string', 'max:255', Rule::in($types)],
             'nomenclature_entry_id' => 'sometimes|nullable|integer|exists:nomenclature_entries,id',
@@ -637,18 +665,51 @@ final class DocumentDraftController
         }
 
         $values = $validator->validated();
-        $record->metadata = array_replace($record->metadata ?? [], $values['metadata']);
+        $metadata = array_replace($record->metadata ?? [], $values['metadata']);
+        $previousEntryId = $record->nomenclature_entry_id;
         if (array_key_exists('nomenclature_entry_id', $values)) {
             $record->nomenclature_entry_id = $values['nomenclature_entry_id'];
         }
+        if (array_key_exists('physical_dossier_id', $values['metadata'])) {
+            $dossier = $values['metadata']['physical_dossier_id']
+                ? PhysicalDossier::query()->find($values['metadata']['physical_dossier_id'])
+                : null;
+            if ($dossier) {
+                $metadata['physical_dossier_number'] = $dossier->physical_dossier_number;
+                $metadata['inventory_number'] = $dossier->inventory_number;
+            } else {
+                unset($metadata['physical_dossier_number']);
+            }
+        }
+        $selectedDossier = isset($metadata['physical_dossier_id'])
+            ? PhysicalDossier::query()->find($metadata['physical_dossier_id'])
+            : null;
+        $entry = $record->nomenclatureEntry;
+        if ($selectedDossier && $entry && ($selectedDossier->archival_indicator !== $entry->archival_indicator
+            || $selectedDossier->retention_time !== $entry->retention_term)) {
+            if (array_key_exists('physical_dossier_id', $values['metadata']) && $previousEntryId === $record->nomenclature_entry_id) {
+                return response()->json(['eroare' => 'Dosarul fizic nu corespunde indicativului și termenului de păstrare ale clasificării.', 'cod' => 'incompatible_dossier'], 422);
+            }
+            unset($metadata['physical_dossier_id'], $metadata['physical_dossier_number'], $metadata['inventory_number']);
+        }
+        $record->metadata = $metadata;
+        $record->metadata_revision = (int) $record->metadata_revision + 1;
         $record->metadata_confirmed_at = null;
+        $record->metadata_confirmed_revision = null;
+        $record->metadata_confirmed_ocr_revision = null;
+        $record->review_snapshot = null;
         $record->save();
         $audit->record($request, $record, 'metadata_updated');
 
         return response()->json([
             'metadata' => $record->metadata,
             'metadata_confirmed' => false,
+            'metadata_revision' => (int) $record->metadata_revision,
+            'ocr_revision' => (int) $record->ocr_revision,
             'classification' => $this->classificationData($record->nomenclatureEntry),
+            'retention' => $record->nomenclatureEntry
+                ? $retention->calculate($record->nomenclatureEntry, $record->metadata ?? [])
+                : null,
         ]);
     }
 
@@ -667,15 +728,118 @@ final class DocumentDraftController
                 ], 422);
             }
         }
+        if (! isset($metadata['physical_dossier_id']) || ! PhysicalDossier::query()->whereKey($metadata['physical_dossier_id'])->exists()) {
+            return response()->json(['eroare' => 'Selectați dosarul fizic înainte de confirmarea metadatelor.'], 422);
+        }
         if (! $record->nomenclature_entry_id || ! $record->nomenclatureEntry()->exists()) {
             return response()->json(['eroare' => 'Alegeți tipul, subtipul și contextul de arhivare înainte de confirmare.'], 422);
         }
+        $entry = $record->nomenclatureEntry;
+        $dossier = PhysicalDossier::query()->find($metadata['physical_dossier_id']);
+        if (! $dossier || $dossier->archival_indicator !== $entry->archival_indicator || $dossier->retention_time !== $entry->retention_term) {
+            return response()->json(['eroare' => 'Selectați un dosar fizic corespunzător indicativului și termenului de păstrare.', 'cod' => 'incompatible_dossier'], 422);
+        }
 
-        $record->metadata_confirmed_at = now();
-        $record->save();
-        $audit->record($request, $record, 'metadata_confirmed');
+        $validator = Validator::make($request->all(), [
+            'metadata_revision' => 'required|integer|min:1',
+            'ocr_revision' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) return response()->json(['eroare' => 'Trimiteți versiunile curente ale metadatelor și OCR.'], 422);
+        $confirmed = DB::transaction(function () use ($draft, $request, $audit): bool {
+            $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+            if (!$locked || (int) $request->input('metadata_revision') !== (int) $locked->metadata_revision
+                || (int) $request->input('ocr_revision') !== (int) $locked->ocr_revision) return false;
+            $locked->metadata_confirmed_at = now();
+            $locked->metadata_confirmed_revision = (int) $locked->metadata_revision;
+            $locked->metadata_confirmed_ocr_revision = (int) $locked->ocr_revision;
+            $locked->save();
+            $audit->record($request, $locked, 'metadata_confirmed');
+            return true;
+        });
+        if (!$confirmed) return response()->json(['eroare' => 'Metadatele sau OCR s-au modificat. Reîncărcați înainte de confirmare.', 'cod' => 'stale_revision'], 409);
 
-        return response()->json(['metadata_confirmed' => true]);
+        return response()->json(['metadata_confirmed' => true, 'metadata_revision' => (int) $record->fresh()->metadata_revision, 'ocr_revision' => (int) $record->fresh()->ocr_revision]);
+    }
+
+    public function confirmFinalReview(
+        Request $request,
+        string $draft,
+        DraftAccessLogger $audit,
+        \App\Services\ReviewSnapshotService $snapshots,
+        DocumentStorageService $storage,
+        \App\Services\RetentionCalculator $retention,
+    ): JsonResponse {
+        $record = $this->metadataDraft($draft);
+        if ($record instanceof JsonResponse) return $record;
+        $validator = Validator::make($request->all(), [
+            'metadata_revision' => 'required|integer|min:1',
+            'ocr_revision' => 'required|integer|min:1',
+            'detection_revision' => 'required|integer|min:1',
+            'redaction_ocr_revision' => 'required|integer|min:1',
+            'redaction_detection_revision' => 'required|integer|min:1',
+        ]);
+        if ($validator->fails()) return response()->json(['eroare' => 'Trimiteți versiunile curente ale metadatelor, OCR și anonimizării.', 'cod' => 'invalid_review_revision'], 422);
+
+        try {
+            $snapshot = DB::transaction(function () use ($draft, $request, $validator, $audit, $snapshots, $storage, $retention): array {
+                $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
+                $values = $validator->validated();
+                if (!$locked || $values['metadata_revision'] !== (int) $locked->metadata_revision
+                    || $values['ocr_revision'] !== (int) $locked->ocr_revision
+                    || $values['detection_revision'] !== (int) $locked->detection_revision
+                    || $values['redaction_ocr_revision'] !== (int) $locked->redaction_ocr_revision
+                    || $values['redaction_detection_revision'] !== (int) $locked->redaction_detection_revision) {
+                    throw new \App\Services\PublicationProblem(409, 'stale_revision', 'Revizuirea s-a modificat. Reîncărcați Editorul.');
+                }
+                $snapshot = $snapshots->issue($locked, $storage, $retention, (int) $request->user()->id);
+                $audit->record($request, $locked, 'final_review_confirmed');
+                return $snapshot;
+            });
+        } catch (\App\Services\PublicationProblem $problem) {
+            return response()->json(['eroare' => $problem->getMessage(), 'cod' => $problem->problemCode] + $problem->details, $problem->httpStatus);
+        } catch (\Throwable $exception) {
+            report($exception);
+            return response()->json(['eroare' => 'Confirmarea finală nu a putut fi salvată.', 'cod' => 'review_confirmation_failed'], 503);
+        }
+        return response()->json([
+            'review_confirmed' => true,
+            'review_snapshot' => $snapshot['token'],
+            'confirmed_at' => $snapshot['confirmed_at'],
+            'metadata_revision' => $snapshot['metadata_revision'],
+            'ocr_revision' => $snapshot['ocr_revision'],
+            'detection_revision' => $snapshot['detection_revision'],
+        ]);
+    }
+
+    public function publish(Request $request, string $draft, \App\Services\DocumentPublicationService $publication): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'review_snapshot' => 'required|string|uuid',
+            'target_document_id' => 'sometimes|nullable|uuid',
+            'target_version_id' => 'sometimes|nullable|uuid',
+            'duplicate_action' => 'sometimes|nullable|in:version,separate,cancel',
+        ]);
+        if ($validator->fails() || !$request->header('Idempotency-Key')) {
+            return response()->json(['eroare' => 'Cererea de publicare sau cheia de idempotentă nu sunt valide.', 'cod' => 'invalid_publication_request'], 422);
+        }
+        $key = (string) $request->header('Idempotency-Key');
+        if (strlen($key) > 255 || preg_match('/[[:cntrl:]]/', $key)) {
+            return response()->json(['eroare' => 'Cheia de idempotentă nu este validă.', 'cod' => 'invalid_idempotency_key'], 422);
+        }
+        try {
+            $result = $publication->publish(
+                $draft,
+                (int) $request->user()->id,
+                $key,
+                $validator->validated()['review_snapshot'],
+                $validator->validated()['target_document_id'] ?? null,
+                $validator->validated()['target_version_id'] ?? null,
+                $validator->validated()['duplicate_action'] ?? null,
+            );
+            return response()->json($result['body'], $result['status']);
+        } catch (\App\Services\PublicationProblem $problem) {
+            return response()->json(['eroare' => $problem->getMessage(), 'cod' => $problem->problemCode] + $problem->details, $problem->httpStatus);
+        }
     }
 
     private function metadataDraft(string $id): DocumentDraft|JsonResponse
@@ -701,6 +865,7 @@ final class DocumentDraftController
             'subtype' => $entry->subtype,
             'storage_context' => $entry->storage_context,
             'archival_indicator' => $entry->archival_indicator,
+            'retention_term' => $entry->retention_term,
         ];
     }
 

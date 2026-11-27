@@ -18,6 +18,8 @@
 - D-019 · In-app notifications
 - D-042 · Screen inventory, home screen, and role-based access control
 - D-043 · Browser session authentication lifetime and login throttling
+- D-044 · Retention eligibility date calculation
+- D-045 · Physical Dossier record identity and catalogue fields
 
 ### [Archive workflows](decisions/archive-workflows.md)
 - D-022 · PII detection and Redaction coverage
@@ -154,3 +156,21 @@
 - **Evidence:** [M1a.1 plan](plans/p22-m1a-1-login-and-application-foundation.md) and owner approval in chat on 2026-11-24.
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-24
+
+## D-044 · Retention eligibility date calculation
+- **Status:** approved
+- **Date:** 2026-11-27
+- **Rule:** For a retention term of N calendar years and a known Retention Computation Base B, the first eligible retention date is B plus N calendar years. If B is February 29 and the target year is not a leap year, use February 28. This date marks retention eligibility only; it does not authorize destruction. Destruction remains subject to D-035, including any required Selection Commission review and the Admin's explicit confirmation.
+- **Why:** M2 needs one deterministic eligibility date across retention bases while keeping eligibility separate from authority to destroy.
+- **Evidence:** Owner approval of the M2 plan on 2026-11-27.
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-27
+
+## D-045 · Physical Dossier record identity and catalogue fields
+- **Status:** approved
+- **Date:** 2026-11-27
+- **Rule:** Physical Dossier printed numbers are unique. Each record stores its printed number, Archival Indicator, Inventory Number, retention term, and an optional short description. The selected Notarial Nomenclature entry determines the Archival Indicator and retention term. Staff may select only dossiers matching both values; if none exists, an Admin may create one by providing its printed number and Inventory Number (plus optional description), while the server derives the indicator and retention term. Dossier selection in the Editor displays the printed number and sends the stable record ID. Only `admin` may create dossier records; `admin` and `arhivar` may select them.
+- **Why:** Dossiers retain documents with matching nomenclature indicator and retention, and these catalogue fields identify the physical records without exposing database IDs.
+- **Evidence:** Owner confirmation of dossier fields and matching-classification workflow in chat on 2026-11-27.
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-27

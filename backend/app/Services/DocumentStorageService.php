@@ -68,6 +68,36 @@ final class DocumentStorageService
         return $this->disk()->delete($path);
     }
 
+    public function sha256(string $path): string
+    {
+        $stream = $this->readStream($path);
+        if (!$stream) {
+            throw new RuntimeException('Fișierul de stocare nu este disponibil.');
+        }
+        $context = hash_init('sha256');
+        try {
+            hash_update_stream($context, $stream);
+        } finally {
+            fclose($stream);
+        }
+        return hash_final($context);
+    }
+
+    public function copyPrivate(string $source, string $destination): void
+    {
+        $stream = $this->readStream($source);
+        if (!$stream) {
+            throw new RuntimeException('Fișierul sursă nu este disponibil.');
+        }
+        try {
+            if (!$this->put($destination, $stream, ['visibility' => 'private'])) {
+                throw new RuntimeException('Fișierul nu a putut fi copiat în stocarea privată.');
+            }
+        } finally {
+            fclose($stream);
+        }
+    }
+
     public function mimeType(string $path): ?string
     {
         $this->assertSafePath($path);

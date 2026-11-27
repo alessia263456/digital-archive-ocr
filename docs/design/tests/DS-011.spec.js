@@ -6,7 +6,7 @@ const mock = pathToFileURL(resolve('../docs/design/mocks/DS-011.html')).href;
 const saved = '?document=Procur%C4%83_exemplu.docx&reluare=1';
 const steps = ['Date document', 'Corectare OCR', 'Anonimizare', 'Verificare finală'];
 const workspace = page => page.getByRole('region', { name: 'Spațiu de lucru' });
-const field = (page, name) => page.getByLabel(name, { exact: true });
+const field = (page, name) => workspace(page).getByLabel(name, { exact: true });
 const suggestion = (page, name) => workspace(page).getByRole('listitem').filter({ has: page.getByText(name, { exact: true }) });
 const mark = (page, id) => page.locator('[data-coverage="' + id + '"]');
 
@@ -33,7 +33,7 @@ async function step(page, index) {
 
 async function confirmMetadata(page) {
   await field(page, 'Data actului').fill('2026-11-20');
-  await page.getByRole('button', { name: 'Confirmă metadatele' }).click();
+  await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
 }
 
 test('opens both queue entries and requires explicit approval even for zero uncertain matches', async ({ page }) => {
@@ -242,10 +242,11 @@ test('derives classification and handles confirmed future, pending, and permanen
   await step(page, 0);
   await confirmMetadata(page);
   await step(page, 3);
-  await expect(workspace(page)).toContainText('20.11.2031');
+  await expect(workspace(page)).toContainText('20.11.2041');
+  await expect(workspace(page)).toContainText('eligibilitatea pentru analiză, nu autorizează distrugerea');
   await workspace(page).getByRole('link', { name: 'Verifică metadatele' }).click();
   await field(page, 'Data expirării contractului').fill('');
-  await page.getByRole('button', { name: 'Confirmă metadatele' }).click();
+  await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
   await step(page, 3);
   await expect(workspace(page)).toContainText('Dată de retenție în așteptare');
   await page.getByRole('button', { name: 'Aprobă revizuirea' }).click();
@@ -260,12 +261,55 @@ test('derives classification and handles confirmed future, pending, and permanen
   await expect(workspace(page)).toContainText('Fără termen de distrugere');
 });
 
+test('selects a Physical Dossier by printed number and lets Admin create a unique missing one', async ({ page, isMobile }, info) => {
+  await page.setViewportSize({ width: isMobile ? 320 : 1440, height: isMobile ? 740 : 900 });
+  await page.goto(mock + '?document=Contract_exemplu.pdf');
+  const dossier = field(page, 'Numărul dosarului fizic');
+  await expect(dossier.locator('option')).toContainText(['29/2026', '30/2026']);
+  expect((await dossier.locator('option').allTextContents()).map(value => value.trim())).toEqual(['Selectați dosarul fizic', '29/2026', '30/2026']);
+  await dossier.selectOption('102');
+  await expect(dossier).toHaveValue('102');
+  await expect(dossier.locator('option:checked')).toHaveText('30/2026');
+  await expect(field(page, 'Număr inventar dosar')).toHaveValue('30/2026');
+  await expect(workspace(page)).toContainText('Indicativ: IA 20 · Inventar: 30/2026 · Păstrare: 10 ani C.S.');
+  await page.screenshot({ path: info.outputPath('dossier-selection.png'), fullPage: true, scale: 'css' });
+
+  await page.goto(mock + '?document=Contract_exemplu.pdf&stare=dosar-lipsa');
+  await expect(page.getByText('Nu există o înregistrare pentru acest număr de dosar.')).toBeVisible();
+  await page.getByRole('button', { name: 'Creează dosarul fizic' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Creează dosarul fizic' });
+  await dialog.getByLabel('Numărul dosarului fizic').fill('29/2026');
+  await expect(dialog.getByLabel('Indicativ arhivistic')).toHaveValue('IA 20');
+  await expect(dialog.getByLabel('Indicativ arhivistic')).toHaveAttribute('readonly', '');
+  await dialog.getByLabel('Număr inventar dosar').fill('32/2026');
+  await expect(dialog.getByLabel('Termen de păstrare')).toHaveValue('10 ani C.S.');
+  await expect(dialog.getByLabel('Termen de păstrare')).toHaveAttribute('readonly', '');
+  await dialog.getByLabel('Descriere scurtă (opțional)').fill('Contracte sintetice');
+  await dialog.getByRole('button', { name: 'Creează dosarul' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Există deja un dosar fizic cu acest număr.');
+  await dialog.getByLabel('Numărul dosarului fizic').fill('32/2026');
+  await page.screenshot({ path: info.outputPath('dossier-create.png'), scale: 'css' });
+  await dialog.getByRole('button', { name: 'Creează dosarul' }).click();
+  await expect(dossier).toHaveValue('103');
+  await expect(dossier.locator('option:checked')).toHaveText('32/2026');
+  await expect(field(page, 'Număr inventar dosar')).toHaveValue('32/2026');
+  await expect(page.getByRole('status')).toContainText('Dosarul fizic a fost creat și selectat.');
+
+  await page.goto(mock + '?document=Contract_exemplu.pdf&stare=dosar-lipsa&rol=arhivar');
+  await expect(page.getByRole('button', { name: 'Creează dosarul fizic' })).toHaveCount(0);
+  await expect(page.getByText('Solicitați unui Admin să creeze dosarul fizic.')).toBeVisible();
+});
+
 test('aligns Step 1 metadata labels and keeps fields usable at desktop and narrow widths', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(mock + '?document=Contract_exemplu.pdf');
+  expect(await workspace(page).locator('.metadata-section > h3').allTextContents()).toEqual([
+    'Clasificare arhivistică', 'Identificarea actului', 'Dosar fizic', 'Sugestii OCR',
+  ]);
   const names = [
-    'Data actului', 'Numărul actului', 'Numărul dosarului fizic', 'Numărul de inventar',
-    'Sumă', 'Etichete', 'Tip document', 'Subtip', 'Context arhivare', 'Indicativ arhivistic',
+    'Tip document', 'Subtip', 'Context arhivare', 'Indicativ arhivistic',
+    'Data actului', 'Numărul actului', 'Numărul dosarului fizic', 'Număr inventar dosar',
+    'Sumă', 'Etichete',
     'Data expirării contractului',
   ];
   const positions = async name => field(page, name).evaluate(control => {
@@ -290,18 +334,19 @@ test('aligns Step 1 metadata labels and keeps fields usable at desktop and narro
         expect(Math.abs(position.labelCenter - position.inputCenter)).toBeLessThanOrEqual(1);
       }
     }
-    const [date, number, dossier, inventory, amount, tags, ...classification] = fields;
-    if (width === 1440) {
-      expect(date.inputY).toBe(number.inputY);
-      expect(dossier.inputY).toBe(inventory.inputY);
-      expect(date.inputX).toBe(dossier.inputX);
-      expect(number.inputX).toBe(inventory.inputX);
-      expect(amount.inputWidth).toBeGreaterThan(number.inputWidth);
-    }
-    if (width === 1024 || width === 320) expect(date.inputY).toBeLessThan(number.inputY);
-    for (const input of [tags, ...classification]) expect(input.inputX).toBe(amount.inputX);
+    for (const position of fields) expect(position.inputWidth).toBeGreaterThan(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const continueAlignment = await workspace(page).getByRole('button', { name: 'Continuă', exact: true }).evaluate(button => {
+      const actions = button.parentElement;
+      return Math.abs(actions.getBoundingClientRect().right - parseFloat(getComputedStyle(actions).paddingRight) - button.getBoundingClientRect().right);
+    });
+    expect(continueAlignment).toBeLessThanOrEqual(1);
   }
+
+  await page.getByRole('button', { name: 'Adaugă etichetă' }).click();
+  await expect(field(page, 'Etichetă 2')).toBeVisible();
+  await field(page, 'Etichetă 2').fill('test manual');
+  await expect(field(page, 'Etichetă 2')).toHaveValue('test manual');
 
   const date = field(page, 'Data actului');
   await date.focus();

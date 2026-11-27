@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentDraftController;
+use App\Http\Controllers\PhysicalDossierController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])
@@ -17,6 +18,7 @@ Route::get('/user', [AuthController::class, 'currentUser'])
     ->name('auth.user');
 
 Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group(function () {
+    Route::get('/physical-dossiers', [PhysicalDossierController::class, 'index'])->name('physical-dossiers.index');
     Route::post('/drafts', [DocumentDraftController::class, 'store'])->name('drafts.store');
     Route::get('/drafts/queue', [DocumentDraftController::class, 'queue'])->name('drafts.queue');
     Route::get('/drafts/recent', [DocumentDraftController::class, 'recent'])->name('drafts.recent');
@@ -34,5 +36,9 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
     Route::get('/drafts/{draft}/metadata', [DocumentDraftController::class, 'metadata'])->name('drafts.metadata');
     Route::patch('/drafts/{draft}/metadata', [DocumentDraftController::class, 'updateMetadata'])->name('drafts.metadata.update');
     Route::post('/drafts/{draft}/metadata/confirm', [DocumentDraftController::class, 'confirmMetadata'])->name('drafts.metadata.confirm');
+    Route::post('/drafts/{draft}/review/confirm', [DocumentDraftController::class, 'confirmFinalReview'])->name('drafts.review.confirm');
+    Route::post('/drafts/{draft}/publish', [DocumentDraftController::class, 'publish'])->name('drafts.publish');
     Route::post('/drafts/{draft}/preview', [DocumentDraftController::class, 'preview'])->name('drafts.preview');
 });
+
+Route::middleware(['auth:web', 'session.lifetime', 'role:admin'])->post('/physical-dossiers', [PhysicalDossierController::class, 'store'])->name('physical-dossiers.store');

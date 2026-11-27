@@ -278,6 +278,9 @@
     #workspace { overflow-wrap: anywhere; }
     #content { display: grid; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
     .workflow-actions { border-block-start: thin solid var(--color-border); }
+    #next-step { margin-inline-start: auto; }
+    .metadata-confirmation { display: flex; align-items: center; gap: var(--space-sm); font: var(--text-small); font-weight: 400; }
+    .metadata-confirmation input { inline-size: auto; }
     label { display: grid; min-inline-size: 0; gap: var(--space-xs); font: var(--text-small); font-weight: 600; }
     label[for] { margin-block-end: var(--space-xs); }
     input, select, textarea {
@@ -297,6 +300,7 @@
     .metadata-identification { container-type: inline-size; }
     .metadata-field { display: grid; align-items: center; gap: var(--space-xs) var(--space-sm); }
     .metadata-field label { display: block; margin: 0; }
+    .dossier-details { margin: 0; }
     .metadata-section :is(input, select) { padding-block: var(--space-xs); }
     @media (min-width: 640px) {
       .metadata-field { grid-template-columns: calc(var(--space-3xl) * 2 + var(--space-xl)) minmax(0, 1fr); }
@@ -376,6 +380,7 @@
 
   <nav class="entries" aria-label="Exemple din coada de revizuire">
     <p>Simulare cu documente sintetice</p>
+    <p id="role-label" class="muted">Rol de test</p>
     <a class="entry" data-fixture="contract" href="?document=Contract_exemplu.pdf">Începe revizuirea</a>
     <a class="entry" data-fixture="procura" href="?document=Procur%C4%83_exemplu.docx&amp;reluare=1">Continuă revizuirea</a>
     <details id="full-name" hidden>
@@ -456,6 +461,28 @@
       <button value="approve" class="primary">Confirmă aprobarea</button>
     </form>
   </dialog>
+  <dialog id="dossier-create" aria-labelledby="dossier-create-title">
+    <h2 id="dossier-create-title">Creează dosarul fizic</h2>
+    <p>Înregistrarea va fi selectată pentru acest document.</p>
+    <form id="dossier-create-form" method="dialog">
+      <label for="new-dossier-number">Numărul dosarului fizic</label>
+      <input id="new-dossier-number" name="physical-dossier-number" required maxlength="255">
+      <label for="new-dossier-indicator">Indicativ arhivistic</label>
+      <input id="new-dossier-indicator" name="archival-indicator" readonly aria-describedby="dossier-derived-help">
+      <p id="dossier-derived-help" class="muted">Completat automat din clasificarea selectată.</p>
+      <label for="new-dossier-inventory">Număr inventar dosar</label>
+      <input id="new-dossier-inventory" name="inventory-number" required maxlength="255">
+      <label for="new-dossier-retention">Termen de păstrare</label>
+      <input id="new-dossier-retention" name="retention-time" readonly>
+      <label for="new-dossier-description">Descriere scurtă (opțional)</label>
+      <textarea id="new-dossier-description" name="description" maxlength="500"></textarea>
+      <p id="dossier-create-error" role="alert" hidden></p>
+      <div class="actions">
+        <button value="cancel" autofocus>Renunță</button>
+        <button value="create" class="primary">Creează dosarul</button>
+      </div>
+    </form>
+  </dialog>
   <script>
     const $ = id => document.getElementById(id);
     const titles = ['Date document', 'Corectare OCR', 'Anonimizare', 'Verificare finală'];
@@ -466,19 +493,26 @@
       'Verifică datele, corecturile și previzualizarea înainte de aprobare.',
     ];
     const labels = {
-      date: 'Data actului', number: 'Numărul actului', dossier: 'Numărul dosarului fizic',
-      inventory: 'Numărul de inventar', amount: 'Sumă', tags: 'Etichete', expiry: 'Data expirării contractului',
+      date: 'Data actului', number: 'Numărul actului', dossierId: 'Numărul dosarului fizic',
+      inventory: 'Număr inventar dosar', amount: 'Sumă', tags: 'Etichete', expiry: 'Data expirării contractului',
       type: 'Tip document', subtype: 'Subtip', context: 'Context arhivare', indicator: 'Indicativ arhivistic',
     };
-    const requiredMetadata = ['date', 'number', 'dossier', 'inventory'];
+    const requiredMetadata = ['date', 'number', 'dossierId', 'inventory'];
+    const dossierRecords = [
+      { id: '101', number: '29/2026', indicator: 'IA 20', inventory: '29/2026', retention: '10 ani C.S.', description: 'Contracte de comodat' },
+      { id: '102', number: '30/2026', indicator: 'IA 20', inventory: '30/2026', retention: '10 ani C.S.', description: 'Contracte de comodat' },
+      { id: '201', number: '31/2026', indicator: 'IA 1', inventory: '31/2026', retention: 'P', description: 'Procuri de dispoziție' },
+    ];
+    let nextDossierId = 103;
+    let createdDossiers = [];
     const fixtures = {
       contract: {
         name: 'Contract_exemplu.pdf', title: 'Contract de comodat', format: 'PDF',
-        metadata: { date: '', number: '41', dossier: '29/2026', inventory: '29/2026', amount: '1200', tags: 'comodat', expiry: '2031-11-20', type: 'Contract', subtype: 'contract-ia20', context: 'Act de sine stătător' },
+        metadata: { date: '', number: '41', dossier: '29/2026', dossierId: '101', inventory: '29/2026', amount: '1200', tags: 'comodat', expiry: '2031-11-20', type: 'Contract', subtype: 'contract-ia20', context: 'Act de sine stătător' },
       },
       procura: {
         name: 'Procură_exemplu.docx', title: 'Procură specială', format: 'DOCX · PDF derivat',
-        metadata: { date: '2026-11-18', number: '76', dossier: '31/2026', inventory: '31/2026', amount: '', tags: 'reprezentare', expiry: '', type: 'Procură', subtype: 'procura-ia1', context: 'Act de sine stătător' },
+        metadata: { date: '2026-11-18', number: '76', dossier: '31/2026', dossierId: '201', inventory: '31/2026', amount: '', tags: 'reprezentare', expiry: '', type: 'Procură', subtype: 'procura-ia1', context: 'Act de sine stătător' },
       },
     };
     const classifications = [
@@ -514,6 +548,7 @@
     const signature = { page: 2, box: [13, 51, 26, 9] };
     const params = new URLSearchParams(location.search);
     const scenario = params.get('stare');
+    const role = params.get('rol') === 'arhivar' ? 'arhivar' : 'admin';
     const working = new Map();
     let fixtureKey = keyFrom(params);
     let draft;
@@ -795,12 +830,26 @@
       return value.split('-').reverse().join('.');
     }
 
+    function addCalendarYears(value, years) {
+      const [year, month, day] = value.split('-').map(Number);
+      const targetYear = year + years;
+      const lastDay = new Date(Date.UTC(targetYear, month, 0)).getUTCDate();
+      return `${targetYear}-${String(month).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
+    }
+
     function retention() {
       const row = classification();
       if (!row) return 'Clasificare de completat';
       if (row[5] === 'P') return 'Păstrare permanentă · Fără termen de distrugere';
-      if (!draft.metadata.expiry) return 'Dată de retenție în așteptare';
-      return `${row[5]} · Expirarea contractului: ${formatDate(draft.metadata.expiry)}`;
+      if (!draft.metadata.expiry) return 'Dată de retenție în așteptare · Documentul nu este eligibil pentru lista de distrugere';
+      const years = Number(row[5].match(/\d+/)?.[0] ?? 0);
+      const firstEligible = addCalendarYears(draft.metadata.expiry, years);
+      return `${row[5]} · Eligibilă pentru analiză de la ${formatDate(firstEligible)}`;
+    }
+
+    function retentionExplanation(row) {
+      if (row?.[5] === 'P') return 'Păstrarea permanentă nu are termen de distrugere.';
+      return 'Data indică eligibilitatea pentru analiză, nu autorizează distrugerea. Confirmarea distrugerii rămâne o acțiune separată a Adminului.';
     }
 
     function metadataField(key, control) {
@@ -811,47 +860,104 @@
       return metadataField(key, `<input id="metadata-${key}" data-metadata="${key}" type="${type}" value="${html(draft.metadata[key])}">`);
     }
 
+    function tagValues() {
+      const value = draft.metadata.tags;
+      return Array.isArray(value) ? value : String(value ?? '').split(',').map(tag => tag.trim()).filter(Boolean);
+    }
+
+    function tagsField() {
+      const tags = tagValues();
+      if (tags.length === 0) tags.push('');
+      const controls = tags.map((tag, index) => `<div class="metadata-field">
+        <label for="metadata-tag-${index}">${index === 0 ? 'Etichete' : `Etichetă ${index + 1}`}</label>
+        <input id="metadata-tag-${index}" data-tag-index="${index}" value="${html(tag)}">
+      </div>`).join('');
+      return `${controls}<div class="actions"><button type="button" data-action="add-tag">Adaugă etichetă</button></div>`;
+    }
+
     function select(key, choices) {
       const options = choices.map(([value, caption]) =>
         `<option value="${html(value)}" ${draft.metadata[key] === value ? 'selected' : ''}>${html(caption)}</option>`).join('');
       return metadataField(key, `<select id="metadata-${key}" data-metadata="${key}">${options}</select>`);
     }
 
+    function availableDossiers() {
+      const existing = scenario === 'dosar-lipsa'
+        ? dossierRecords.filter(record => record.number !== fixture().metadata.dossier)
+        : dossierRecords;
+      const row = classification();
+      return [...existing, ...createdDossiers].filter(record => row
+        && record.indicator === row[4] && record.retention === row[5]);
+    }
+
+    function dossierField() {
+      const records = availableDossiers();
+      const options = records.map(record => `<option value="${record.id}" ${draft.metadata.dossierId === record.id ? 'selected' : ''}>
+        ${html(record.number)}
+      </option>`).join('');
+      return metadataField('dossierId', `<select id="metadata-dossierId" data-metadata="dossierId">
+        <option value="">Selectați dosarul fizic</option>${options}
+      </select>`);
+    }
+
+    function dossierDetails() {
+      const records = availableDossiers();
+      const hasSuggestedRecord = records.some(record => record.number === fixture().metadata.dossier);
+      const selected = records.find(record => record.id === draft.metadata.dossierId);
+      if (selected) return `<p class="muted dossier-details">Indicativ: ${html(selected.indicator)} · Inventar: ${html(selected.inventory)} · Păstrare: ${html(selected.retention)}${selected.description ? ` · ${html(selected.description)}` : ''}</p>`;
+      if (hasSuggestedRecord) return '';
+      return `<div class="dossier-details">
+        <p class="muted">Nu există o înregistrare pentru acest număr de dosar.</p>
+        ${role === 'admin'
+          ? '<button type="button" data-action="create-dossier">Creează dosarul fizic</button>'
+          : '<p class="muted">Solicitați unui Admin să creeze dosarul fizic.</p>'}
+      </div>`;
+    }
+
     function renderMetadata() {
       const rows = classifications.filter(([, type]) => type === draft.metadata.type);
       const choices = values => [...new Set(values)].map(value => [value, value]);
       const row = classification();
-      const suggestions = ['amount', 'tags'].filter(key => draft.metadata[key] || fixture().metadata[key]);
+      const suggestions = ['amount'].filter(key => draft.metadata[key] || fixture().metadata[key]);
       $('content').innerHTML = `
-        <section class="metadata-section metadata-identification">
-          <h3>Identificarea actului</h3>
-          <div class="identification-fields">
-            ${field('date', 'date')}${field('number')}${field('dossier')}${field('inventory')}
-          </div>
-        </section>
-        <section class="metadata-section">
-          <h3>Sugestii OCR</h3>
-          ${suggestions.map(key => field(key)).join('')}
-        </section>
         <section class="metadata-section">
           <h3>Clasificare arhivistică</h3>
           ${select('type', choices(classifications.map(item => item[1])))}
           ${select('subtype', rows.map(([id, , subtype]) => [id, subtype]))}
           ${select('context', choices(rows.map(item => item[3])))}
           ${metadataField('indicator', `<input id="metadata-indicator" readonly value="${row?.[4] ?? ''}">`)}
-        </section>
-        <section class="metadata-section">
           <div class="metadata-field">
             <h3>Retenție</h3>
             <div>
               <p id="retention-status">${retention()}</p>
               <p class="muted">${row?.[6] ?? 'Alege clasificarea aplicabilă.'}</p>
+              <p class="muted">${retentionExplanation(row)}</p>
             </div>
           </div>
           ${row?.[5] !== 'P' ? field('expiry', 'date') : ''}
         </section>
+        <section class="metadata-section metadata-identification">
+          <h3>Identificarea actului</h3>
+          <div class="identification-fields">${field('date', 'date')}${field('number')}</div>
+        </section>
+        <section class="metadata-section">
+          <h3>Dosar fizic</h3>
+          ${dossierField()}
+          ${dossierDetails()}
+          ${field('inventory')}
+        </section>
+        <section class="metadata-section">
+          <h3>Sugestii OCR</h3>
+          ${suggestions.map(key => field(key)).join('')}
+        </section>
+        <section class="metadata-section">
+          ${tagsField()}
+        </section>
         <div class="actions">
-          <button data-action="metadata">Confirmă metadatele</button>
+          <label class="metadata-confirmation" for="metadata-confirm">
+            <input id="metadata-confirm" type="checkbox" ${draft.confirmed ? 'checked' : ''}>
+            Confirmă metadatele
+          </label>
           <span id="metadata-status" class="muted">${draft.confirmed ? 'Metadate confirmate' : 'De confirmat'}</span>
         </div>`;
     }
@@ -975,7 +1081,8 @@
         metadata.dossier && `Dosar nr. ${html(metadata.dossier)}`,
         metadata.inventory && `Inventar nr. ${html(metadata.inventory)}`,
       ].filter(Boolean);
-      const suggestions = [metadata.amount && `Sumă ${html(metadata.amount)}`, metadata.tags && `Etichete ${html(metadata.tags)}`].filter(Boolean);
+      const tags = tagValues().filter(Boolean).map(html).join(', ');
+      const suggestions = [metadata.amount && `Sumă ${html(metadata.amount)}`, tags && `Etichete ${tags}`].filter(Boolean);
       const stale = staleKeys();
       const issues = approvalIssues();
       const applied = marks();
@@ -991,6 +1098,7 @@
               <p class="muted">${row?.[4] ?? 'Clasificare de completat'}${row ? ` · ${html(row[1])} · ${html(row[2])} · ${html(row[3])}` : ''}</p>
               <p>${retention()}</p>
               <p class="muted">${row?.[6] ?? ''}</p>
+              <p class="muted">${retentionExplanation(row)}</p>
             </div>
           </div>
           <div>
@@ -1053,6 +1161,7 @@
       $('state').hidden = true;
       $('editor').hidden = false;
       $('save').disabled = false;
+      $('role-label').textContent = `Acces simulat: ${role === 'admin' ? 'Admin' : 'Arhivar'}`;
       feedback();
       renderHeader();
       renderStep(focus);
@@ -1081,7 +1190,17 @@
       const key = control.dataset.metadata;
       if (draft.metadata[key] === control.value) return;
       draft.metadata[key] = control.value;
+      if (key === 'dossierId') {
+        const selected = availableDossiers().find(record => record.id === control.value);
+        if (selected) {
+          draft.metadata.dossier = selected.number;
+          draft.metadata.inventory = selected.inventory;
+          const inventory = document.querySelector('[data-metadata="inventory"]');
+          if (inventory) inventory.value = selected.inventory;
+        }
+      }
       draft.confirmed = false;
+      if ($('metadata-confirm')) $('metadata-confirm').checked = false;
       changeDraft();
       feedback();
       const isClassification = ['type', 'subtype', 'context'].includes(key);
@@ -1092,9 +1211,19 @@
           : rows.find(([id]) => id === draft.metadata.subtype)) ?? rows[0];
         draft.metadata.subtype = row[0];
         draft.metadata.context = row[3];
+        const selected = availableDossiers().find(record => record.id === draft.metadata.dossierId);
+        if (!selected) {
+          draft.metadata.dossierId = '';
+          draft.metadata.dossier = '';
+          draft.metadata.inventory = '';
+        }
         renderMetadata();
         document.querySelector(`[data-metadata="${key}"]`).focus();
       } else {
+        if (key === 'dossierId') {
+          renderMetadata();
+          document.querySelector('[data-metadata="dossierId"]').focus();
+        }
         $('metadata-status').textContent = 'De confirmat';
         $('retention-status').textContent = retention();
       }
@@ -1103,7 +1232,7 @@
     }
 
     function missingMetadata() {
-      return requiredMetadata.find(key => !draft.metadata[key].trim()) || (!classification() ? 'type' : null);
+      return requiredMetadata.find(key => !String(draft.metadata[key] ?? '').trim()) || (!classification() ? 'type' : null);
     }
 
     function renderReviewChange(message) {
@@ -1130,6 +1259,17 @@
         $('scan').querySelector('.inspection').scrollIntoView({ block: 'nearest', inline: 'nearest' });
         if (window.matchMedia('(max-width: 1023px)').matches) $('viewport').focus({ preventScroll: true });
       }
+    }
+
+    function updateTag(control) {
+      const tags = tagValues();
+      tags[Number(control.dataset.tagIndex)] = control.value;
+      draft.metadata.tags = tags;
+      draft.confirmed = false;
+      if ($('metadata-confirm')) $('metadata-confirm').checked = false;
+      if ($('metadata-status')) $('metadata-status').textContent = 'De confirmat';
+      changeDraft();
+      feedback();
     }
 
     function updateReview(action, key) {
@@ -1317,10 +1457,30 @@
     $('content').addEventListener('input', event => {
       const control = event.target;
       if (control.matches('input[data-metadata]')) updateMetadata(control);
+      if (control.matches('input[data-tag-index]')) updateTag(control);
       if (control.matches('[data-ocr]')) updateOCR(control.value);
     });
     $('content').addEventListener('change', event => {
       if (event.target.matches('select[data-metadata]')) updateMetadata(event.target);
+      if (event.target.matches('#metadata-confirm')) {
+        if (event.target.checked) {
+          const missing = missingMetadata();
+          if (missing) {
+            event.target.checked = false;
+            feedback('', 'Completează data actului, numerele obligatorii și clasificarea.');
+            $('content').querySelector(`[data-metadata="${missing}"]`).focus();
+            return;
+          }
+          draft.confirmed = true;
+          $('metadata-status').textContent = 'Metadate confirmate';
+          renderSteps();
+          feedback('Metadate confirmate.');
+        } else {
+          draft.confirmed = false;
+          $('metadata-status').textContent = 'De confirmat';
+          renderSteps();
+        }
+      }
     });
     function toggleMarkTool() {
       if (drawing) cancelDrawing();
@@ -1334,19 +1494,27 @@
       if (!button) return;
       const { action, key } = button.dataset;
       switch (action) {
-        case 'metadata': {
-          const missing = missingMetadata();
-          if (missing) {
-            feedback('', 'Completează data actului, numerele obligatorii și clasificarea.');
-            $('content').querySelector(`[data-metadata="${missing}"]`).focus();
-            return;
-          }
-          draft.confirmed = true;
-          $('metadata-status').textContent = 'Metadate confirmate';
-          renderSteps();
-          feedback('Metadate confirmate.');
+        case 'add-tag': {
+          const tags = tagValues();
+          tags.push('');
+          draft.metadata.tags = tags;
+          draft.confirmed = false;
+          changeDraft();
+          renderMetadata();
+          document.querySelector(`[data-tag-index="${tags.length - 1}"]`).focus();
           break;
         }
+        case 'create-dossier':
+          if (role === 'admin') {
+            $('new-dossier-number').value = draft.metadata.dossier || '';
+            $('new-dossier-indicator').value = classification()?.[4] ?? '';
+            $('new-dossier-retention').value = classification()?.[5] ?? '';
+            $('new-dossier-inventory').value = draft.metadata.inventory || '';
+            $('new-dossier-description').value = '';
+            $('dossier-create-error').hidden = true;
+            $('dossier-create').showModal();
+          }
+          break;
         case 'inspect':
           inspectMark(key);
           break;
@@ -1382,6 +1550,41 @@
           openApproval(button);
           break;
       }
+    });
+
+    $('dossier-create').addEventListener('close', () => {
+      if ($('dossier-create').returnValue !== 'create') {
+        document.querySelector('[data-action="create-dossier"]')?.focus();
+        return;
+      }
+      const number = $('new-dossier-number').value.trim();
+      if (role !== 'admin' || !number) return;
+      if ([...dossierRecords, ...createdDossiers].some(record => record.number === number)) {
+        $('dossier-create-error').textContent = 'Există deja un dosar fizic cu acest număr.';
+        $('dossier-create-error').hidden = false;
+        $('dossier-create').showModal();
+        $('new-dossier-number').focus();
+        return;
+      }
+      const record = {
+        id: String(nextDossierId++), number,
+        indicator: classification()?.[4] ?? '',
+        inventory: $('new-dossier-inventory').value.trim(),
+        retention: classification()?.[5] ?? '',
+        description: $('new-dossier-description').value.trim(),
+      };
+      createdDossiers.push(record);
+      draft.metadata.dossierId = record.id;
+      draft.metadata.dossier = record.number;
+      draft.metadata.inventory = record.inventory;
+      draft.confirmed = false;
+      changeDraft();
+      renderStep(false);
+      feedback('Dosarul fizic a fost creat și selectat.');
+      $('metadata-dossierId').focus();
+    });
+    $('new-dossier-number').addEventListener('input', () => {
+      $('dossier-create-error').hidden = true;
     });
 
     document.addEventListener('click', event => {
