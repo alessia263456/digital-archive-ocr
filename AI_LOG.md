@@ -2,6 +2,18 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-27 · P22-31, P22-32 și P22-33 · Permisiuni și API de căutare
+
+**Unealta:** OpenAI Codex, Docker Compose, PostgreSQL și PHPUnit.
+
+**Ce am cerut:** Implementarea backend-ului pentru Folder Permissions, indexarea full-text în română și API-ul de navigare/căutare, exclusiv în worktree-ul `/tmp/proiect1-m3-backend`, fără modificări frontend și cu PostgreSQL izolat.
+
+**Ce am primit:** Migrare pentru permisiuni la nivel de rol și utilizator, cu acces implicit refuzat și prioritate pentru permisiunea individuală; proiecții de căutare separate pentru personal și `cititor`, cu indexuri GIN românești și reindexarea versiunii aprobate curente; endpoint-urile protejate `GET /api/archive/browse` și `GET /api/documents`, cu filtrarea permisiunilor înainte de rezultate, numărători și paginare. Proiecția pentru `cititor` elimină valorile acceptate pentru Redaction și exclude tag-urile. Ecranul DS-001 și administrarea permisiunilor rămân în afara acestei sesiuni.
+
+**Verificare:** Migrațiile au trecut pe PostgreSQL curat, iar PHPUnit a trecut cu 183 teste și 1.445 aserțiuni; 3 teste au rămas skipped. Acoperirea include precedența permisiunilor, căutarea românească, protecția proiecției cititorului, highlight-uri, filtre, paginare și înlocuirea atomică a indexului la publicarea unei versiuni noi. Verificarea a folosit proiectul Compose `p22m3backend`, porturile 15432/18031 și bazele `archive_p22m3`/`archive_p22m3_test`; containerele, volumele și secretele temporare au fost eliminate după rulare.
+
+Implementarea backend a pornit de la baza cerută `f0c2023` și a fost înregistrată în commitul `8489a09`. `git diff --check` a trecut. `git fetch --all --prune` nu a putut scrie în metadatele Git partajate și read-only ale worktree-ului linked. Nu au fost modificate fișiere frontend sau fișierele Ledger.
+
 ## 2026-11-27 · DS-001 · Căutare și navigare în arhivă
 
 **Unealta:** OpenAI Codex, Docker Compose și Playwright.
