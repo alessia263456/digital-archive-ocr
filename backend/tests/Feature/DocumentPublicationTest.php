@@ -54,6 +54,11 @@ final class DocumentPublicationTest extends TestCase
         self::assertSame('published', $draft->fresh()->status);
         self::assertDatabaseCount('documents', 1);
         self::assertDatabaseCount('document_versions', 1);
+        self::assertDatabaseCount('archive_search_documents', 1);
+        $indexed = DB::table('archive_search_documents')->where('document_id', $first->json('document_id'))->first();
+        self::assertSame($first->json('version_id'), $indexed->version_id);
+        self::assertStringContainsString('41', $indexed->staff_text);
+        self::assertStringContainsString('Contract de vânzare', $indexed->reader_text);
         self::assertDatabaseCount('publication_requests', 1);
         $version = DB::table('document_versions')->where('id', $first->json('version_id'))->first();
         self::assertNotSame('drafts/initial.pdf', json_decode($version->source_storage_keys, true)[0]);
@@ -125,6 +130,30 @@ final class DocumentPublicationTest extends TestCase
         self::assertDatabaseCount('document_versions', 1);
     }
 
+    public function test_replacement_publication_replaces_the_single_current_search_projection(): void
+    {
+        $first = $this->readyDraft($this->source, 'drafts/index-first.pdf', 'index-first');
+        $firstSnapshot = $this->prepareReview($first);
+        $published = $this->withHeader('Idempotency-Key', 'index-first')->postJson('/api/drafts/'.$first->id.'/publish', [
+            'review_snapshot' => $firstSnapshot,
+        ])->assertCreated();
+
+        $replacement = $this->readyDraft($this->source."\n% changed searchable metadata", 'drafts/index-replacement.pdf', 'index-replacement');
+        $replacementSnapshot = $this->prepareReview($replacement);
+        $current = $this->withHeader('Idempotency-Key', 'index-replacement')->postJson('/api/drafts/'.$replacement->id.'/publish', [
+            'review_snapshot' => $replacementSnapshot,
+            'target_document_id' => $published->json('document_id'),
+            'target_version_id' => $published->json('version_id'),
+            'duplicate_action' => 'version',
+        ])->assertOk()->assertJsonPath('version_number', 2);
+
+        self::assertDatabaseCount('document_versions', 2);
+        self::assertDatabaseCount('archive_search_documents', 1);
+        $indexed = DB::table('archive_search_documents')->where('document_id', $published->json('document_id'))->first();
+        self::assertSame($current->json('version_id'), $indexed->version_id);
+        self::assertSame('index-replacement', json_decode($indexed->staff_metadata, true)['act_number']);
+    }
+
     public function test_ocr_and_pii_changes_after_review_require_fresh_review(): void
     {
         $ocrDraft = $this->readyDraft($this->source."\n% ocr-state", 'drafts/ocr-state.pdf', 'ocr-state');
@@ -182,7 +211,8 @@ final class DocumentPublicationTest extends TestCase
         ]);
         DB::table('ocr_pages')->insert([
             'extraction' => $draft->ocr_extraction_id, 'source_sha256' => hash('sha256', $contents),
-            'page' => 1, 'width' => 100, 'height' => 100, 'text' => '', 'tsv' => '', 'words' => '[]',
+            'page' => 1, 'width' => 100, 'height' => 100,
+            'text' => 'Contract de vânzare; act numărul '.$actNumber, 'tsv' => '', 'words' => '[]',
         ]);
         $draft->metadata_suggestions = [];
         $draft->save();

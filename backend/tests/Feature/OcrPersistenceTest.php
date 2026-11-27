@@ -20,7 +20,7 @@ final class OcrPersistenceTest extends TestCase
         if (!is_executable('/usr/bin/tesseract')) {
             self::markTestSkipped('Integration runs in the OCR worker image.');
         }
-        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        self::assertSame('archive_p22m3_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
         $source = base_path('tests/Fixtures/rendering/text-rotation.pdf');
         $before = DB::table('ocr_pages')->count();
@@ -59,7 +59,7 @@ SH);
         if (!is_executable('/usr/bin/tesseract')) {
             self::markTestSkipped('Integration runs in the OCR worker image.');
         }
-        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        self::assertSame('archive_p22m3_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
         $source = base_path('tests/Fixtures/rendering/romanian.png');
         $id = (new OcrExtraction)->extract($source);
@@ -88,7 +88,7 @@ SH);
         if (!is_executable('/usr/bin/tesseract')) {
             self::markTestSkipped('Integration runs in the OCR worker image.');
         }
-        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        self::assertSame('archive_p22m3_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
         $first = base_path('tests/Fixtures/rendering/romanian.png');
         $second = base_path('tests/Fixtures/rendering/mark.pdf');

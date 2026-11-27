@@ -16,7 +16,7 @@ final class AccountAndPhysicalDossierTest extends TestCase
         parent::setUp();
 
         self::assertSame('pgsql', DB::connection()->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
-        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        self::assertSame('archive_p22m3_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
     }
 
