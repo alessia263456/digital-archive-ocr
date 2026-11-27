@@ -16,6 +16,7 @@ final class DocumentPublicationService
         private readonly DocumentStorageService $storage,
         private readonly RetentionCalculator $retention,
         private readonly ReviewSnapshotService $snapshots,
+        private readonly ArchiveSearchIndexer $searchIndexer,
     ) {}
 
     /** @return array{body: array, status: int, replayed: bool} */
@@ -154,6 +155,7 @@ final class DocumentPublicationService
                 $target->metadata = $metadata;
                 $target->current_version_id = $version->id;
                 $target->save();
+                $this->searchIndexer->reindex($draft, $target, $version);
                 $draft->status = 'published';
                 $draft->save();
 

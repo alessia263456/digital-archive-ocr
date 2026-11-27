@@ -24,7 +24,7 @@ final class AuthenticationAndRolesTest extends TestCase
         parent::setUp();
 
         self::assertSame('pgsql', DB::connection()->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME));
-        self::assertSame('archive_test', DB::scalar('select current_database()'));
+        self::assertSame('archive_p22m3_test', DB::scalar('select current_database()'));
         $this->artisan('migrate')->assertExitCode(0);
         config(['sanctum.stateful' => ['localhost']]);
         $this->withHeader('Origin', 'http://localhost');

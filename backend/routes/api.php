@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentDraftController;
 use App\Http\Controllers\PhysicalDossierController;
+use App\Http\Controllers\ArchiveController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])
@@ -42,3 +43,8 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
 });
 
 Route::middleware(['auth:web', 'session.lifetime', 'role:admin'])->post('/physical-dossiers', [PhysicalDossierController::class, 'store'])->name('physical-dossiers.store');
+
+Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar,cititor'])->group(function () {
+    Route::get('/archive/browse', [ArchiveController::class, 'browse'])->name('archive.browse');
+    Route::get('/documents', [ArchiveController::class, 'index'])->name('documents.index');
+});
