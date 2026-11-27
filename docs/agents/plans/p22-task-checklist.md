@@ -201,11 +201,15 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 
 ## M3 · Search, permissions and document viewing · target Nov 28–29
 
-- [ ] P22-31 · Folder Permission policy
-- [ ] P22-32 · PostgreSQL Romanian search index
-- [ ] P22-33 · Browse and search API
+- [x] P22-31 · Folder Permission policy
+  - Added dossier-scoped role and individual `cititor` permissions with default deny and individual precedence. The same SQL authorization scope filters browse, search, counts and pagination; staff roles retain unrestricted access.
+- [x] P22-32 · PostgreSQL Romanian search index
+  - Added separate staff and reader-safe current-version projections with PostgreSQL Romanian full-text GIN indexes. Accepted Redactions and reader-excluded tags are removed before reader indexing. Publication replaces the single indexed row for the current version transactionally; PHPUnit covers replacement and safe reindexing.
+- [x] P22-33 · Browse and search API
+  - Added session-protected `GET /api/archive/browse` and `GET /api/documents` with Romanian relevance/highlights, approved metadata filters, stable pagination, role-safe fields and Physical Dossier Numbers. Staff-only party/tag parameters fail closed for `cititor`; denied dossiers do not affect results or aggregates.
+  - On 2026-11-27, clean PostgreSQL migrations passed and full backend PHPUnit passed (183 tests, 1,445 assertions, 3 skipped) in an isolated Compose project using `archive_p22m3_test`. `git diff --check` passed. The project’s containers and unique volumes were removed after verification.
 - [ ] P22-34 · DS-001 search and browse
-  - M1a.1 implements only the authenticated default home and the confirmed copy-only empty state. Search and browse remain pending.
+  - M1a.1 implements the authenticated default home and confirmed copy-only empty state. The backend API is complete under P22-31–33; React integration and Screen verification remain pending here.
 - [ ] P22-36b · Verify audit integrity
 - [ ] P22-37 · Metadata edits and dossier reassignment
 - [ ] P22-38 · Authorized viewer and export access
