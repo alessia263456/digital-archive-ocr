@@ -2,6 +2,18 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-27 · DS-001 · Căutare și navigare în arhivă
+
+**Unealta:** OpenAI Codex, Docker Compose și Playwright.
+
+Am implementat frontend-ul DS-001 pe baza machetei HTML/CSS/JavaScript aprobate, într-un worktree și pe ramura `feat/ds-001-search-browse`. Ecranul păstrează navigarea după tip, dosar și an, iconurile de dosar, acțiunile „Vezi toate” și documentele recente. Căutarea include filtre, număr total de rezultate, sortare după relevanță/dată, evidențierea potrivirilor, paginare și ștergerea filtrelor. Câmpurile Etichete și Nume din acte sunt disponibile doar pentru Admin și Arhivar; Cititor primește doar textul sigur pentru citire. Datele și accesul la catalog sunt separate de componentele React și folosesc date sintetice provizorii, deoarece C-008 lipsește din checkout. Nu s-a creat sau modificat un contract și nu s-a conectat API-ul real.
+
+Integrarea folosește AppShell existent. Conflictul din `main.jsx` a fost rezolvat păstrând modificările DS-011 mai noi și adăugând doar importul și selectarea ecranului DS-001. Macheta și testul său de interacțiuni au fost extinse, iar registrul DS-001 a fost actualizat la implementarea frontend curentă. Nu s-au modificat backend-ul, baza de date sau migrațiile.
+
+**Verificare:** Build-ul frontend integrat a trecut; testele Playwright focalizate DS-001 au trecut cu 28/28 pe desktop și mobil, în teme luminoasă și întunecată. Testele machetei aprobate au trecut cu 4/4, iar Ledger lint a trecut. Rularea completă frontend a avut 184 teste: 145 passed, 24 skipped și 15 failed. O parte dintre eșecuri provin din teste existente care presupun o arhivă goală, incompatibilă cu datele sintetice aprobate; au mai fost raportate un timeout la așteptarea fonturilor în captura upload și un timeout în testul cozii. Un locator ambiguu din testul nou DS-001 a fost corectat, după care suita focalizată a trecut. Capturile home și rezultate DS-001 light/dark sunt în `docs/design/screens/`.
+
+Commiturile locale sunt `baeab2b` (implementarea pe ramura feature) și `230240e` (integrarea în `main`). Nu s-a făcut push sau deploy; integrarea API și C-008 rămân separate.
+
 ## 2026-11-27 · P22 DS-011 · Corecturi editor, publicare și verificare manuală
 
 **Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.

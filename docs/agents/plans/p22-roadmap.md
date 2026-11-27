@@ -66,6 +66,8 @@ Prepare and approve a separate implementation plan for each M1a part before codi
 
 **Acceptance:** Test Romanian relevance and highlights, filters and browse modes, current-version-only indexing, denied-dossier behavior, default-deny Folder Permissions with individual precedence, staff/original versus `cititor`/redacted access, version history and downloads. Verify Append-Only Audit Log integrity and access records.
 
+**Progress · 2026-11-27:** DS-001 frontend browsing and search are implemented from the approved mock, with replaceable synthetic data pending C-008 and real API integration. The local integration build and 28 focused DS-001 Playwright checks passed. The complete frontend suite reported 145 passed, 24 skipped and 15 failed; older empty-archive expectations and upload/queue timeouts remain recorded in the checklist. P22-31, P22-32, P22-33 and the remaining API-backed M3 acceptance work stay open.
+
 ### M4 · Staff operations, sharing and retention — target Nov 29–Dec 1
 
 Start backend services as their dependencies clear rather than waiting for Nov 30. Batch mock review by Screen, but retain explicit approval for every Screen.

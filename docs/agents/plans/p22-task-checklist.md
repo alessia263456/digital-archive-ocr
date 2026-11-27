@@ -205,7 +205,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 - [ ] P22-32 · PostgreSQL Romanian search index
 - [ ] P22-33 · Browse and search API
 - [ ] P22-34 · DS-001 search and browse
-  - M1a.1 implements only the authenticated default home and the confirmed copy-only empty state. Search and browse remain pending.
+  - [x] Frontend search and browsing implemented against the approved mock using replaceable synthetic data; actual API integration and the absent C-008 remain pending.
 - [ ] P22-36b · Verify audit integrity
 - [ ] P22-37 · Metadata edits and dossier reassignment
 - [ ] P22-38 · Authorized viewer and export access
@@ -261,6 +261,7 @@ M1a is split into separately planned and verified parts: M1a.1 Login and applica
 
 ## Integration and verification notes
 
+- **2026-11-27 · DS-001 frontend:** Implemented approved archive browsing and search with type/dossier/year categories, recent documents, staff-only tag and Signatory Party fields, filters, total count, relevance/date sorting, highlighted snippets, pagination, clear-filters, and loading/empty/error/no-results states. Data and repository access are separate from the React component; no API contract or backend files changed. Build passed; focused DS-001 Playwright passed (28 tests); approved mock checks passed (4 tests); Ledger lint passed. Full frontend suite: 145 passed, 24 skipped, 15 failed; existing empty-archive expectations conflict with the approved synthetic mock, and upload font-wait and queue test timeouts were also observed. Integrated locally in commit `230240e` (feature commit `baeab2b`); no push/deploy. C-008 and real API integration remain pending.
 - **2026-11-27 · Physical Dossier creation in DS-011:** Owner approved Arhivar creation under C-009 and amended D-045; D-046 now authorizes both Admin and Arhivar to create dossiers. Creation retains the successful server response against an outstanding classification lookup, selects the new dossier, and rejects stale lookup results. The Admin create failure was traced to a pending database migration; the active local dossier table was empty, the catalogue migration was applied, and its four columns were verified. PHPUnit passed (187 tests, 1,480 assertions, 3 skipped); serial Playwright passed (204 passed, 28 opt-in real-API skips). Desktop/mobile and light/dark create-flow screenshots were captured and inspected. Ledger lint and `git diff --check` passed. See the [implementation plan](p22-dossier-creation-by-arhivar.md).
 - **2026-11-27 · DS-011 canonical Redaction corrections (initial behavior, superseded below):** Eligible automatic detections entered persisted canonical state by default; removal/undo was revision-bound, uncertain detections required human review, and preview, reader-safe projection/search, review snapshots, and publication guards consumed the shared state. The subsequent owner-approved amendment below removes the per-candidate approval step.
 - **2026-11-27 · DS-011 follow-up usability fix:** The anonymized PDF URL is loaded only after successful generation, preventing an early 404 from leaving the iframe empty. Uncertain acceptance and the subsequent manual-location → preview flow are covered. Focused PHPUnit passed (20 tests, 137 assertions); focused Playwright passed (8 tests across desktop/mobile and light/dark).
