@@ -22,8 +22,11 @@
 - D-020 · Screen inventory and role-based access control · _superseded-by D-032_
 - D-032 · Screen inventory and role-based access control · _superseded-by D-042_
 - D-041 · API bearer token lifetime and login throttling · _superseded-by D-043_
+- D-045 · Physical Dossier record identity and catalogue fields · _superseded-by D-046_
 
 ### [Archive workflows](decisions/archive-workflows.md)
+- D-022 · PII detection and Redaction coverage · _superseded-by D-047_
+- D-047 · Implicit PII Redaction and delete-to-remove review · _superseded-by D-048_
 - D-023 · Archive browsing, Folder Permissions, and search · _superseded-by D-033_
 - D-024 · Share Link access and lifecycle · _superseded-by D-034_
 - D-027 · Retention, destruction, and retained audit evidence · _superseded-by D-035_
@@ -190,3 +193,12 @@
 - **Evidence:** Q-022 and [P22-25 plan](plans/p22-25-username-password-authentication-and-roles.md); Laravel 13 Sanctum supports per-token expiration, and Laravel's starter-kit guidance demonstrates a five-per-minute username/IP login limit.
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-23
+
+## D-045 · Physical Dossier record identity and catalogue fields
+- **Status:** superseded-by D-046
+- **Date:** 2026-11-27
+- **Rule:** Physical Dossier printed numbers are unique. Each record stores its printed number, Archival Indicator, Inventory Number, retention term, and an optional short description. The selected Notarial Nomenclature entry determines the Archival Indicator and retention term. Staff may select only dossiers matching both values; if none exists, an Admin may create one by providing its printed number and Inventory Number (plus optional description), while the server derives the indicator and retention term. Dossier selection in the Editor displays the printed number and sends the stable record ID. Only `admin` may create dossier records; `admin` and `arhivar` may select them.
+- **Why:** Dossiers retain documents with matching nomenclature indicator and retention, and these catalogue fields identify the physical records without exposing database IDs.
+- **Evidence:** Owner confirmation of dossier fields and matching-classification workflow in chat on 2026-11-27.
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-27

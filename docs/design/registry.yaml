@@ -96,8 +96,8 @@ designs:
     kind: screen
     status: implemented
     roles: [admin, arhivar]
-    decisions: [D-004, D-038, D-022, D-035, D-042, D-044, D-045]
-    description: "Editor cu file Date document, Corectare OCR, Anonimizare / Revizuire PII și Verificare finală. Vizualizatorul cu pagini consecutive și marcaje aliniate rămâne disponibil lângă etapa selectată. Salvează ciorna fără confirmare sau publicare; metadatele confirmate, revizuirea PII obligatorie, marcajele manuale, PDF anonimizat și publicarea ca versiune imuabilă rămân legate de reviziile curente. Eligibilitatea nu autorizează distrugerea. Capturi PII desktop/mobile, light/dark: `docs/design/screens/DS-011.PII.*.png`."
+    decisions: [D-004, D-038, D-022, D-035, D-042, D-044, D-045, D-048]
+    description: "Editor cu file Date document, Corectare OCR, Anonimizare / Revizuire PII și Verificare finală. Vizualizatorul cu pagini consecutive și marcaje aliniate rămâne disponibil lângă etapa selectată. Potrivirile cu geometrie sigură sunt incluse implicit; detecțiile fără geometrie sigură sunt omise automat. Salvează ciorna fără confirmare sau publicare; metadatele confirmate, marcajele manuale, PDF anonimizat și publicarea ca versiune imuabilă rămân legate de reviziile curente și necesită revizuire finală explicită. Eligibilitatea nu autorizează distrugerea. Capturi PII desktop/mobile, light/dark: `docs/design/screens/DS-011.PII.*.png`."
     design_ref: mocks/DS-011.html
 
   - id: DS-012

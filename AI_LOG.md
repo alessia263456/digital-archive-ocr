@@ -2,6 +2,16 @@
 
 Jurnal de bord al interacțiunilor cu asistenții AI conform cerințelor de curs. Înregistrează deciziile de arhitectură, interviul cu clientul, clarificările de scope și evoluția registrului de cunoștințe (ledger).
 
+## 2026-11-27 · P22 DS-011 · Corecturi editor, publicare și verificare manuală
+
+**Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.
+
+Am continuat corecturile aprobate pentru DS-011: anonimizările automate cu geometrie sigură sunt incluse implicit, eliminarea și undo sunt păstrate pe revizia curentă, iar detectările fără localizare sigură sunt omise fără să blocheze previzualizarea sau publicarea. Au fost corectate fluxurile de acceptare a detectărilor incerte, generarea și comutarea previzualizării anonimizate, mesajele popup, salvarea OCR și crearea dosarelor de către `admin` și `arhivar`. C-005/C-007 au fost amendate în Ledger, iar deciziile și planurile aferente au fost consemnate; D-022 și D-038 au rămas neschimbate.
+
+La publicarea documentelor `TEST-017-incheiere-pag2.jpg` și `TEST-017-incheiere-pag1.jpg`, jurnalul backend a identificat cauza mesajului generic de siguranță: textul OCR corectat de pe o pagină nu se putea asocia complet cu geometria cuvintelor. Publicarea indexează acum pagina respectivă fără text pentru `cititor` când alinierea nu poate fi demonstrată sigur; textul rămâne disponibil personalului, iar textul incert nu ajunge în căutarea cititorului. Proprietara a confirmat că publicarea funcționează conform așteptărilor.
+
+**Verificare:** PHPUnit a trecut cu 188 teste, 1.493 aserțiuni și 3 skipped; suita concentrată de proiecție/publicare a trecut cu 15 teste și 169 aserțiuni. Playwright a trecut cu 216 teste, iar 28 verificări opt-in ale API-ului real au rămas skipped. Ledger lint și `git diff --check` au trecut. Backend-ul local a fost reconstruit și repornit. Funcționalitățile par să funcționeze; interfața Editor DS-011 trebuie revizuită separat. Nu s-a făcut push sau deploy.
+
 ## 2026-11-26 · P22-24a, P22-24b și P22-45 · Editor OCR și cozi DS-004
 
 **Unealta:** OpenAI Codex, Docker Compose, PHPUnit și Playwright.

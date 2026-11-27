@@ -50,7 +50,7 @@ final class PhysicalDossierApiTest extends TestCase
             ->assertJsonCount(0, 'dossiers');
     }
 
-    public function test_dossier_number_must_be_unique_and_only_admin_can_create(): void
+    public function test_dossier_numbers_are_unique_and_admin_or_archivar_can_create(): void
     {
         $this->asRole('admin');
         $entry = NomenclatureEntry::query()->firstOrFail();
@@ -64,6 +64,16 @@ final class PhysicalDossierApiTest extends TestCase
         ])->assertUnprocessable()->assertJsonPath('cod', 'duplicate_dossier_number');
 
         $this->asRole('arhivar');
+        $this->postJson('/api/physical-dossiers', [
+            'nomenclature_entry_id' => $entry->id,
+            'physical_dossier_number' => '30/2026',
+            'inventory_number' => 'INV-30/2026',
+        ])->assertCreated()
+            ->assertJsonPath('dossier.physical_dossier_number', '30/2026')
+            ->assertJsonPath('dossier.archival_indicator', $entry->archival_indicator)
+            ->assertJsonPath('dossier.retention_time', $entry->retention_term);
+
+        $this->asRole('cititor');
         $this->postJson('/api/physical-dossiers', [])->assertForbidden();
     }
 

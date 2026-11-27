@@ -19,10 +19,10 @@
 - D-042 · Screen inventory, home screen, and role-based access control
 - D-043 · Browser session authentication lifetime and login throttling
 - D-044 · Retention eligibility date calculation
-- D-045 · Physical Dossier record identity and catalogue fields
+- D-046 · Physical Dossier record identity and catalogue fields
 
 ### [Archive workflows](decisions/archive-workflows.md)
-- D-022 · PII detection and Redaction coverage
+- D-048 · Discard PII detections without safe geometry
 - D-025 · Exact and possible duplicates
 - D-026 · OCR quarantine threshold
 - D-028 · DOCX originals and derived PDFs
@@ -166,11 +166,11 @@
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-27
 
-## D-045 · Physical Dossier record identity and catalogue fields
+## D-046 · Physical Dossier record identity and catalogue fields
 - **Status:** approved
 - **Date:** 2026-11-27
-- **Rule:** Physical Dossier printed numbers are unique. Each record stores its printed number, Archival Indicator, Inventory Number, retention term, and an optional short description. The selected Notarial Nomenclature entry determines the Archival Indicator and retention term. Staff may select only dossiers matching both values; if none exists, an Admin may create one by providing its printed number and Inventory Number (plus optional description), while the server derives the indicator and retention term. Dossier selection in the Editor displays the printed number and sends the stable record ID. Only `admin` may create dossier records; `admin` and `arhivar` may select them.
-- **Why:** Dossiers retain documents with matching nomenclature indicator and retention, and these catalogue fields identify the physical records without exposing database IDs.
-- **Evidence:** Owner confirmation of dossier fields and matching-classification workflow in chat on 2026-11-27.
+- **Rule:** Physical Dossier printed numbers are unique. Each record stores its printed number, Archival Indicator, Inventory Number, retention term, and an optional short description. The selected Notarial Nomenclature entry determines the Archival Indicator and retention term. Staff may select only dossiers matching both values; if none exists, an Admin or Arhivar may create one by providing its printed number and Inventory Number (plus optional description), while the server derives the indicator and retention term. Dossier selection in the Editor displays the printed number and sends the stable record ID. Only `admin` and `arhivar` may create dossier records; `admin` and `arhivar` may select them.
+- **Why:** Dossiers retain documents with matching nomenclature indicator and retention, and these catalogue fields identify the physical records without exposing database IDs. Admin and Arhivar both perform the approved archive intake workflow.
+- **Evidence:** Owner confirmation of dossier fields and matching-classification workflow in chat on 2026-11-27; owner approval of Arhivar dossier creation and the D-045 amendment on 2026-11-27.
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-27

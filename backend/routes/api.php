@@ -29,7 +29,6 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
     Route::get('/drafts/{draft}/ocr', [DocumentDraftController::class, 'ocr'])->name('drafts.ocr');
     Route::get('/drafts/{draft}/editor', [DocumentDraftController::class, 'editor'])->name('drafts.editor');
     Route::patch('/drafts/{draft}/editor/ocr', [DocumentDraftController::class, 'saveEditorOcr'])->name('drafts.editor.ocr');
-    Route::patch('/drafts/{draft}/editor/pii-review', [DocumentDraftController::class, 'reviewEditorPii'])->name('drafts.editor.pii-review');
     Route::patch('/drafts/{draft}/editor/redaction-marks', [DocumentDraftController::class, 'saveRedactionMarks'])->name('drafts.editor.redaction-marks');
     Route::post('/drafts/{draft}/editor/redaction-preview', [DocumentDraftController::class, 'generateRedaction'])->name('drafts.editor.redaction-preview');
     Route::get('/drafts/{draft}/editor/redaction-preview', [DocumentDraftController::class, 'redactedPdf'])->name('drafts.editor.redaction-preview.show');
@@ -42,7 +41,7 @@ Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->group
     Route::post('/drafts/{draft}/preview', [DocumentDraftController::class, 'preview'])->name('drafts.preview');
 });
 
-Route::middleware(['auth:web', 'session.lifetime', 'role:admin'])->post('/physical-dossiers', [PhysicalDossierController::class, 'store'])->name('physical-dossiers.store');
+Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar'])->post('/physical-dossiers', [PhysicalDossierController::class, 'store'])->name('physical-dossiers.store');
 
 Route::middleware(['auth:web', 'session.lifetime', 'role:admin,arhivar,cititor'])->group(function () {
     Route::get('/archive/browse', [ArchiveController::class, 'browse'])->name('archive.browse');

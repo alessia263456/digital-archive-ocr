@@ -908,9 +908,9 @@
       if (hasSuggestedRecord) return '';
       return `<div class="dossier-details">
         <p class="muted">Nu există o înregistrare pentru acest număr de dosar.</p>
-        ${role === 'admin'
+        ${role === 'admin' || role === 'arhivar'
           ? '<button type="button" data-action="create-dossier">Creează dosarul fizic</button>'
-          : '<p class="muted">Solicitați unui Admin să creeze dosarul fizic.</p>'}
+          : '<p class="muted">Solicitați crearea dosarului fizic.</p>'}
       </div>`;
     }
 
@@ -1034,7 +1034,7 @@
         : [];
       const shortcutsOpen = $('mark-shortcuts')?.open;
       $('content').innerHTML = `
-        <p class="review-notice neutral"><strong>Verifică anonimizările aplicate.</strong> Toate zonele detectate automat sunt deja marcate. Poți elimina o anonimizare cu × sau poți adăuga una nouă.</p>
+        <p class="review-notice neutral"><strong>Verifică anonimizările aplicate.</strong> Potrivirile cu localizare sigură sunt marcate automat; cele fără localizare sigură sunt omise. Poți elimina o anonimizare cu × sau poți adăuga una nouă.</p>
         <h3>Anonimizări aplicate</h3>
         <p class="mark-counts neutral">Total: ${applied.length} marcaje · Automate: ${automatic} · Manuale: ${applied.length - automatic}</p>
         ${applied.length ? `<ul class="review-list" aria-label="Anonimizări aplicate">${applied.map(appliedRow).join('')}</ul>`

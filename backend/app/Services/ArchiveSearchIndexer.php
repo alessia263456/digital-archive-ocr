@@ -32,6 +32,7 @@ final class ArchiveSearchIndexer
         $metadata = $document->metadata ?? $draft->metadata ?? [];
         $projection = app(ReaderRedactionProjection::class)->project(
             $pages, $draft->pii_candidates ?? [], $draft->redaction_marks ?? [], $metadata,
+            $draft->redaction_excluded_candidate_ids ?? [],
         );
         $readerMetadata = $projection['metadata'];
         unset($readerMetadata['tags'], $readerMetadata['physical_dossier_id']);

@@ -59,12 +59,7 @@ test('hands off from DS-004 through metadata, final review, and immutable public
   await expect(page.getByRole('status').filter({ hasText: 'Metadatele au fost confirmate' })).toBeVisible();
   console.log('M2 real API: metadata confirmed');
   await page.getByRole('tab', { name: /Anonimizare/ }).click();
-  const rejectButtons = page.getByRole('button', { name: 'Respinge potrivirea' });
-  const candidateCount = await rejectButtons.count();
-  for (let index = 0; index < candidateCount; index++) {
-    const button = rejectButtons.nth(index);
-    if (await button.isEnabled()) await button.click();
-  }
+  await expect(page.getByRole('region', { name: 'Anonimizări aplicate' })).toBeVisible();
   await page.getByRole('button', { name: 'Marchează o zonă' }).click();
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
   await canvas.press('Enter'); await canvas.press('ArrowRight'); await canvas.press('ArrowDown'); await canvas.press('Enter');

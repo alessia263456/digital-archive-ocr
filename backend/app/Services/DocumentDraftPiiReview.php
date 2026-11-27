@@ -66,7 +66,7 @@ class DocumentDraftPiiReview
                 $candidate['location_status'] = $reliable ? 'reliable' : 'manual_review_required';
                 if (!$reliable) $candidate['disposition'] = 'review';
                 $candidate['corrected_text_span'] = ['start' => $start, 'length' => $end - $start];
-                $candidate['review_status'] = 'pending';
+                $candidate['review_status'] = 'accepted';
                 $result[] = $candidate;
             }
         }

@@ -30,13 +30,15 @@ final class ReaderRedactionProjectionTest extends TestCase
         self::assertArrayNotHasKey('name', $result['metadata']);
     }
 
-    public function test_accepted_candidate_without_reliable_geometry_fails_closed(): void
+    public function test_candidate_without_reliable_geometry_is_discarded_from_reader_redaction_projection(): void
     {
-        $this->expectException(\RuntimeException::class);
-        (new ReaderRedactionProjection)->project($this->pages(), [
+        $result = (new ReaderRedactionProjection)->project($this->pages(), [
             ['review_status' => 'accepted', 'page' => 1, 'location_status' => 'manual_review_required',
                 'bounding_boxes' => [], 'corrected_text_span' => ['start' => 4, 'length' => 9]],
-        ], [], ['year' => '2024']);
+        ], [], ['name' => 'John Doe', 'year' => '2024']);
+
+        self::assertSame('CNP John Doe pentru contract', $result['pages'][0]['text']);
+        self::assertSame(['name' => 'John Doe', 'year' => '2024'], $result['metadata']);
     }
 
     public function test_corrected_token_and_overlapping_original_box_are_removed(): void
@@ -52,6 +54,23 @@ final class ReaderRedactionProjectionTest extends TestCase
                 'corrected_text_span' => ['start' => 4, 'length' => 8]],
         ], [], ['titlu' => 'Jonn Doe', 'original' => 'John Doe']);
         self::assertSame('CNP pentru contract', $result['pages'][0]['text']);
+        self::assertSame([], $result['metadata']);
+    }
+
+    public function test_page_with_unmatched_corrected_ocr_is_omitted_from_reader_search(): void
+    {
+        $pages = $this->pages();
+        $pages[0]['source_text'] = $pages[0]['text'];
+        $pages[0]['base_text'] = 'CNP John Doe revised text';
+        $pages[0]['text'] = $pages[0]['base_text'];
+        $result = (new ReaderRedactionProjection)->project($pages, [
+            ['id' => 'candidate-john-doe', 'disposition' => 'redact', 'page' => 1,
+                'location_status' => 'reliable',
+                'bounding_boxes' => [['left' => 20, 'top' => 10, 'width' => 30, 'height' => 10]],
+                'corrected_text_span' => ['start' => 4, 'length' => 8]],
+        ], [], ['name' => 'John Doe']);
+
+        self::assertSame('', $result['pages'][0]['text']);
         self::assertSame([], $result['metadata']);
     }
 

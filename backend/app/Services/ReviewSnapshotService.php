@@ -34,8 +34,11 @@ final class ReviewSnapshotService
             'ocr_revision' => (int) $draft->ocr_revision,
             'detection_status' => $draft->detection_status,
             'detection_revision' => (int) $draft->detection_revision,
-            'pii_candidates' => $this->canonicalize($draft->pii_candidates ?? []),
+            'pii_candidates' => $this->canonicalize((new RedactionState)->includedCandidates(
+                $draft->pii_candidates ?? [], $draft->redaction_excluded_candidate_ids ?? [],
+            )),
             'redaction_marks' => $this->canonicalize($draft->redaction_marks ?? []),
+            'redaction_excluded_candidate_ids' => $this->canonicalize($draft->redaction_excluded_candidate_ids ?? []),
             'redaction_ocr_revision' => $draft->redaction_ocr_revision,
             'redaction_detection_revision' => $draft->redaction_detection_revision,
         ];
@@ -53,20 +56,6 @@ final class ReviewSnapshotService
         }
         if ($draft->detection_status !== 'ready' || (int) $draft->detection_revision !== (int) $draft->ocr_revision) {
             throw new PublicationProblem(409, 'review_stale', 'Rezultatele OCR și de detectare nu sunt actuale.');
-        }
-        foreach ($draft->pii_candidates ?? [] as $candidate) {
-            if (!in_array($candidate['review_status'] ?? null, ['accepted', 'rejected'], true)) {
-                throw new PublicationProblem(422, 'pii_review_incomplete', 'Revizuiți fiecare rezultat de detectare înainte de aprobarea finală.');
-            }
-            if (($candidate['review_status'] ?? null) === 'accepted'
-                && (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes']))) {
-                $hasManual = collect($draft->redaction_marks ?? [])->contains(
-                    static fn (array $mark): bool => (int) $mark['page'] === (int) ($candidate['page'] ?? 0),
-                );
-                if (!$hasManual) {
-                    throw new PublicationProblem(422, 'redaction_location_required', 'O potrivire acceptată necesită marcaj manual sigur.');
-                }
-            }
         }
         if (!$draft->redacted_pdf_storage_key || !$storage->exists($draft->redacted_pdf_storage_key)) {
             throw new PublicationProblem(409, 'redaction_required', 'Generați PDF-ul anonimizat înainte de aprobarea finală.');

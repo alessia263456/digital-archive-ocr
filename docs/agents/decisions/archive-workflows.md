@@ -1,13 +1,30 @@
 # Archive workflows
 
 ## D-022 · PII detection and Redaction coverage
-- **Status:** approved
+- **Status:** superseded-by D-047
 - **Date:** 2026-11-19
 - **Rule:** Detect Romanian CNP, IBAN, phone numbers, email addresses, and Signatory Party names. Validate CNP using weights `279146358279` and the mod-11 control digit, and validate IBAN with ISO 7064 MOD-97. Use Notarial Context Anchors for contextual detection. A valid CNP or IBAN checksum plus a nearby anchor can trigger automatic Redaction. Route names, corrupt OCR, and uncertain matches to human review. Also flag addresses, identity-card details, Signatory Party signatures, cadastral identifiers, vehicle identifiers, and CUI/CIF for Redaction. Preserve the Notary Public name, title, and signature. DS-011 combines manual Bounding Boxes with automatically detected Bounding Boxes and burns solid black pixels into the redacted copy. Keep the original intact. Remove underlying redacted PDF text and strip redacted values from text and metadata served to `cititor`. Every document requires explicit review approval under D-031.
 - **Why:** Defines what staff must check and what remains visible in the anonymized copy.
 - **Evidence:** Q-006, D-004, D-020, and owner confirmation in the requirements review
 - **Source:** user · confidence high
 - **Confirmed:** 2026-11-26
+
+## D-047 · Implicit PII Redaction and delete-to-remove review
+- **Status:** superseded-by D-048
+- **Date:** 2026-11-27
+- **Rule:** Detect Romanian CNP, IBAN, phone numbers, email addresses, Signatory Party names, addresses, identity-card details, Signatory Party signatures, cadastral identifiers, vehicle identifiers, and CUI/CIF using the approved validation, context, and detection rules. Preserve the Notary Public name, title, and signature. Every detection enters the persisted canonical Redaction state by default; all candidates with validated geometry are included in the black-pixel PDF, regardless of confidence or review disposition. Staff remove false positives with a persisted, revision-bound delete action and may undo the removal. Do not require per-candidate Accept/Reject decisions. A candidate without safe page geometry remains included and requires a manual Bounding Box on its page before preview/publication, unless staff deletes it. Redacted view generation is available immediately after successful detection when every included candidate has safe geometry. Keep the original intact, remove underlying redacted PDF text, and strip redacted values from reader-facing text, metadata, and search. Every document still requires explicit final human review before publication.
+- **Why:** The owner wants the anonymized view available by default, with staff removing false positives instead of approving each candidate individually.
+- **Evidence:** Owner approval on 2026-11-27 of the implicit-inclusion/delete-to-remove proposal; [DS-011 implicit redaction plan](../plans/p22-ds011-implicit-redaction-inclusion.md).
+- **Source:** user · confidence high
+
+## D-048 · Discard PII detections without safe geometry
+- **Status:** approved
+- **Date:** 2026-11-27
+- **Rule:** Keep the approved PII detection, checksum, context, and confidence rules. Candidates with safe page geometry are included in the canonical Redaction state by default, independent of confidence or legacy review disposition; staff may remove and undo them with revision guards. Automatically discard a candidate that lacks safe geometry: do not show it as an applied Redaction, require a manual zone, include it in the visual PDF, block preview/final review/publication, or remove its value from reader-facing text, metadata, or search. A true sensitive value in a discarded detection may remain visible in the published PDF and searchable to `cititor`. Preserve the original, validate geometry for included candidates, and require explicit final human review and a current redacted PDF before publication.
+- **Why:** The owner rejected manual zone marking for detections without a certain location and chose to discard those detections automatically.
+- **Evidence:** Owner confirmation of the proposed C-011/D-048 change on 2026-11-27; [DS-011 geometryless-candidate plan](../plans/p22-ds011-geometryless-candidate-discard.md).
+- **Source:** user · confidence high
+- **Confirmed:** 2026-11-27
 
 ## D-023 · Archive browsing, Folder Permissions, and search
 - **Status:** superseded-by D-033

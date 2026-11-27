@@ -52,21 +52,6 @@ final class DocumentDraftOcrReviewTest extends TestCase
         self::assertStringNotContainsString('1960523123456', DB::table('draft_access_events')->where('draft_id', $draft->id)->get()->toJson());
     }
 
-    public function test_review_requires_current_revisions_and_persists_candidate_decisions(): void
-    {
-        $draft = $this->readyDraft();
-        $editor = $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk()->json();
-        $candidate = $editor['candidates'][0];
-        $this->patchJson('/api/drafts/'.$draft->id.'/editor/pii-review', [
-            'ocr_revision' => 2, 'detection_revision' => $editor['detection_revision'],
-            'decisions' => [['id' => $candidate['id'], 'review_status' => 'accepted']],
-        ])->assertStatus(409);
-        $this->patchJson('/api/drafts/'.$draft->id.'/editor/pii-review', [
-            'ocr_revision' => 1, 'detection_revision' => $editor['detection_revision'],
-            'decisions' => [['id' => $candidate['id'], 'review_status' => 'accepted']],
-        ])->assertOk()->assertJsonPath('candidates.0.review_status', 'accepted');
-    }
-
     public function test_split_candidate_text_requires_manual_location_review_and_has_no_boxes(): void
     {
         $draft = $this->readyDraft();
@@ -140,9 +125,8 @@ final class DocumentDraftOcrReviewTest extends TestCase
 
         $editor = $this->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk()
             ->assertJsonPath('detection_status', 'failed')->assertJsonCount(0, 'candidates');
-        $this->patchJson('/api/drafts/'.$draft->id.'/editor/pii-review', [
-            'ocr_revision' => 2, 'detection_revision' => 0,
-            'decisions' => [['id' => (string) Str::uuid(), 'review_status' => 'accepted']],
+        $this->patchJson('/api/drafts/'.$draft->id.'/editor/redaction-marks', [
+            'ocr_revision' => 2, 'detection_revision' => 1, 'marks' => [],
         ])->assertStatus(409);
         self::assertSame('CNP 1960523123456 corectat', $editor->json('pages.0.corrected_text'));
     }
@@ -290,20 +274,62 @@ final class DocumentDraftOcrReviewTest extends TestCase
         self::assertDatabaseHas('draft_access_events', ['draft_id' => $draft->id, 'event' => 'redaction_pdf_generated']);
     }
 
-    public function test_accepted_automatic_region_can_generate_preview_without_manual_marks(): void
+    public function test_low_confidence_review_candidate_is_included_in_preview_without_manual_marks_when_geometry_is_reliable(): void
     {
         Storage::fake('documents');
         Config::set('filesystems.default_document_disk', 'documents');
         Storage::disk('documents')->put('private/source.pdf', file_get_contents(base_path('tests/Fixtures/rendering/mark.pdf')));
         $draft = $this->readyDraft();
+        $candidateId = (string) Str::uuid();
+        $draft->pii_candidates = [[
+            'id' => $candidateId, 'category' => 'cnp', 'disposition' => 'review', 'confidence' => 55,
+            'page' => 1, 'location_status' => 'reliable', 'bounding_boxes' => [['left' => 22, 'top' => 1, 'width' => 50, 'height' => 10]],
+            'corrected_text_span' => ['start' => 4, 'length' => 13], 'review_status' => 'pending',
+        ]];
+        $draft->ocr_revision = 1; $draft->detection_revision = 1; $draft->detection_status = 'ready'; $draft->save();
         $url = '/api/drafts/'.$draft->id.'/editor';
-        $editor = $this->staff()->getJson($url)->assertOk();
-        $this->patchJson($url.'/pii-review', [
-            'ocr_revision' => 1, 'detection_revision' => 1,
-            'decisions' => [['id' => $editor->json('candidates.0.id'), 'review_status' => 'accepted']],
-        ])->assertOk();
+        $this->staff()->getJson($url)->assertOk()->assertJsonPath('candidates.0.review_status', 'pending');
         $this->postJson($url.'/redaction-preview')->assertOk();
         $this->get($url.'/redaction-preview')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        self::assertNotNull($draft->fresh()->redacted_pdf_storage_key);
+    }
+
+    public function test_automatic_redaction_removal_and_undo_are_saved_with_revision_guards(): void
+    {
+        $draft = $this->readyDraft();
+        $candidateId = (string) Str::uuid();
+        $draft->pii_candidates = [[
+            'id' => $candidateId, 'category' => 'cnp', 'disposition' => 'redact', 'confidence' => 99,
+            'page' => 1, 'location_status' => 'reliable', 'bounding_boxes' => [['left' => 22, 'top' => 1, 'width' => 50, 'height' => 10]],
+            'corrected_text_span' => ['start' => 4, 'length' => 13], 'review_status' => 'pending',
+        ]];
+        $draft->ocr_revision = 1; $draft->detection_revision = 1; $draft->detection_status = 'ready'; $draft->save();
+        $url = '/api/drafts/'.$draft->id.'/editor/redaction-marks';
+        $payload = ['ocr_revision' => 1, 'detection_revision' => 1, 'marks' => [], 'excluded_candidate_ids' => [$candidateId]];
+        $this->staff()->patchJson($url, $payload)->assertOk()->assertJsonPath('excluded_candidate_ids.0', $candidateId);
+        self::assertSame([$candidateId], $draft->fresh()->redaction_excluded_candidate_ids);
+        $this->patchJson($url, [...$payload, 'excluded_candidate_ids' => []])->assertOk()->assertJsonPath('excluded_candidate_ids', []);
+        self::assertSame([], $draft->fresh()->redaction_excluded_candidate_ids);
+        $this->patchJson($url, [...$payload, 'ocr_revision' => 2])->assertStatus(409);
+    }
+
+    public function test_detection_without_safe_geometry_is_omitted_and_does_not_block_preview(): void
+    {
+        Storage::fake('documents');
+        Config::set('filesystems.default_document_disk', 'documents');
+        Storage::disk('documents')->put('private/source.pdf', file_get_contents(base_path('tests/Fixtures/rendering/mark.pdf')));
+        $draft = $this->readyDraft();
+        $candidateId = (string) Str::uuid();
+        $draft->pii_candidates = [[
+            'id' => $candidateId, 'category' => 'name', 'disposition' => 'review', 'confidence' => 99,
+            'page' => 1, 'location_status' => 'manual_review_required', 'bounding_boxes' => [],
+            'corrected_text_span' => ['start' => 4, 'length' => 13], 'review_status' => 'pending',
+        ]];
+        $draft->ocr_revision = 1; $draft->detection_revision = 1; $draft->detection_status = 'ready'; $draft->save();
+        $this->staff()->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk()->assertJsonPath('candidates.0.review_status', 'pending');
+        $this->assertSame([], (new \App\Services\RedactionState)->includedCandidates($draft->pii_candidates, []));
+        $this->postJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk();
+        self::assertNotNull($draft->fresh()->redacted_pdf_storage_key);
     }
 
     public function test_corrected_pii_flows_through_acceptance_pdf_preview_and_reader_projection(): void
@@ -332,11 +358,6 @@ final class DocumentDraftOcrReviewTest extends TestCase
                     ['start' => 16, 'deleted' => '0', 'inserted' => '6'],
                 ]]],
             ])->assertOk()->assertJsonPath('candidates.0.location_status', 'reliable');
-            $this->patchJson($url.'/pii-review', [
-                'ocr_revision' => $corrected->json('ocr_revision'),
-                'detection_revision' => $corrected->json('detection_revision'),
-                'decisions' => [['id' => $corrected->json('candidates.0.id'), 'review_status' => 'accepted']],
-            ])->assertOk();
             $this->postJson($url.'/redaction-preview')->assertOk();
             $this->get($url.'/redaction-preview')->assertOk()->assertHeader('Content-Type', 'application/pdf');
 

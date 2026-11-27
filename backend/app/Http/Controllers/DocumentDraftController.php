@@ -306,6 +306,7 @@ final class DocumentDraftController
             $record->review_snapshot = null;
             $record->pii_candidates = [];
             $record->redaction_marks = null;
+            $record->redaction_excluded_candidate_ids = [];
             $record->redacted_pdf_storage_key = null;
             $record->redaction_ocr_revision = null;
             $record->redaction_detection_revision = null;
@@ -349,46 +350,6 @@ final class DocumentDraftController
         return response()->json($this->editorPayload($record, $pages));
     }
 
-    public function reviewEditorPii(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
-    {
-        $record = $this->editorDraft($draft);
-        if ($record instanceof JsonResponse) return $record;
-        $validator = Validator::make($request->all(), [
-            'ocr_revision' => 'required|integer|min:1',
-            'detection_revision' => 'required|integer|min:0',
-            'decisions' => 'required|array|min:1',
-            'decisions.*.id' => 'required|uuid|distinct',
-            'decisions.*.review_status' => 'required|in:accepted,rejected',
-        ]);
-        if ($validator->fails()) return response()->json(['eroare' => 'Deciziile de revizuire nu sunt valide.'], 422);
-        if ($record->detection_status !== 'ready'
-            || (int) $request->input('ocr_revision') !== (int) $record->ocr_revision
-            || (int) $request->input('detection_revision') !== (int) $record->detection_revision) {
-            return response()->json(['eroare' => 'Rezultatele de detectare s-au schimbat. Reîncărcați editorul înainte de revizuire.'], 409);
-        }
-        [$candidates, $changed] = DB::transaction(function () use ($draft, $request, $audit, $validator): array {
-            $locked = DocumentDraft::query()->whereKey($draft)->lockForUpdate()->first();
-            if ($locked === null || $locked->detection_status !== 'ready'
-                || (int) $request->input('ocr_revision') !== (int) $locked->ocr_revision
-                || (int) $request->input('detection_revision') !== (int) $locked->detection_revision) return [[], false];
-            $candidates = $locked->pii_candidates ?? [];
-            $byId = [];
-            foreach ($candidates as $index => $candidate) $byId[$candidate['id']] = $index;
-            foreach ($validator->validated()['decisions'] as $decision) {
-                if (!isset($byId[$decision['id']])) return [[], false];
-                $candidates[$byId[$decision['id']]]['review_status'] = $decision['review_status'];
-            }
-            $locked->pii_candidates = $candidates;
-            $locked->redacted_pdf_storage_key = null;
-            $locked->review_snapshot = null;
-            $locked->save();
-            $audit->record($request, $locked, 'pii_review_updated');
-            return [$candidates, true];
-        });
-        if (!$changed) return response()->json(['eroare' => 'Rezultatele de detectare s-au schimbat. Reîncărcați editorul înainte de revizuire.'], 409);
-        return response()->json(['candidates' => $candidates]);
-    }
-
     public function saveRedactionMarks(Request $request, string $draft, DraftAccessLogger $audit): JsonResponse
     {
         $record = $this->editorDraft($draft);
@@ -396,6 +357,7 @@ final class DocumentDraftController
         $validator = Validator::make($request->all(), [
             'ocr_revision' => 'required|integer|min:1', 'detection_revision' => 'required|integer|min:1',
             'marks' => 'present|array|max:500', 'marks.*.page' => 'required|integer|min:1',
+            'excluded_candidate_ids' => 'sometimes|array|max:500', 'excluded_candidate_ids.*' => 'required|uuid|distinct',
             'marks.*.box.left' => 'required|integer|min:0', 'marks.*.box.top' => 'required|integer|min:0',
             'marks.*.box.width' => 'required|integer|min:1', 'marks.*.box.height' => 'required|integer|min:1',
         ]);
@@ -411,7 +373,13 @@ final class DocumentDraftController
                 $page = $pages->get($mark['page']); $box = $mark['box'];
                 if (!$page || $box['left'] + $box['width'] > $page->width || $box['top'] + $box['height'] > $page->height) return [false, false];
             }
+            $redactionState = new \App\Services\RedactionState;
+            $candidates = collect($locked->pii_candidates ?? [])->keyBy('id');
+            foreach ($values['excluded_candidate_ids'] ?? [] as $candidateId) {
+                if (!$candidates->has($candidateId)) return [false, false];
+            }
             $locked->redaction_marks = $values['marks'];
+            $locked->redaction_excluded_candidate_ids = array_values($values['excluded_candidate_ids'] ?? []);
             $locked->redaction_ocr_revision = $locked->ocr_revision;
             $locked->redaction_detection_revision = $locked->detection_revision;
             $locked->redacted_pdf_storage_key = null;
@@ -422,7 +390,7 @@ final class DocumentDraftController
         });
         if ($stale) return response()->json(['eroare' => 'Revizuirea s-a schimbat. Reîncărcați editorul.'], 409);
         if (!$saved) return response()->json(['eroare' => 'Un marcaj depășește pagina selectată.'], 422);
-        return response()->json(['marks' => $values['marks']]);
+        return response()->json(['marks' => $values['marks'], 'excluded_candidate_ids' => $values['excluded_candidate_ids'] ?? []]);
     }
 
     public function generateRedaction(Request $request, string $draft, DocumentStorageService $storage, DraftAccessLogger $audit): JsonResponse
@@ -431,29 +399,23 @@ final class DocumentDraftController
         if (!$record) return response()->json(['eroare' => 'Ciorna solicitată nu a fost găsită.'], 404);
         if ($record->status !== 'review_ready' || $record->detection_status !== 'ready'
             || (int) $record->detection_revision !== (int) $record->ocr_revision
-            || (!empty($record->redaction_marks) && (
+            || ((!empty($record->redaction_marks) || !empty($record->redaction_excluded_candidate_ids)) && (
                 (int) $record->ocr_revision !== (int) $record->redaction_ocr_revision
                 || (int) $record->detection_revision !== (int) $record->redaction_detection_revision
             ))) {
             return response()->json(['eroare' => 'Revizuirea anonimizării este incompletă sau neactualizată. Reîncărcați editorul.'], 409);
         }
         $boxes = [];
-        $manualPages = array_fill_keys(array_map(static fn (array $mark): int => (int) $mark['page'], $record->redaction_marks ?? []), true);
-        foreach ($record->pii_candidates ?? [] as $candidate) {
-            if (($candidate['review_status'] ?? null) !== 'accepted') continue;
-            if (($candidate['location_status'] ?? null) !== 'reliable' || empty($candidate['bounding_boxes'])) {
-                if (!isset($manualPages[(int) ($candidate['page'] ?? 0)])) return response()->json(['eroare' => 'O potrivire acceptată nu are un marcaj manual pe pagina sa. Adăugați un marcaj manual.'], 422);
+        $excluded = $record->redaction_excluded_candidate_ids ?? [];
+        $redactionState = new \App\Services\RedactionState;
+        foreach ($redactionState->includedCandidates($record->pii_candidates ?? [], $excluded) as $candidate) {
+            if ($redactionState->isEligibleAutomatic($candidate)) {
+                foreach ($candidate['bounding_boxes'] as $box) $boxes[$candidate['page']][] = $box;
                 continue;
             }
             foreach ($candidate['bounding_boxes'] as $box) $boxes[$candidate['page']][] = $box;
         }
         foreach ($record->redaction_marks ?? [] as $mark) $boxes[$mark['page']][] = $mark['box'];
-        foreach ($record->pii_candidates ?? [] as $candidate) {
-            if (!in_array($candidate['review_status'] ?? null, ['accepted', 'rejected'], true)) {
-                return response()->json(['eroare' => 'Revizuiți fiecare rezultat de detectare înainte de generarea PDF-ului.'], 422);
-            }
-        }
-
         $sourceKey = match ($record->source_format) {
             'docx' => $record->derived_pdf_storage_key,
             'pdf' => ($record->original_storage_keys[0] ?? null),
@@ -488,6 +450,7 @@ final class DocumentDraftController
                     || (int) $current->ocr_revision !== (int) $record->ocr_revision
                     || (int) $current->detection_revision !== (int) $record->detection_revision
                     || $current->redaction_marks !== $record->redaction_marks
+                    || $current->redaction_excluded_candidate_ids !== $record->redaction_excluded_candidate_ids
                     || $current->pii_candidates !== $record->pii_candidates) return false;
                 $current->redacted_pdf_storage_key = $key;
                 $current->redaction_ocr_revision = $current->ocr_revision;
@@ -589,6 +552,7 @@ final class DocumentDraftController
             'ocr_revision' => (int) $record->ocr_revision,
             'detection_status' => $record->detection_status,
             'detection_revision' => (int) $record->detection_revision,
+            'automatic_redaction_confidence_cutoff' => (float) config('services.ocr.pii_confidence_cutoff', 80),
             'pages' => $pages->map(fn ($page) => [
                 'page' => (int) $page->page, 'width' => (int) $page->width, 'height' => (int) $page->height,
                 'source_text' => $page->text, 'corrected_text' => $corrected->get((int) $page->page)['text'] ?? $page->text,
@@ -596,6 +560,7 @@ final class DocumentDraftController
             ])->values()->all(),
             'candidates' => $candidates,
             'manual_marks' => $record->redaction_marks ?? [],
+            'excluded_candidate_ids' => $record->redaction_excluded_candidate_ids ?? [],
         ];
     }
 

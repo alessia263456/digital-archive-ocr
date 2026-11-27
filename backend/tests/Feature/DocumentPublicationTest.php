@@ -67,6 +67,47 @@ final class DocumentPublicationTest extends TestCase
         self::assertSame($this->source, Storage::disk('documents')->get('drafts/initial.pdf'));
     }
 
+    public function test_publication_succeeds_when_reader_search_must_omit_an_unaligned_ocr_page(): void
+    {
+        $draft = $this->readyDraft($this->source."\n% unaligned-ocr", 'drafts/unaligned-ocr.pdf', 'unaligned-ocr');
+        DB::table('ocr_pages')->where('extraction', $draft->ocr_extraction_id)->update([
+            'text' => 'CNP John Doe other text',
+            'words' => json_encode([
+                ['text' => 'CNP', 'left' => 1, 'top' => 1, 'width' => 10, 'height' => 10],
+                ['text' => 'John', 'left' => 12, 'top' => 1, 'width' => 20, 'height' => 10],
+                ['text' => 'Doe', 'left' => 34, 'top' => 1, 'width' => 15, 'height' => 10],
+                ['text' => 'other', 'left' => 50, 'top' => 1, 'width' => 20, 'height' => 10],
+                ['text' => 'text', 'left' => 72, 'top' => 1, 'width' => 20, 'height' => 10],
+            ], JSON_THROW_ON_ERROR),
+        ]);
+        $draft->corrected_ocr = [[
+            'page' => 1, 'text' => 'CNP John Doe revised text',
+            'base_text' => 'CNP John Doe revised text', 'operations' => [],
+        ]];
+        $candidateId = (string) Str::uuid();
+        $draft->pii_candidates = [[
+            'id' => $candidateId, 'category' => 'name', 'disposition' => 'redact',
+            'confidence' => 99, 'page' => 1, 'location_status' => 'reliable',
+            'bounding_boxes' => [['left' => 12, 'top' => 1, 'width' => 37, 'height' => 10]],
+            'corrected_text_span' => ['start' => 4, 'length' => 8],
+        ]];
+        $draft->detection_status = 'ready';
+        $draft->ocr_revision = 1;
+        $draft->detection_revision = 1;
+        $draft->save();
+
+        $snapshot = $this->prepareReview($draft);
+        self::assertSame($candidateId, $draft->fresh()->pii_candidates[0]['id']);
+        $published = $this->withHeader('Idempotency-Key', 'publish-unaligned-reader-ocr')->postJson('/api/drafts/'.$draft->id.'/publish', [
+            'review_snapshot' => $snapshot,
+        ])->assertCreated();
+
+        $indexed = DB::table('archive_search_documents')->where('document_id', $published->json('document_id'))->first();
+        self::assertStringNotContainsString('John Doe', $indexed->reader_text);
+        self::assertStringNotContainsString('revised', $indexed->reader_text);
+        self::assertStringContainsString('John Doe', $indexed->staff_text);
+    }
+
     public function test_exact_duplicate_blocks_even_when_separate_document_is_requested(): void
     {
         $first = $this->readyDraft($this->source, 'drafts/first.pdf');
@@ -169,7 +210,8 @@ final class DocumentPublicationTest extends TestCase
         $piiSnapshot = $this->prepareReview($piiDraft);
         $piiDraft->pii_candidates = [[
             'id' => 'candidate-1', 'category' => 'persoană', 'review_status' => 'rejected',
-            'location_status' => 'reliable', 'bounding_boxes' => [], 'page' => 1,
+            'location_status' => 'reliable', 'bounding_boxes' => [['left' => 1, 'top' => 1, 'width' => 1, 'height' => 1]],
+            'page' => 1, 'corrected_text_span' => ['start' => 0, 'length' => 1],
         ]];
         $piiDraft->save();
         $this->withHeader('Idempotency-Key', 'publish-stale-pii')->postJson('/api/drafts/'.$piiDraft->id.'/publish', [
@@ -178,6 +220,58 @@ final class DocumentPublicationTest extends TestCase
 
         self::assertDatabaseCount('documents', 0);
         self::assertDatabaseCount('document_versions', 0);
+    }
+
+    public function test_automatic_redaction_exclusion_change_invalidates_final_review_and_publication(): void
+    {
+        $draft = $this->readyDraft($this->source."\n% automatic-redaction", 'drafts/automatic-redaction.pdf', 'automatic-redaction');
+        $snapshot = $this->prepareReview($draft);
+        $draft = $draft->fresh();
+        $draft->redaction_excluded_candidate_ids = [(string) \Illuminate\Support\Str::uuid()];
+        $draft->save();
+        $this->withHeader('Idempotency-Key', 'publish-stale-redaction')->postJson('/api/drafts/'.$draft->id.'/publish', [
+            'review_snapshot' => $snapshot,
+        ])->assertStatus(409)->assertJsonPath('cod', 'review_stale');
+        self::assertDatabaseCount('documents', 0);
+        self::assertDatabaseCount('document_versions', 0);
+    }
+
+    public function test_final_review_and_publication_omit_a_candidate_without_safe_geometry(): void
+    {
+        $draft = $this->readyDraft($this->source."\n% missing-location", 'drafts/missing-location.pdf', 'missing-location');
+        $editor = $this->getJson('/api/drafts/'.$draft->id.'/editor')->assertOk();
+        $metadata = $this->patchJson('/api/drafts/'.$draft->id.'/metadata', [
+            'metadata' => [
+                'act_date' => '2026-11-20', 'act_number' => $this->draftActNumbers[$draft->id],
+                'physical_dossier_id' => $this->dossier->id,
+            ],
+            'nomenclature_entry_id' => $this->classification->id,
+        ])->assertOk();
+        $this->postJson('/api/drafts/'.$draft->id.'/metadata/confirm', [
+            'metadata_revision' => $metadata->json('metadata_revision'),
+            'ocr_revision' => $metadata->json('ocr_revision'),
+        ])->assertOk();
+
+        $draft->pii_candidates = [[
+            'id' => (string) Str::uuid(), 'category' => 'name', 'disposition' => 'review', 'confidence' => 42,
+            'page' => 1, 'location_status' => 'manual_review_required', 'bounding_boxes' => [],
+            'corrected_text_span' => ['start' => 0, 'length' => 8], 'review_status' => 'pending',
+        ]];
+        $draft->redaction_ocr_revision = 1;
+        $draft->redaction_detection_revision = 1;
+        $draft->save();
+
+        $this->postJson('/api/drafts/'.$draft->id.'/editor/redaction-preview')->assertOk();
+        $review = $this->postJson('/api/drafts/'.$draft->id.'/review/confirm', [
+            'metadata_revision' => $metadata->json('metadata_revision'),
+            'ocr_revision' => $editor->json('ocr_revision'),
+            'detection_revision' => $editor->json('detection_revision'),
+            'redaction_ocr_revision' => $editor->json('ocr_revision'),
+            'redaction_detection_revision' => $editor->json('detection_revision'),
+        ])->assertOk()->assertJsonPath('review_confirmed', true);
+        $this->withHeader('Idempotency-Key', 'publish-unlocated-candidate')->postJson('/api/drafts/'.$draft->id.'/publish', [
+            'review_snapshot' => $review->json('review_snapshot'),
+        ])->assertCreated();
     }
 
     public function test_failed_database_publication_removes_staged_objects_and_all_rows(): void

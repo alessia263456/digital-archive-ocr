@@ -4,7 +4,7 @@ namespace App\Services;
 
 final class ReaderRedactionProjection
 {
-    public function project(array $pages, array $candidates, array $manualMarks, array $metadata): array
+    public function project(array $pages, array $candidates, array $manualMarks, array $metadata, array $excludedCandidateIds = []): array
     {
         $byPage = [];
         foreach ($pages as $page) {
@@ -18,20 +18,23 @@ final class ReaderRedactionProjection
         $regions = [];
         $phrases = [];
         $candidateSpans = [];
-        foreach ($candidates as $candidate) {
-            if (($candidate['review_status'] ?? null) !== 'accepted') continue;
-            if (($candidate['location_status'] ?? null) !== 'reliable' || !is_array($candidate['bounding_boxes'] ?? null) || $candidate['bounding_boxes'] === []
-                || !isset($candidate['page'], $candidate['corrected_text_span']['start'], $candidate['corrected_text_span']['length'])) {
-                throw new \RuntimeException('O anonimizare acceptată nu are o localizare sigură.');
+        $manualPages = array_fill_keys(array_map(static fn (array $mark): int => (int) ($mark['page'] ?? 0), $manualMarks), true);
+        foreach ((new RedactionState)->includedCandidates($candidates, $excludedCandidateIds) as $candidate) {
+            if (!isset($candidate['page'], $candidate['corrected_text_span']['start'], $candidate['corrected_text_span']['length'])) {
+                throw new \RuntimeException('O anonimizare inclusă nu are un pasaj OCR valid.');
             }
             $pageNumber = (int) $candidate['page'];
-            $page = $byPage[$pageNumber] ?? throw new \RuntimeException('Lipsește pagina unei anonimizări acceptate.');
+            $page = $byPage[$pageNumber] ?? throw new \RuntimeException('Lipsește pagina unei anonimizări incluse.');
             $span = $candidate['corrected_text_span'];
             $start = $this->utf16ByteOffset((string) $page['text'], (int) $span['start']);
             $end = $this->utf16ByteOffset((string) $page['text'], (int) ($span['start'] + $span['length']));
             if ($end <= $start) throw new \RuntimeException('Pasajul anonimizat nu este valid.');
             $phrases[] = substr((string) $page['text'], $start, $end - $start);
             $candidateSpans[$pageNumber][] = [$start, $end];
+            if (($candidate['location_status'] ?? null) !== 'reliable' || !is_array($candidate['bounding_boxes'] ?? null) || $candidate['bounding_boxes'] === []) {
+                if (!isset($manualPages[$pageNumber])) throw new \RuntimeException('O anonimizare inclusă necesită marcaj manual.');
+                continue;
+            }
             foreach ($candidate['bounding_boxes'] as $box) $regions[$pageNumber][] = $this->validatedBox($box, $page);
         }
         foreach ($manualMarks as $mark) {
@@ -75,7 +78,12 @@ final class ReaderRedactionProjection
                 foreach ($candidateSpans[$pageNumber] ?? [] as [$start, $end]) {
                     if ($token['start'] < $end && $token['end'] > $start) $inCandidate = true;
                 }
-                if ($mapped === [] && !$inCandidate) throw new \RuntimeException('Textul OCR nu se aliniază sigur cu geometria.');
+                if ($mapped === [] && !$inCandidate) {
+                    // Keep publication safe when corrected OCR has unassociated tokens:
+                    // omit this page from reader search instead of indexing uncertain text.
+                    $byPage[$pageNumber]['text'] = '';
+                    continue 2;
+                }
                 foreach ($mapped as $sourceIndex) {
                     if (isset($redactedWords[$sourceIndex])) $inCandidate = true;
                 }

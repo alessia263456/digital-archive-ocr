@@ -26,8 +26,8 @@ function deferred() {
   return { promise, resolve };
 }
 
-async function openEditor(page, state = editorState, editorStatus = 200, pending = {}) {
-  await page.route('**/api/user', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: 'arhivar', role: 'arhivar' }) }));
+async function openEditor(page, state = editorState, editorStatus = 200, pending = {}, role = 'arhivar') {
+  await page.route('**/api/user', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: role, role }) }));
   await page.route('**/api/drafts/queue', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ review: [draft], quarantine: [] }) }));
   await page.route('**/api/drafts/editor-1/editor', async (route) => {
     pending.editorStarted?.resolve();
@@ -122,28 +122,16 @@ test('shows draft and OCR saving feedback while the correction request is pendin
   await page.getByRole('button', { name: 'Salvează ciorna' }).click();
   await saveStarted.promise;
   await expect(page.getByRole('button', { name: 'Se salvează ciorna…' })).toBeDisabled();
-  await expect(page.getByRole('status').filter({ hasText: 'Se salvează textul OCR și se detectează din nou datele personale' })).toBeVisible();
+  await expect(page.locator('.editor-toast-status').filter({ hasText: 'Se salvează ciorna' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Se salvează…' })).toBeDisabled();
   saveRequest.resolve();
   await expect(page.getByRole('status').filter({ hasText: 'Ciorna a fost salvată' })).toBeVisible();
 });
 
-test('shows pending feedback and blocks duplicate PII and redaction preview requests', async ({ page }) => {
+test('blocks duplicate redaction preview requests while generation is pending', async ({ page }) => {
   const candidate = { ...editorState.candidates[0], bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }], location_status: 'reliable' };
   await openEditor(page, { ...editorState, candidates: [candidate] });
   await showTab(page, 'Anonimizare');
-
-  const piiRequest = deferred(), piiStarted = deferred();
-  await page.route('**/api/drafts/editor-1/editor/pii-review', async (route) => {
-    if (route.request().method() !== 'PATCH') return route.fallback();
-    piiStarted.resolve(); await piiRequest.promise;
-    await route.fulfill({ json: { candidates: [{ ...candidate, review_status: 'accepted' }] } });
-  });
-  await page.getByRole('button', { name: 'Acceptă potrivirea' }).click();
-  await piiStarted.promise;
-  await expect(page.getByRole('button', { name: 'Se salvează…' }).first()).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Se salvează…' }).last()).toBeDisabled();
-  piiRequest.resolve();
 
   const previewRequest = deferred(), previewStarted = deferred();
   await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
@@ -157,6 +145,15 @@ test('shows pending feedback and blocks duplicate PII and redaction preview requ
   await expect(page.getByRole('status').filter({ hasText: 'Se generează previzualizarea' })).toBeVisible();
   await expect(preview).toBeDisabled();
   previewRequest.resolve();
+  const previewToast = page.locator('.editor-toast-status').filter({ hasText: 'Previzualizarea anonimizării a fost generată' });
+  await expect(previewToast).toBeVisible();
+  await expect(page.locator('.editor-error-toasts')).toHaveCSS('position', 'fixed');
+  const anonymized = page.getByRole('button', { name: 'Anonimizat' });
+  await expect(anonymized).toBeEnabled();
+  await anonymized.click();
+  await expect(page.getByTitle('Document anonimizat')).toBeVisible();
+  await page.getByRole('button', { name: 'Original' }).click();
+  await expect(page.getByLabel('Pagini documentului')).toBeVisible();
 });
 
 test('selects one workflow tab at a time and keeps the continuous viewer available', async ({ page }) => {
@@ -245,7 +242,6 @@ test('captures metadata in the approved order, selects by printed dossier number
   await expect(page.getByLabel('Număr de inventar')).toHaveValue('29/2026');
   await page.getByRole('button', { name: 'Adaugă etichetă' }).click();
   await page.getByLabel('Etichetă 1').selectOption('Contract');
-  await page.getByRole('button', { name: 'Continuă' }).click();
   await expect(page.getByRole('checkbox', { name: 'Confirmă metadatele' })).toBeVisible();
   await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
   await expect.poll(() => confirmationBody?.metadata_revision).toBe(2);
@@ -257,11 +253,85 @@ test('captures metadata in the approved order, selects by printed dossier number
   expect(metadataBody.metadata.act_number).toBe('41');
 });
 
+test('admin creates a classified physical dossier and the Editor selects it', async ({ page }) => {
+  await openEditor(page, editorState, 200, {}, 'admin');
+  let creationRequest;
+  await page.route('**/api/physical-dossiers*', async (route) => {
+    if (route.request().method() === 'POST') {
+      creationRequest = route.request().postDataJSON();
+      return route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ dossier: { id: 202, physical_dossier_number: '30/2026', inventory_number: 'INV-30/2026', archival_indicator: classification.archival_indicator, retention_time: classification.retention_term, description: 'Dosar creat din Editor' } }),
+      });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ dossiers: [] }) });
+  });
+  await page.getByLabel('Tip document').selectOption('Contract');
+  await page.getByLabel('Subtip').selectOption(classification.subtype);
+  await page.getByLabel('Context de arhivare').selectOption(classification.storage_context);
+  await page.getByRole('button', { name: 'Creează dosarul fizic' }).click();
+  await page.getByLabel('Numărul dosarului fizic').fill('30/2026');
+  await page.getByLabel('Număr inventar dosar').fill('INV-30/2026');
+  await page.getByLabel('Descriere scurtă (opțional)').fill('Dosar creat din Editor');
+  await page.getByRole('dialog').getByRole('button', { name: 'Creează dosarul' }).click();
+  await expect.poll(() => creationRequest).toEqual({
+    nomenclature_entry_id: classification.id,
+    physical_dossier_number: '30/2026',
+    inventory_number: 'INV-30/2026',
+    description: 'Dosar creat din Editor',
+  });
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByLabel('Dosarul fizic')).toHaveValue('202');
+});
+
+for (const role of ['admin', 'arhivar']) {
+  test(`${role} keeps a newly created dossier when the earlier lookup finishes late`, async ({ page, colorScheme }, testInfo) => {
+    const lookup = deferred(), lookupStarted = deferred();
+    let creationRequest;
+    await openEditor(page, editorState, 200, {}, role);
+    await page.route('**/api/physical-dossiers*', async (route) => {
+      if (route.request().method() === 'POST') {
+        creationRequest = route.request().postDataJSON();
+        return route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ dossier: { id: 202, physical_dossier_number: '30/2026', inventory_number: 'INV-30/2026', archival_indicator: classification.archival_indicator, retention_time: classification.retention_term, description: null } }),
+        });
+      }
+      lookupStarted.resolve();
+      await lookup.promise;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ dossiers: [] }) });
+    });
+    await page.getByLabel('Tip document').selectOption('Contract');
+    await page.getByLabel('Subtip').selectOption(classification.subtype);
+    await page.getByLabel('Context de arhivare').selectOption(classification.storage_context);
+    await lookupStarted.promise;
+    const isDesktop = testInfo.project.name.startsWith('desktop');
+    const viewport = isDesktop ? '1600x900' : '320x740';
+    await page.setViewportSize(isDesktop ? { width: 1600, height: 900 } : { width: 320, height: 740 });
+    const createButton = page.getByRole('button', { name: 'Creează dosarul fizic' });
+    await createButton.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `screens/DS-011.dossier-create.${role}.${viewport}.${colorScheme}.png`, scale: 'css', fullPage: true });
+    await createButton.click();
+    await page.getByLabel('Numărul dosarului fizic').fill('30/2026');
+    await page.getByLabel('Număr inventar dosar').fill('INV-30/2026');
+    await page.getByRole('dialog').getByRole('button', { name: 'Creează dosarul' }).click();
+    await expect.poll(() => creationRequest).toBeDefined();
+    await expect(page.getByLabel('Dosarul fizic')).toHaveValue('202');
+    await expect(page.getByLabel('Dosarul fizic').getByRole('option', { name: '30/2026' })).toHaveCount(1);
+    lookup.resolve();
+    await expect(page.getByLabel('Dosarul fizic')).toHaveValue('202');
+    await expect(page.getByLabel('Dosarul fizic').getByRole('option', { name: '30/2026' })).toHaveCount(1);
+  });
+}
+
 test('confirms the current final review and publishes with an idempotency key', async ({ page }) => {
   await openEditor(page, { ...editorState, candidates: [] });
   let finalReviewBody;
   let publicationBody;
   let idempotencyKey;
+  const finalizationCalls = [];
   const publicationRequest = deferred(), publicationStarted = deferred();
   await page.route('**/api/drafts/editor-1/metadata', async (route) => {
     if (route.request().method() === 'PATCH') await route.fulfill({ json: { metadata: { act_date: '2026-11-18', act_number: '41', physical_dossier_id: 101, inventory_number: '29/2026', tags: ['Contract'] }, metadata_confirmed: false, metadata_revision: 2, ocr_revision: 1, classification, retention: { status: 'calculated', first_eligible_date: '2036-01-01' } } });
@@ -269,9 +339,12 @@ test('confirms the current final review and publishes with an idempotency key', 
   });
   await page.route('**/api/drafts/editor-1/metadata/confirm', (route) => route.fulfill({ json: { metadata_confirmed: true, metadata_revision: 2, ocr_revision: 1 } }));
   await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => route.fulfill({ json: { marks: route.request().postDataJSON().marks } }));
-  await page.route('**/api/drafts/editor-1/editor/redaction-preview', (route) => route.request().method() === 'POST'
-    ? route.fulfill({ json: { status: 'ready' } }) : route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }));
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', (route) => {
+    if (route.request().method() === 'POST') { finalizationCalls.push('redaction'); return route.fulfill({ json: { status: 'ready' } }); }
+    return route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
+  });
   await page.route('**/api/drafts/editor-1/review/confirm', async (route) => {
+    finalizationCalls.push('review');
     finalReviewBody = route.request().postDataJSON();
     await route.fulfill({ json: { review_confirmed: true, review_snapshot: '5ac61e6a-3fd5-45d2-890c-c026e01ad67a' } });
   });
@@ -287,15 +360,14 @@ test('confirms the current final review and publishes with an idempotency key', 
   await page.getByLabel('Data actului').fill('2026-11-18');
   await page.getByLabel('Numărul actului').fill('41');
   await page.getByLabel('Dosar fizic').selectOption('101');
-  await page.getByRole('button', { name: 'Continuă' }).click();
   await page.getByRole('checkbox', { name: 'Confirmă metadatele' }).check();
   await showTab(page, 'Anonimizare');
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
-  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  await page.locator('.editor-viewer-toolbar').getByRole('button', { name: 'Marchează o zonă' }).click();
   await canvas.press('Enter'); await canvas.press('ArrowRight'); await canvas.press('ArrowDown'); await canvas.press('Enter');
-  await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
   await showTab(page, 'Verificare finală');
   await page.getByRole('button', { name: 'Confirmă revizuirea finală' }).click();
+  await expect.poll(() => finalizationCalls).toEqual(['redaction', 'review']);
   await page.getByRole('button', { name: 'Aprobă și publică' }).click();
   await publicationStarted.promise;
   await expect(page.getByRole('button', { name: 'Se publică…' })).toBeDisabled();
@@ -306,12 +378,12 @@ test('confirms the current final review and publishes with an idempotency key', 
   expect(idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
 });
 
-test('edits OCR with stale review disabled, saves, and persists a PII decision', async ({ page, colorScheme }, testInfo) => {
+test('edits OCR with stale redaction state disabled and saves fresh detections', async ({ page, colorScheme }, testInfo) => {
   await openEditor(page);
   await showTab(page, 'Corectare OCR');
   const area = page.getByLabel('Corectare OCR · Pagina 1');
   await expect(area).toHaveValue('CNP 1960523123456');
-  await expect(page.getByText('Casete de delimitare')).toBeVisible();
+  await expect(page.getByText('Casete de delimitare')).toHaveCount(0);
   const isDesktop = testInfo.project.name.startsWith('desktop');
   await page.setViewportSize(isDesktop ? { width: 1600, height: 900 } : { width: 320, height: 740 });
   await page.screenshot({ path: `screens/DS-011.${isDesktop ? '1600x900' : '320x740'}.${colorScheme}.png`, scale: 'css' });
@@ -326,9 +398,8 @@ test('edits OCR with stale review disabled, saves, and persists a PII decision',
   }
   await showTab(page, 'Corectare OCR');
   await area.fill('CNP 1960523123456 corectat');
-  await expect(page.getByText('Rezultatele detectării sunt neactualizate.')).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Corectare OCR.*Corecturi nesalvate/ })).toBeVisible();
   await showTab(page, 'Anonimizare');
-  await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toBeDisabled();
   let savedBody;
   await page.route('**/api/drafts/editor-1/editor/ocr', async (route) => {
     savedBody = route.request().postDataJSON();
@@ -338,13 +409,7 @@ test('edits OCR with stale review disabled, saves, and persists a PII decision',
   await page.getByRole('button', { name: 'Salvează corecturile' }).click();
   await expect.poll(() => savedBody?.ocr_revision).toBe(1);
   await showTab(page, 'Anonimizare');
-  await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toBeEnabled();
-  await page.route('**/api/drafts/editor-1/editor/pii-review', async (route) => {
-    const body = route.request().postDataJSON();
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ ...editorState.candidates[0], review_status: body.decisions[0].review_status }] }) });
-  });
-  await page.getByRole('button', { name: 'Acceptă potrivirea' }).click();
-  await expect(page.getByText('Acceptată')).toBeVisible();
+  await expect(page.getByText('Potrivirile cu localizare sigură sunt incluse implicit; cele fără localizare sigură sunt omise automat.')).toBeVisible();
 });
 
 test('shows the empty candidate state', async ({ page }) => {
@@ -356,12 +421,13 @@ test('shows the empty candidate state', async ({ page }) => {
 test('keeps long OCR and many candidate rows usable at the narrow viewport', async ({ page }) => {
   const text = 'Text OCR sintetic pentru verificarea unui pasaj foarte lung. '.repeat(24);
   const candidates = Array.from({ length: 12 }, (_, index) => ({
-    ...editorState.candidates[0], id: `candidate-${index}`, corrected_text_span: { start: 0, length: 25 },
+    ...editorState.candidates[0], id: `candidate-${index}`, location_status: 'reliable',
+    bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }], corrected_text_span: { start: 0, length: 25 },
   }));
   await openEditor(page, { ...editorState, pages: [{ ...editorState.pages[0], corrected_text: text }], candidates });
   await showTab(page, 'Anonimizare');
   await page.setViewportSize({ width: 320, height: 740 });
-  await expect(page.getByRole('button', { name: 'Acceptă potrivirea' })).toHaveCount(12);
+  await expect(page.getByRole('region', { name: 'Anonimizări aplicate' }).getByRole('listitem')).toHaveCount(12);
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 320);
 });
 
@@ -373,9 +439,15 @@ test('shows an actionable editor load error', async ({ page }) => {
 
 test('draws a revision-bound mark after scrolling, supports undo, and generates a preview', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
+  let pdfRequests = 0;
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() === 'POST') await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ready' }) });
+    else { pdfRequests++; await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }); }
+  });
   await openEditor(page);
+  expect(pdfRequests).toBe(0);
   await page.getByRole('button', { name: 'Mărește' }).click();
-  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  await page.locator('.editor-viewer-toolbar').getByRole('button', { name: 'Marchează o zonă' }).click();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
   await canvas.scrollIntoViewIfNeeded();
@@ -401,18 +473,107 @@ test('draws a revision-bound mark after scrolling, supports undo, and generates 
   await expect.poll(() => saved?.marks?.length).toBe(1);
   expect(saved.ocr_revision).toBe(1);
   expect(saved.detection_revision).toBe(1);
-  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 1');
-  await page.getByText('Marcaje manuale · 1').click();
-  await page.getByRole('button', { name: 'Elimină marcajul manual 1' }).click();
-  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 0');
-  await page.getByRole('button', { name: 'Anulează eliminarea' }).click();
-  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje 1');
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje aplicate 1');
+  await showTab(page, 'Anonimizare');
+  const appliedList = page.getByRole('region', { name: 'Anonimizări aplicate' });
+  await appliedList.getByRole('button', { name: 'Elimină anonimizarea: Zonă manuală, pagina 1' }).click();
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje aplicate 0');
+  await appliedList.getByRole('button', { name: 'Anulează eliminarea' }).click();
+  await expect(page.locator('.editor-mark-count')).toHaveText('Marcaje aplicate 1');
+  await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
+  await expect.poll(() => pdfRequests).toBe(1);
+  await page.getByRole('button', { name: 'Anonimizat' }).click();
+  await expect(page.getByTitle('Document anonimizat')).toBeVisible();
+});
+
+test('editor errors appear as separate short-lived popups', async ({ page }, testInfo) => {
+  await page.clock.install();
+  let previewRequests = 0;
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() === 'POST') {
+      previewRequests++;
+      await route.fulfill({ status: 422, json: { eroare: 'Previzualizarea nu a putut fi generată.' } });
+    } else await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
+  });
+  const candidate = { ...editorState.candidates[0], disposition: 'redact', location_status: 'reliable', bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }] };
+  await page.route('**/api/drafts/editor-1/editor/redaction-marks', (route) => route.fulfill({ status: 500, json: { eroare: 'Eliminarea nu a putut fi salvată.' } }));
+  await openEditor(page, { ...editorState, candidates: [candidate] });
+  await showTab(page, 'Anonimizare');
+  await page.getByRole('button', { name: /Elimină anonimizarea/ }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Eliminarea nu a putut fi salvată.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Anonimizat' }).click();
+  await expect.poll(() => previewRequests).toBe(1);
+  const firstError = page.getByRole('alert').filter({ hasText: 'Eliminarea nu a putut fi salvată.' });
+  const secondError = page.getByRole('alert').filter({ hasText: 'Previzualizarea nu a putut fi generată.' });
+  await expect(firstError).toBeVisible();
+  await expect(secondError).toBeVisible();
+  await page.screenshot({ path: `screens/DS-011.errors.${testInfo.project.name}.png`, fullPage: true });
+  await page.clock.fastForward(6100);
+  await expect(firstError).toHaveCount(0);
+  await expect(secondError).toHaveCount(0);
+});
+
+test('Anonimizat switches to the PDF after successfully generating it', async ({ page }) => {
+  let pdfRequests = 0;
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() === 'POST') await route.fulfill({ json: { status: 'ready' } });
+    else { pdfRequests++; await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }); }
+  });
+  const candidate = { ...editorState.candidates[0], disposition: 'review', location_status: 'reliable', bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }] };
+  await openEditor(page, { ...editorState, candidates: [candidate] });
+  await page.getByRole('button', { name: 'Anonimizat' }).click();
+  await expect.poll(() => pdfRequests).toBe(1);
+  await expect(page.getByRole('button', { name: 'Anonimizat' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTitle('Document anonimizat')).toBeVisible();
+});
+
+test('includes uncertain detections with safe geometry by default', async ({ page }) => {
+  const uncertain = { ...editorState.candidates[0], review_status: 'pending', location_status: 'reliable', bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }] };
+  let pdfRequests = 0;
   await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
     if (route.request().method() === 'POST') await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ready' }) });
-    else await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
+    else { pdfRequests++; await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }); }
   });
+  await openEditor(page, { ...editorState, candidates: [uncertain] });
+  expect(pdfRequests).toBe(0);
+  await showTab(page, 'Anonimizare');
+  const appliedList = page.getByRole('region', { name: 'Anonimizări aplicate' });
+  await expect(appliedList.getByText('Automată · Pagina 1')).toBeVisible();
+  await expect(appliedList.getByText('1960523123456')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previzualizează anonimizarea' })).toBeEnabled();
   await page.getByRole('button', { name: 'Previzualizează anonimizarea' }).click();
-  await expect(page.getByTitle('Previzualizare PDF anonimizat')).toBeVisible();
+  await expect.poll(() => pdfRequests).toBe(1);
+  await page.getByRole('button', { name: 'Anonimizat' }).click();
+  await expect(page.getByTitle('Document anonimizat')).toBeVisible();
+});
+
+test('omits detections without safe geometry and does not require manual marking', async ({ page }) => {
+  const uncertain = { ...editorState.candidates[0], review_status: 'pending' };
+  let pdfRequests = 0;
+  await page.route('**/api/drafts/editor-1/editor/redaction-preview', async (route) => {
+    if (route.request().method() === 'POST') await route.fulfill({ status: 200, json: { status: 'ready' } });
+    else { pdfRequests++; await route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' }); }
+  });
+  await openEditor(page, { ...editorState, candidates: [uncertain] });
+  await showTab(page, 'Anonimizare');
+  const appliedList = page.getByRole('region', { name: 'Anonimizări aplicate' });
+  await expect(appliedList.getByText('Nu există anonimizări aplicate.')).toBeVisible();
+  await expect(page.getByText('Potrivirile cu localizare sigură sunt incluse implicit; cele fără localizare sigură sunt omise automat.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Marchează pe pagina 1' })).toHaveCount(0);
+  const preview = page.getByRole('button', { name: 'Previzualizează anonimizarea' });
+  await expect(preview).toBeEnabled();
+  await preview.click();
+  await expect.poll(() => pdfRequests).toBe(1);
+  await page.getByRole('button', { name: 'Anonimizat' }).click();
+  await expect(page.getByTitle('Document anonimizat')).toBeVisible();
+});
+
+test('omits geometryless detections even when they are present in the Editor response', async ({ page }) => {
+  await openEditor(page, { ...editorState, candidates: [{ ...editorState.candidates[0], review_status: 'accepted' }] });
+  const preview = page.getByRole('button', { name: 'Previzualizează anonimizarea' });
+  await expect(preview).toBeEnabled();
+  await showTab(page, 'Anonimizare');
+  await expect(page.getByRole('region', { name: 'Anonimizări aplicate' }).getByText('Nu există anonimizări aplicate.')).toBeVisible();
 });
 
 test('draws a mark from the keyboard using page coordinates', async ({ page }) => {
@@ -423,7 +584,7 @@ test('draws a mark from the keyboard using page coordinates', async ({ page }) =
     saved = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ marks: saved.marks }) });
   });
-  await page.getByRole('button', { name: 'Marchează o zonă' }).click();
+  await page.locator('.editor-viewer-toolbar').getByRole('button', { name: 'Marchează o zonă' }).click();
   const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
   await canvas.focus();
   await canvas.press('ArrowRight');
@@ -438,19 +599,24 @@ test('draws a mark from the keyboard using page coordinates', async ({ page }) =
   expect(saved.marks[0].box.height).toBeGreaterThan(0);
 });
 
-test('guides the reviewer to the page missing a manual location', async ({ page }) => {
-  await openEditor(page, { ...editorState, candidates: [{ ...editorState.candidates[0], review_status: 'accepted' }] });
-  const preview = page.getByRole('button', { name: 'Previzualizează anonimizarea' });
-  await expect(preview).toBeDisabled();
-  await page.getByRole('button', { name: 'Marchează pe pagina 1' }).click();
-  const canvas = page.getByRole('application', { name: 'Document original, pagina 1' });
-  await expect(canvas).toBeFocused();
-  await page.route('**/editor/redaction-marks', route => route.fulfill({ json: { marks: route.request().postDataJSON().marks } }));
-  await canvas.press('Enter');
-  await canvas.press('ArrowRight');
-  await canvas.press('ArrowDown');
-  await canvas.press('Enter');
-  await expect(preview).toBeEnabled();
+test('shows eligible automatic redactions by default and persists removal and undo', async ({ page }) => {
+  const automatic = { ...editorState.candidates[0], disposition: 'redact', confidence: 99, location_status: 'reliable', review_status: 'pending', bounding_boxes: [{ left: 22, top: 1, width: 50, height: 10 }] };
+  await openEditor(page, { ...editorState, candidates: [automatic] });
+  await showTab(page, 'Anonimizare');
+  const list = page.getByRole('region', { name: 'Anonimizări aplicate' });
+  await expect(list.getByText('Automată · Pagina 1')).toBeVisible();
+  await expect(list.getByText('1960523123456')).toBeVisible();
+  let saved;
+  await page.route('**/api/drafts/editor-1/editor/redaction-marks', async (route) => {
+    saved = route.request().postDataJSON();
+    await route.fulfill({ json: { marks: saved.marks, excluded_candidate_ids: saved.excluded_candidate_ids } });
+  });
+  await list.getByRole('button', { name: /Elimină anonimizarea/ }).click();
+  await expect.poll(() => saved?.excluded_candidate_ids).toEqual(['candidate-1']);
+  await expect(list.getByText('Nu există anonimizări aplicate.')).toBeVisible();
+  await list.getByRole('button', { name: 'Anulează eliminarea' }).click();
+  await expect.poll(() => saved?.excluded_candidate_ids).toEqual([]);
+  await expect(list.getByText('1960523123456')).toBeVisible();
 });
 
 test('records textarea correction operations with UTF-16 offsets', async ({ page }) => {

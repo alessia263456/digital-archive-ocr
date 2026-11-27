@@ -94,13 +94,9 @@ export const api = {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ocr_revision: ocrRevision, pages }),
   }),
-  reviewDraftEditorPii: (id, ocrRevision, detectionRevision, decisions) => request(`/api/drafts/${encodeURIComponent(id)}/editor/pii-review`, {
+  saveDraftRedactionMarks: (id, ocrRevision, detectionRevision, marks, excludedCandidateIds = []) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-marks`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, decisions }),
-  }),
-  saveDraftRedactionMarks: (id, ocrRevision, detectionRevision, marks) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-marks`, {
-    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, marks }),
+    body: JSON.stringify({ ocr_revision: ocrRevision, detection_revision: detectionRevision, marks, excluded_candidate_ids: excludedCandidateIds }),
   }),
   generateDraftRedaction: (id) => request(`/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`, { method: 'POST' }),
   draftRedactedPdf: (id) => `/api/drafts/${encodeURIComponent(id)}/editor/redaction-preview`,

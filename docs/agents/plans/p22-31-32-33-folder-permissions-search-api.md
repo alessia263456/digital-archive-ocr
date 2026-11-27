@@ -54,9 +54,9 @@ No committed Folder Permission table/model, search vector/index, or archive brow
 - Provide relevance ordering and Romanian-context highlights for text queries. For `cititor`, search only the redacted projection and restrict results to explicitly granted dossiers. Restrict Signatory Party name query fields to `admin`/`arhivar`.
 - Return Romanian `eroare` errors with stable machine-readable codes; preserve 401/403 distinctions and avoid storage keys, Signed URLs, and sensitive unredacted content in responses.
 
-## Proposed C-008 · Archive browse and role-safe search API
+## C-008 · Archive browse and role-safe search API
 
-**Status:** proposed for owner review; not yet recorded in `CONTRACTS.md`. The proposal uses the DS-001 mock’s dossier/type/year filters, party-name control, relevance label, result cards, and three browse sections, plus the owner’s clarified role-specific search rules.
+**Status:** Approved by the repository owner on 2026-11-27 and recorded in `CONTRACTS.md`. The contract uses the DS-001 mock’s dossier/type/year filters, party-name control, relevance label, result cards, and three browse sections, plus the owner’s clarified role-specific search rules.
 
 ### Authentication and common rules
 
@@ -98,7 +98,7 @@ The list endpoint accepts empty `q` to support the mock’s dossier/type/year br
 
 ### Consistency with approved decisions
 
-- D-033 requires `cititor` to search approved redacted copies, restricts Signatory Party name lookup to staff, requires the Physical Dossier Number on each result, and says “Exclude redacted text from search.” Read as excluding the sensitive text removed by Redaction while retaining the remaining reader-safe redacted OCR, that is consistent with the clarified behavior and the same decision’s requirement that `cititor` can search redacted copies. If “Exclude redacted text” is intended to prohibit searching all text from redacted documents, it conflicts with both the approved search-of-redacted-copies rule and the owner’s clarification; the owner should confirm the intended reading.
+- D-033 requires `cititor` to search approved redacted copies, restricts Signatory Party name lookup to staff, requires the Physical Dossier Number on each result, and says “Exclude redacted text from search.” The owner approved the C-008 interpretation: exclude sensitive text removed by Redaction while retaining the remaining reader-safe OCR. This is consistent with the same decision’s requirement that `cititor` can search redacted copies.
 - D-037 requires only the current version to be indexed and requires approved OCR-only corrections to reindex the same version; the proposal preserves both.
 - D-042/C-003 role/session boundaries and C-007 publication metadata are reused without amendment.
 - No other contradiction with an approved decision was found. Tags being staff-only is a new clarification within the existing staff-only metadata scope, not an incompatible approved rule.
@@ -107,7 +107,7 @@ The list endpoint accepts empty `q` to support the mock’s dossier/type/year br
 
 Provider: `backend/routes/api.php`, archive browse/search controller and query/index services, Folder Permission policy/query scope, search/index migrations and models. Consumers: future DS-001 React API integration (`frontend/src/api.js` and the archive Screen implementation), PHPUnit browse/search/permission tests, and any later M3 viewer that links by stable document/version IDs. This backend work does not change frontend files.
 
-This proposal resolves the search-specific questions previously listed in this plan. The Folder Permission persistence shape remains minimal: role-level and individual `cititor` grants with individual precedence and default deny. Permission administration endpoints remain outside P22-31/32/33.
+The approved C-008 contract resolves the search-specific questions previously listed in this plan. The Folder Permission persistence shape remains minimal: role-level and individual `cititor` grants with individual precedence and default deny. Permission administration endpoints remain outside P22-31/32/33.
 
 ## Files expected to change after plan approval
 
@@ -116,7 +116,7 @@ This proposal resolves the search-specific questions previously listed in this p
 - `backend/app/Policies/` or `backend/app/Services/` — effective permission and safe search/browse query logic.
 - `backend/app/Http/Controllers/` and `backend/routes/api.php` — browse/search provider routes.
 - `backend/tests/Feature/` and `backend/tests/Unit/` — permission precedence, default deny, safe projections, search/index lifecycle, filters, browse modes, highlights, and role boundaries.
-- `docs/agents/CONTRACTS.md` — add approved C-008 only after the owner resolves the API details.
+- `docs/agents/CONTRACTS.md` — records approved C-008.
 - `docs/agents/plans/p22-task-checklist.md` — mark only these three backend tasks complete after verified implementation.
 - `docs/agents/PATTERNS.md` — add a `candidate` practice only if this work establishes a reusable pattern.
 
@@ -147,10 +147,9 @@ The override, credentials, and runtime state are local operational artifacts; do
 
 ## Approval gate and explicit exclusions
 
-Implementation starts only after the repository owner approves this plan and the C-008 contract details. No implementation, merge, push, tag, release, or deployment is authorized by this draft. DS-001/DS-002 frontend integration, P22-34 UI, version-history/viewer delivery, audit-integrity P22-36b, metadata-edit P22-37, OCR similarity, and Admin permission-management UI remain outside this plan.
+The repository owner approved C-008 and separately authorized local integration of the completed M3 work on 2026-11-27. This draft does not authorize push, tag, release, or deployment. DS-001/DS-002 frontend integration, P22-34 UI, version-history/viewer delivery, audit-integrity P22-36b, metadata-edit P22-37, OCR similarity, and Admin permission-management UI remain outside this plan.
 
-## Owner decisions required before implementation
+## Other choices from the original draft
 
-1. Approve or revise the proposed C-008 endpoint and response contract.
-2. Approve or revise the minimal Folder Permission data shape and permission-administration boundary.
-3. Approve the task-specific Compose/database naming and host ports, subject to checking that the proposed ports are unused.
+1. Folder Permission data shape and permission-administration boundary: the merged implementation uses the minimal role-level and individual `cititor` grants described above; permission-administration endpoints remain out of scope.
+2. Compose/database naming and host ports: verification used the isolated `p22m3backend` project with ports checked for availability before startup. These are local verification settings, not application configuration.

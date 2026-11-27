@@ -131,33 +131,43 @@ final class ArchiveBrowseSearchTest extends TestCase
 
     public function test_indexer_removes_accepted_redactions_and_tags_from_the_reader_projection(): void
     {
+        $unlocatedValue = 'UnlocatedSensitiveName';
+        $pageText = 'CNP John Doe pentru contract '.$unlocatedValue;
+        $unlocatedStart = mb_strpos($pageText, $unlocatedValue);
         $draft = DocumentDraft::query()->create([
             'id' => (string) Str::uuid(), 'source_format' => 'pdf', 'original_storage_keys' => ['private-source'],
             'original_names' => ['synthetic.pdf'], 'status' => 'review_ready', 'ocr_extraction_id' => (string) Str::uuid(),
-            'metadata' => ['act_number' => '88', 'party_name' => 'John Doe', 'tags' => ['John Doe']],
-            'corrected_ocr' => [['page' => 1, 'text' => 'CNP John Doe pentru contract', 'base_text' => 'CNP John Doe pentru contract', 'operations' => []]],
+            'metadata' => ['act_number' => '88', 'party_name' => 'John Doe', 'secondary_party' => $unlocatedValue, 'tags' => ['John Doe', $unlocatedValue]],
+            'corrected_ocr' => [['page' => 1, 'text' => $pageText, 'base_text' => $pageText, 'operations' => []]],
             'pii_candidates' => [[
-                'review_status' => 'accepted', 'page' => 1, 'location_status' => 'reliable',
+                'id' => (string) Str::uuid(), 'disposition' => 'redact', 'confidence' => 99,
+                'review_status' => 'pending', 'page' => 1, 'location_status' => 'reliable',
                 'bounding_boxes' => [['left' => 20, 'top' => 10, 'width' => 30, 'height' => 10]],
                 'corrected_text_span' => ['start' => 4, 'length' => 8],
+            ], [
+                'id' => (string) Str::uuid(), 'disposition' => 'review', 'confidence' => 97,
+                'review_status' => 'pending', 'page' => 1, 'location_status' => 'manual_review_required',
+                'bounding_boxes' => [],
+                'corrected_text_span' => ['start' => $unlocatedStart, 'length' => mb_strlen($unlocatedValue)],
             ]],
             'redaction_marks' => [],
         ]);
         DB::table('ocr_pages')->insert([
             'extraction' => $draft->ocr_extraction_id, 'source_sha256' => str_repeat('c', 64),
-            'page' => 1, 'width' => 100, 'height' => 100, 'text' => 'CNP John Doe pentru contract', 'tsv' => '',
+            'page' => 1, 'width' => 400, 'height' => 100, 'text' => $pageText, 'tsv' => '',
             'words' => json_encode([
                 ['text' => 'CNP', 'left' => 1, 'top' => 10, 'width' => 10, 'height' => 10],
                 ['text' => 'John', 'left' => 20, 'top' => 10, 'width' => 12, 'height' => 10],
                 ['text' => 'Doe', 'left' => 35, 'top' => 10, 'width' => 12, 'height' => 10],
                 ['text' => 'pentru', 'left' => 52, 'top' => 10, 'width' => 14, 'height' => 10],
                 ['text' => 'contract', 'left' => 70, 'top' => 10, 'width' => 20, 'height' => 10],
+                ['text' => $unlocatedValue, 'left' => 100, 'top' => 10, 'width' => 100, 'height' => 10],
             ]),
         ]);
 
         $document = Document::query()->findOrFail($this->documentB);
         $version = DocumentVersion::query()->findOrFail($document->current_version_id);
-        $document->metadata = array_merge($document->metadata, ['party_name' => 'John Doe', 'tags' => ['John Doe']]);
+        $document->metadata = array_merge($document->metadata, ['party_name' => 'John Doe', 'secondary_party' => $unlocatedValue, 'tags' => ['John Doe', $unlocatedValue]]);
         $document->save();
         app(ArchiveSearchIndexer::class)->reindex($draft, $document, $version);
         $indexed = DB::table('archive_search_documents')->where('document_id', $document->id)->first();
@@ -166,9 +176,13 @@ final class ArchiveBrowseSearchTest extends TestCase
         self::assertStringContainsString('John Doe', $indexed->staff_text);
         self::assertSame($version->id, $indexed->version_id);
         self::assertStringNotContainsString('John Doe', $indexed->reader_text);
-        self::assertStringContainsString('CNP pentru contract', $indexed->reader_text);
+        self::assertStringContainsString('CNP pentru contract '.$unlocatedValue, $indexed->reader_text);
         self::assertArrayNotHasKey('party_name', $readerMetadata);
+        self::assertSame($unlocatedValue, $readerMetadata['secondary_party']);
         self::assertArrayNotHasKey('tags', $readerMetadata);
+        $this->as($this->readerAllowed);
+        $this->getJson('/api/documents?q='.$unlocatedValue)->assertOk()->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.document_id', $document->id);
     }
 
     private function dossier(string $number, int $entryId): int
