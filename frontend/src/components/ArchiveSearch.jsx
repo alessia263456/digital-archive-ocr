@@ -185,11 +185,12 @@ export function ArchiveSearch({ user, onUpload, onQueue }) {
 
   function renderResultCard(document) {
     const excerpt = document.highlight;
+    const dossierNumber = document.dossierNumber.replace(/^Dosar nr\.?\s*/i, '');
     return <li className="archive-result-card" data-testid="search-result" data-act-date={document.actDate || ''} key={document.id}>
       <article>
         <div className="archive-result-heading"><h3><HighlightedText query={query}>{document.title}</HighlightedText></h3><span>{document.type}</span></div>
-        <div className="archive-result-meta"><span>{document.actNumber}</span><span>Data actului: {dateLabel(document.actDate)}</span><span>{document.inventory}</span><strong>{document.dossierNumber}</strong></div>
-        <p className="archive-result-excerpt"><span>{staff ? 'Text extras: ' : 'Text disponibil după anonimizare: '}</span><HighlightedText query={query}>{excerpt}</HighlightedText></p>
+        <div className="archive-result-meta"><span>Data: {dateLabel(document.actDate)}</span><strong>Dosar: {dossierNumber}</strong></div>
+        {query.trim() && <p className="archive-result-excerpt"><span>{staff ? 'Text extras: ' : 'Text disponibil după anonimizare: '}</span><HighlightedText query={query}>{excerpt}</HighlightedText></p>}
         {staff && document.tags.length > 0 && <div className="archive-result-tags" aria-label="Etichete ale documentului">{document.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
       </article>
     </li>;

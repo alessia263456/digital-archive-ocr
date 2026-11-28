@@ -111,7 +111,9 @@
     .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-3xl) * 4)), 1fr)); gap: var(--space-md); }
     .document-card { min-inline-size: 0; }
     .document-card article { display: grid; align-content: start; gap: var(--space-xs); min-inline-size: 0; block-size: 100%; padding: var(--space-sm); border: thin solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-surface); box-shadow: var(--shadow-card); }
-    .document-card h3 { overflow-wrap: anywhere; font: var(--text-small); font-weight: 600; }
+    .document-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-xs); }
+    .document-heading h3 { min-inline-size: 0; overflow-wrap: anywhere; font: var(--text-small); font-weight: 600; }
+    .document-type { flex: none; color: var(--color-text-secondary); font: var(--text-small); }
     .document-metadata { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-sm); color: var(--color-text-secondary); font: var(--text-small); }
     .dossier-number { color: var(--color-archival-label-text); font-weight: 600; }
     .excerpt { overflow-wrap: anywhere; }
@@ -339,15 +341,29 @@
       if (compact) li.dataset.addedDate = item.addedDate;
       const article = document.createElement('article');
       article.className = compact ? 'recent-preview' : '';
-      const heading = document.createElement('h3');
-      heading.textContent = item.title;
+      const heading = document.createElement('div');
+      heading.className = compact ? 'recent-main-heading' : 'document-heading';
+      const title = document.createElement('h3');
+      title.textContent = item.title;
+      heading.append(title);
+      if (!compact) {
+        const type = document.createElement('span');
+        type.className = 'document-type';
+        type.textContent = item.type;
+        heading.append(type);
+      }
       const meta = document.createElement('div');
       meta.className = 'recent-meta document-metadata';
-      addMeta(meta, item.type);
-      addMeta(meta, item.actNumber);
-      addMeta(meta, `Data actului: ${item.actDate}`);
-      addMeta(meta, item.inventory);
-      addMeta(meta, item.dossierNumber, 'dossier-number');
+      if (compact) {
+        addMeta(meta, item.type);
+        addMeta(meta, item.actNumber);
+        addMeta(meta, `Data actului: ${item.actDate}`);
+        addMeta(meta, item.inventory);
+        addMeta(meta, item.dossierNumber, 'dossier-number');
+      } else {
+        addMeta(meta, `Data: ${item.actDate}`);
+        addMeta(meta, `Dosar: ${item.dossierNumber.replace(/^Dosar nr\.?\s*/i, '')}`, 'dossier-number');
+      }
       if (compact) {
         const summary = document.createElement('div');
         summary.className = 'recent-main';
@@ -364,17 +380,19 @@
         meta.append(added);
       } else {
         article.append(heading, meta);
-        const excerpt = document.createElement('p');
-        excerpt.className = 'excerpt';
-        if (main.dataset.role === 'cititor') {
-          excerpt.dataset.readerExcerpt = '';
-          excerpt.textContent = item.readerExcerpt;
-        } else {
-          excerpt.dataset.adminExcerpt = '';
-          excerpt.textContent = item.adminExcerpt;
+        if (currentQuery.trim()) {
+          const excerpt = document.createElement('p');
+          excerpt.className = 'excerpt';
+          if (main.dataset.role === 'cititor') {
+            excerpt.dataset.readerExcerpt = '';
+            excerpt.textContent = item.readerExcerpt;
+          } else {
+            excerpt.dataset.adminExcerpt = '';
+            excerpt.textContent = item.adminExcerpt;
+          }
+          highlightText(excerpt, currentQuery);
+          article.append(excerpt);
         }
-        highlightText(excerpt, currentQuery);
-        article.append(excerpt);
         if (main.dataset.role !== 'cititor') {
           const tagList = document.createElement('div');
           tagList.className = 'result-tags';

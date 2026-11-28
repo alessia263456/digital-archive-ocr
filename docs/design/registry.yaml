@@ -9,7 +9,7 @@ designs:
     design_ref: mocks/DS-001.html
     roles: [admin, arhivar, cititor]
     decisions: [D-002, D-004, D-033, D-042]
-    description: "Authenticated archive search and browsing for admin, arhivar and cititor. Preserves the approved type, dossier and year browsing groups, Vezi toate interactions and recent documents. Search results use the C-008 API for filters, total count, relevance/date sorting, highlighted snippets and pagination; tag and Signatory Party filters are staff-only. Desktop light/dark home and result captures: docs/design/screens/DS-001.*.png."
+    description: "Authenticated archive search and browsing for admin, arhivar and cititor. Preserves the approved type, dossier and year browsing groups, Vezi toate interactions and recent documents. Result cards keep the act title/number and document type, show only date and dossier metadata, and include highlighted excerpts only for text searches; results use the C-008 API for filters, total count, relevance/date sorting and pagination. Tag and Signatory Party filters are staff-only. Light/dark home and result captures at supported widths: docs/design/screens/DS-001.*.png."
 
   - id: DS-002
     name: "Vizualizator document (Document viewer)"
