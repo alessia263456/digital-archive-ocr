@@ -6,6 +6,33 @@ async function signInAs(page, role = 'admin') {
     contentType: 'application/json',
     body: JSON.stringify({ id: 1, username: `test-${role}`, role }),
   }));
+  const records = Array.from({ length: 8 }, (_, index) => ({
+    document_id: `doc-${index + 1}`, version_id: `ver-${index + 1}`, version_number: 1,
+    document_type: index === 0 ? 'Procură' : 'Contract', act_date: `202${index % 4}-0${index % 9 + 1}-01`,
+    act_number: String(index + 1), physical_dossier_number: index === 0 ? 'Dosar nr. 004/2026' : `Dosar nr. 00${index}/2026`,
+    physical_dossier_id: index === 0 ? 4 : index + 4, inventory_number: `INV-${index}`, approved_at: `2026-01-0${index + 1}T10:00:00Z`,
+    highlight: '<mark>procură</mark> Persoană sintetică E', tags: index === 0 ? ['succesiune'] : [],
+  }));
+  await page.route('**/api/archive/browse', (route) => route.fulfill({ json: {
+    document_types: [{ document_type: 'Procură', total: 1 }, { document_type: 'Contract', total: 7 }],
+    physical_dossiers: records.map((row) => ({ id: row.physical_dossier_id, physical_dossier_number: row.physical_dossier_number, total: 1 })),
+    years: [{ year: 2026, total: 8 }], recent: records.slice().reverse().slice(0, 6),
+  } }));
+  await page.route('**/api/documents?*', async (route) => {
+    const url = new URL(route.request().url());
+    let filtered = records.filter((row) => !url.searchParams.get('q') || row.highlight.toLowerCase().includes(url.searchParams.get('q').toLowerCase()));
+    if (url.searchParams.get('document_type')) filtered = filtered.filter((row) => row.document_type === url.searchParams.get('document_type'));
+    if (url.searchParams.get('physical_dossier_id')) filtered = filtered.filter((row) => String(row.physical_dossier_id) === url.searchParams.get('physical_dossier_id'));
+    if (url.searchParams.get('year')) filtered = filtered.filter((row) => row.act_date.startsWith(url.searchParams.get('year')));
+    if (url.searchParams.get('tag')) filtered = filtered.filter((row) => row.tags.includes(url.searchParams.get('tag')));
+    if (url.searchParams.get('party')) filtered = filtered.filter((row) => row.highlight.includes('Persoană sintetică E'));
+    const sort = url.searchParams.get('sort');
+    if (sort === 'oldest') filtered.sort((a, b) => a.act_date.localeCompare(b.act_date));
+    else if (sort === 'newest') filtered.sort((a, b) => b.act_date.localeCompare(a.act_date));
+    const total = filtered.length, perPage = Number(url.searchParams.get('per_page') || 20), current = Number(url.searchParams.get('page') || 1);
+    const body = { data: filtered.slice((current - 1) * perPage, current * perPage), meta: { current_page: current, per_page: perPage, total, last_page: Math.max(1, Math.ceil(total / perPage)) } };
+    await route.fulfill({ json: body });
+  });
   await page.goto('/');
 }
 

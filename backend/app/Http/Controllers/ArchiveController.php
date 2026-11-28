@@ -45,7 +45,7 @@ final class ArchiveController
     {
         $parameters = $request->query();
         $user = $request->user();
-        $unknown = array_diff(array_keys($parameters), ['q', 'physical_dossier_id', 'document_type', 'year', 'party', 'tag', 'page', 'per_page']);
+        $unknown = array_diff(array_keys($parameters), ['q', 'physical_dossier_id', 'document_type', 'year', 'party', 'tag', 'page', 'per_page', 'sort']);
         if ($unknown !== []) return $this->error(422, 'parametri_nevalizi', 'Parametrii de căutare nu sunt valizi.');
         if ($user->role === 'cititor' && (array_key_exists('party', $parameters) || array_key_exists('tag', $parameters) || array_key_exists('tags', $parameters))) {
             return $this->error(403, 'parametru_interzis', 'Parametrul solicitat nu este disponibil pentru acest rol.');
@@ -60,6 +60,7 @@ final class ArchiveController
             'tag' => 'sometimes|string|max:255',
             'page' => 'sometimes|integer|min:1|max:1000000',
             'per_page' => 'sometimes|integer|min:1|max:100',
+            'sort' => 'sometimes|in:relevance,newest,oldest',
         ]);
         if ($validator->fails()) return $this->error(422, 'parametri_nevalizi', 'Parametrii de căutare nu sunt valizi.');
         $values = $validator->validated();
@@ -77,6 +78,7 @@ final class ArchiveController
         $total = (clone $query)->count();
         $page = (int) ($values['page'] ?? 1);
         $perPage = (int) ($values['per_page'] ?? 20);
+        $sort = $values['sort'] ?? 'relevance';
         $rank = $queryText === '' ? '0::real' : "ts_rank_cd(to_tsvector('romanian', {$textColumn}), websearch_to_tsquery('romanian', ?))";
         $select = 'archive_search_documents.*, dossier.physical_dossier_number, version.version_number';
         $startMarker = 'ZXQSTART'.str_replace('-', '', (string) Str::uuid());
@@ -87,7 +89,10 @@ final class ArchiveController
             ->join('document_versions as version', function ($join): void {
                 $join->on('version.id', '=', 'archive_search_documents.version_id')->on('version.document_id', '=', 'archive_search_documents.document_id');
             })->selectRaw($select, $queryText === '' ? [] : [$queryText, $queryText])
-            ->orderByRaw($queryText === '' ? 'approved_at DESC, document_id ASC' : 'relevance DESC, approved_at DESC, document_id ASC')
+            ->when($sort === 'newest', fn ($ordered) => $ordered->orderByRaw('act_date DESC NULLS LAST, document_id ASC'))
+            ->when($sort === 'oldest', fn ($ordered) => $ordered->orderByRaw('act_date ASC NULLS LAST, document_id ASC'))
+            ->when($sort === 'relevance' && $queryText !== '', fn ($ordered) => $ordered->orderByRaw('relevance DESC, approved_at DESC, document_id ASC'))
+            ->when($sort === 'relevance' && $queryText === '', fn ($ordered) => $ordered->orderByRaw('approved_at DESC, document_id ASC'))
             ->offset(($page - 1) * $perPage)->limit($perPage);
         $rows = $query->get();
 

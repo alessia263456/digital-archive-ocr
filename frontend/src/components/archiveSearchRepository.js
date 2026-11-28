@@ -1,65 +1,54 @@
-import { archiveDocuments, archiveDossiers, archiveTypes } from './archiveSearchMockData.js';
+import { api } from '../api.js';
 
-const PAGE_SIZE = 6;
-const delay = (milliseconds = 350) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+export const archiveSearchPageSize = 6;
 
-export async function loadArchiveCatalog(role) {
-  await delay(100);
-  const documents = archiveDocuments.filter((document) => role !== 'cititor' || document.readerVisible);
-  const availableDossiers = archiveDossiers.filter((dossier) => documents.some((document) => document.dossierId === dossier.id));
-  const availableTypes = archiveTypes.filter((type) => documents.some((document) => document.type === type));
-  const availableYears = [...new Set(documents.map((document) => document.year))].sort((left, right) => right.localeCompare(left));
-  return { documents, dossiers: availableDossiers, types: availableTypes, years: availableYears };
+function resultItem(row) {
+  return {
+    id: row.document_id,
+    versionId: row.version_id,
+    title: row.act_number ? `Act nr. ${row.act_number}` : row.document_type,
+    type: row.document_type,
+    actNumber: row.act_number ? `Nr. ${row.act_number}` : 'Număr act nespecificat',
+    actDate: row.act_date,
+    addedDate: row.approved_at?.slice(0, 10) || '',
+    inventory: row.inventory_number || 'Inventar nespecificat',
+    dossierNumber: row.physical_dossier_number || 'Dosar nespecificat',
+    dossierId: row.physical_dossier_id,
+    highlight: row.highlight || '',
+    tags: row.tags || [],
+    readerExcerpt: row.highlight || '',
+    adminExcerpt: row.highlight || '',
+  };
 }
 
-function normalize(value = '') {
-  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('ro').trim();
+export async function loadArchiveCatalog() {
+  const response = await api.archiveBrowse();
+  const documents = (response.recent || []).map(resultItem);
+  return {
+    documents,
+    dossiers: (response.physical_dossiers || []).map((item) => ({ id: String(item.id), number: item.physical_dossier_number, context: '' })),
+    types: (response.document_types || []).map((item) => item.document_type),
+    years: (response.years || []).map((item) => String(item.year)).sort((a, b) => b.localeCompare(a)),
+  };
 }
 
-function termsFor(query) {
-  return normalize(query).split(/\s+/).filter(Boolean);
+export async function searchArchive({ query = '', filters = {}, sort = 'relevance', page = 1, browse = null }) {
+  const parameters = {
+    q: query.trim(),
+    physical_dossier_id: browse?.dossierId || (filters.dossierId !== 'all' ? filters.dossierId : ''),
+    document_type: browse?.type || (filters.type !== 'all' ? filters.type : ''),
+    year: browse?.year || (filters.year !== 'all' ? filters.year : ''),
+    party: filters.partyQuery?.trim() || '',
+    tag: filters.tags?.trim() || '',
+    sort,
+    page,
+    per_page: archiveSearchPageSize,
+  };
+  const response = await api.archiveDocuments(parameters);
+  return {
+    items: (response.data || []).map(resultItem),
+    total: response.meta?.total || 0,
+    page: response.meta?.current_page || 1,
+    pageCount: response.meta?.last_page || 1,
+  };
 }
-
-function searchableText(document, role) {
-  const fields = [document.title, document.type, document.actNumber, document.actDate, document.year,
-    document.inventory, document.dossierNumber, role === 'cititor' ? document.readerExcerpt : document.adminExcerpt];
-  if (role !== 'cititor') fields.push(document.partyName, ...document.tags);
-  return normalize(fields.join(' '));
-}
-
-export async function searchArchive({ catalog, role, query = '', filters = {}, sort = 'relevance', page = 1, browse = null }) {
-  await delay();
-  const terms = termsFor(query);
-  const normalizedParty = normalize(filters.partyQuery);
-  const normalizedTags = normalize(filters.tags);
-  let documents = catalog.documents.filter((document) => {
-    if (role === 'cititor' && !document.readerVisible) return false;
-    if (browse?.type && document.type !== browse.type) return false;
-    if (browse?.dossierId && document.dossierId !== browse.dossierId) return false;
-    if (browse?.year && document.year !== browse.year) return false;
-    if (filters.dossierId && filters.dossierId !== 'all' && document.dossierId !== filters.dossierId) return false;
-    if (filters.type && filters.type !== 'all' && document.type !== filters.type) return false;
-    if (filters.year && filters.year !== 'all' && document.year !== filters.year) return false;
-    if (normalizedTags && !document.tags.some((tag) => normalize(tag).includes(normalizedTags))) return false;
-    if (normalizedParty && (role === 'cititor' || !normalize(document.partyName).includes(normalizedParty))) return false;
-    const searchable = searchableText(document, role);
-    return terms.every((term) => searchable.includes(term));
-  });
-
-  if (sort === 'oldest') documents.sort((left, right) => left.actDate.localeCompare(right.actDate));
-  else if (sort === 'newest') documents.sort((left, right) => right.actDate.localeCompare(left.actDate));
-  else documents.sort((left, right) => {
-    const leftText = searchableText(left, role);
-    const rightText = searchableText(right, role);
-    const score = (text) => terms.reduce((total, term) => total + (text.split(term).length - 1), 0);
-    return score(rightText) - score(leftText) || right.actDate.localeCompare(left.actDate);
-  });
-
-  const total = documents.length;
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const safePage = Math.min(Math.max(1, page), pageCount);
-  documents = documents.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-  return { items: documents, total, page: safePage, pageCount };
-}
-
-export const archiveSearchPageSize = PAGE_SIZE;

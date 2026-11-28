@@ -119,6 +119,22 @@ final class ArchiveBrowseSearchTest extends TestCase
             ->assertExactJson(['data' => [], 'meta' => ['current_page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]]);
     }
 
+    public function test_explicit_act_date_sorts_put_missing_dates_last_and_validate_values(): void
+    {
+        DB::table('archive_search_documents')->where('document_id', $this->documentA)->update(['act_date' => null]);
+        DB::table('archive_search_documents')->where('document_id', $this->documentB)->update(['act_date' => '2025-01-01']);
+        $this->as($this->user('admin'));
+        $this->getJson('/api/documents?sort=newest')->assertOk()
+            ->assertJsonPath('data.0.document_id', $this->documentB)
+            ->assertJsonPath('data.1.document_id', $this->documentA);
+        $this->getJson('/api/documents?sort=oldest')->assertOk()
+            ->assertJsonPath('data.0.document_id', $this->documentB)
+            ->assertJsonPath('data.1.document_id', $this->documentA);
+        $this->getJson('/api/documents?sort=invalid')->assertUnprocessable()
+            ->assertJsonPath('eroare', 'Parametrii de căutare nu sunt valizi.')
+            ->assertJsonPath('cod', 'parametri_nevalizi');
+    }
+
     public function test_endpoints_require_a_session_and_current_reader_projection_never_matches_removed_text(): void
     {
         auth()->logout();

@@ -52,6 +52,12 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  archiveBrowse: () => request('/api/archive/browse'),
+  archiveDocuments: (parameters = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(parameters).forEach(([key, value]) => { if (value !== undefined && value !== null && value !== '') query.set(key, String(value)); });
+    return request(`/api/documents${query.size ? `?${query}` : ''}`);
+  },
   currentUser: () => request('/api/user'),
   login: (username, password) => request('/api/login', {
     method: 'POST',
