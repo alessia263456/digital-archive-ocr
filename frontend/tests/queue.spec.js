@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockEmptyArchiveBrowse, navigateTo } from './test-helpers.js';
 
 const longName = 'Dosar_sintetic_documente_justificative_documente_justificative_exemplu.pdf';
 const reviewDraft = { id: 'review-1', name: longName, status: 'review_ready', source_format: 'pdf' };
@@ -6,6 +7,7 @@ const quarantineDraft = { id: 'quarantine-1', name: 'Scanare_deteriorată.pdf', 
 
 async function openQueue(page, response = { review: [reviewDraft], quarantine: [quarantineDraft] }) {
   const queueState = structuredClone(response);
+  await mockEmptyArchiveBrowse(page);
   await page.route('**/api/user', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -18,7 +20,7 @@ async function openQueue(page, response = { review: [reviewDraft], quarantine: [
   }));
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
+  await navigateTo(page, 'Cozi de lucru', 'last');
   await expect(page.getByRole('heading', { name: 'Cozi de lucru' })).toBeVisible();
   return queueState;
 }
@@ -86,6 +88,7 @@ test('retry reports success, permanent failure requires confirmation, and stale 
 
 test('recovers from a queue loading error', async ({ page }) => {
   let loads = 0;
+  await mockEmptyArchiveBrowse(page);
   await page.route('**/api/user', (route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: 'admin', role: 'admin' }),
   }));
@@ -96,7 +99,7 @@ test('recovers from a queue loading error', async ({ page }) => {
       : { status: 200, contentType: 'application/json', body: JSON.stringify({ review: [], quarantine: [] }) });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
+  await navigateTo(page, 'Cozi de lucru', 'last');
   await expect(page.getByRole('alert')).toHaveText('Nu am putut încărca documentele.');
   await page.getByRole('button', { name: 'Încearcă din nou' }).click();
   await expect(page.getByText('Nu sunt documente pentru revizuire.')).toBeVisible();

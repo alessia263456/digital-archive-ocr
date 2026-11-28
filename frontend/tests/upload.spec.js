@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { mockEmptyArchiveBrowse, navigateTo, openMobileNavigation } from './test-helpers.js';
 
 const screenshotDir = join(process.cwd(), 'test-results', 'design');
 mkdirSync(screenshotDir, { recursive: true });
 
 async function authenticatedPage(page, role = 'admin') {
+  await mockEmptyArchiveBrowse(page);
   await page.route('**/api/drafts/recent', (route) => route.fulfill({ json: { drafts: [] } }));
   await page.route('**/api/user', (route) => route.fulfill({
     status: 200,
@@ -44,8 +46,8 @@ test('admin can upload one PDF as a private draft and refresh its persisted OCR 
   });
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Arhiva este goală' })).toBeVisible();
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Arhiva este goală' })).toBeVisible({ timeout: 10000 });
+  await navigateTo(page, 'Încărcare documente');
   await expect(page.getByRole('heading', { name: 'Încărcare documente' })).toBeVisible();
   await page.getByLabel('Document PDF sau DOCX').setInputFiles({
     name: 'contract-test.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test'),
@@ -93,7 +95,7 @@ test('shows transfer loading and keeps multiple current-session items with long 
     });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   const input = page.getByLabel('Document PDF sau DOCX');
   await input.setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();
@@ -126,7 +128,7 @@ test('arhivar can upload an ordered image collection as one draft', async ({ pag
     });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByRole('button', { name: 'Înapoi la arhivă' }).focus();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'PDF / DOCX' })).toBeFocused();
@@ -147,6 +149,8 @@ test('cititor has no upload entry point', async ({ page }) => {
   await authenticatedPage(page, 'cititor');
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Arhiva este goală' })).toBeVisible();
+  await openMobileNavigation(page);
+  await expect(page.getByRole('button', { name: 'Încărcare documente' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Încarcă documente' })).toHaveCount(0);
 });
 
@@ -185,7 +189,7 @@ test('loads persisted OCR results and renews the private inline preview through 
   }));
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByLabel('Document PDF sau DOCX').setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();
   await page.getByRole('button', { name: 'Actualizează starea' }).click();
@@ -229,7 +233,7 @@ test('shows session expiry from OCR results as an actionable error', async ({ pa
     body: JSON.stringify({ eroare: 'Sesiunea a expirat. Reîncărcați pagina și încercați din nou.' }),
   }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByLabel('Document PDF sau DOCX').setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();
   await page.getByRole('button', { name: 'Actualizează starea' }).click();
@@ -239,7 +243,7 @@ test('shows session expiry from OCR results as an actionable error', async ({ pa
 test('rejects unsupported selections with a Romanian explanation', async ({ page }) => {
   await authenticatedPage(page, 'admin');
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByLabel('Document PDF sau DOCX').setInputFiles({
     name: 'invalid.txt', mimeType: 'text/plain', buffer: Buffer.from('invalid'),
   });
@@ -263,7 +267,7 @@ test('shows a rejected upload and a network failure without losing earlier state
     }
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   const input = page.getByLabel('Document PDF sau DOCX');
   await input.setInputFiles({ name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') });
   await page.getByRole('button', { name: 'Încarcă documentul' }).click();
@@ -291,7 +295,7 @@ test('keeps draft status visible when refresh reports missing draft or expired s
     });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByLabel('Document PDF sau DOCX').setInputFiles({
     name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test'),
   });
@@ -331,7 +335,7 @@ test('maps mixed batch outcomes by index and recovers persisted drafts after ret
   await page.route('**/api/drafts/newest/preview', (route) => route.fulfill({ json: { pages: [] } }));
 
   await page.goto('/');
-  const openUpload = () => page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  const openUpload = () => navigateTo(page, 'Încărcare documente');
   await openUpload();
   await page.getByLabel('Document PDF sau DOCX').setInputFiles([
     { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
@@ -366,7 +370,7 @@ test('keeps accepted siblings when the API cannot identify an omitted file', asy
     items: [{ group: 'documents', index: 0, id: 'accepted', status: 'queued' }],
   } }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByLabel('Document PDF sau DOCX').setInputFiles([
     { name: 'valid.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
     { name: 'omitted.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-test') },
@@ -386,7 +390,7 @@ test('changes multipart image order using the page controls', async ({ page }, t
     return route.fulfill({ json: { items: [{ group: 'images', status: 'queued', id: 'ordered' }] } });
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
   const mountedFixture = join(process.cwd(), 'fixtures', 'romanian.png');
   const image = readFileSync(existsSync(mountedFixture)
@@ -421,7 +425,7 @@ test('reports unavailable recent drafts and reloads only on request', async ({ p
     }
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await expect(page.getByText('Se încarcă ciornele…')).toBeVisible();
   finishLoading();
   await expect(page.getByRole('alert')).toHaveText('Ciornele sunt temporar indisponibile.');
@@ -433,7 +437,7 @@ test('reports unavailable recent drafts and reloads only on request', async ({ p
 test('allows removing and restoring image pages and reordering by drag', async ({ page }) => {
   await authenticatedPage(page);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Încarcă documente' }).first().click();
+  await navigateTo(page, 'Încărcare documente');
   await page.getByRole('button', { name: 'Colecție de imagini JPG și PNG' }).click();
   const input = page.getByLabel('Imagini în ordinea paginilor');
   await input.setInputFiles({ name: 'first.png', mimeType: 'image/png', buffer: Buffer.from('synthetic') });

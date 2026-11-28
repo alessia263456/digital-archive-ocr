@@ -1,11 +1,13 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect } from '@playwright/test';
+import { mockEmptyArchiveBrowse } from './test-helpers.js';
 
 const screenshotDir = join(process.cwd(), 'test-results', 'design');
 mkdirSync(screenshotDir, { recursive: true });
 
 async function unauthenticatedPage(page) {
+  await mockEmptyArchiveBrowse(page);
   await page.route('**/api/user', (route) => route.fulfill({
     status: 401,
     contentType: 'application/json',

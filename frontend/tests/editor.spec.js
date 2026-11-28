@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockEmptyArchiveBrowse, navigateTo } from './test-helpers.js';
 
 const draft = { id: 'editor-1', name: 'Contract_sintetic.pdf', status: 'review_ready', source_format: 'pdf' };
 const editorState = {
@@ -27,6 +28,7 @@ function deferred() {
 }
 
 async function openEditor(page, state = editorState, editorStatus = 200, pending = {}, role = 'arhivar') {
+  await mockEmptyArchiveBrowse(page);
   await page.route('**/api/user', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 1, username: role, role }) }));
   await page.route('**/api/drafts/queue', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ review: [draft], quarantine: [] }) }));
   await page.route('**/api/drafts/editor-1/editor', async (route) => {
@@ -44,7 +46,7 @@ async function openEditor(page, state = editorState, editorStatus = 200, pending
   });
   await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Cozi de lucru' }).last().click();
+  await navigateTo(page, 'Cozi de lucru', 'last');
   await page.getByRole('button', { name: 'Deschide editorul' }).click();
   if (editorStatus === 200 && !pending.editor) await expect(page.getByRole('heading', { name: draft.name })).toBeVisible();
 }

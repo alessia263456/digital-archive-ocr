@@ -128,7 +128,7 @@ test('searches, sorts, highlights, paginates, and clears archive filters', async
   await expect(page.getByLabel('Tipul documentului')).toHaveValue('all');
   await expect(page.getByLabel('Anul actului')).toHaveValue('all');
   await expect(page.getByLabel('Dosar fizic')).toHaveValue('all');
-  await page.getByLabel('Etichete').fill('succesiune');
+  await page.getByLabel('Etichete', { exact: true }).fill('succesiune');
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText('1 document');
   expect(searchRequests.at(-1).searchParams.get('tag')).toBe('succesiune');
   await page.getByRole('button', { name: 'Șterge filtrele' }).click();
