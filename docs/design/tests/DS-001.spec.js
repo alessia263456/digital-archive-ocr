@@ -109,6 +109,10 @@ test('browses four archive sections, searches matching records, and previews app
   await expect(page.getByRole('heading', { name: 'Procuri' })).toBeVisible();
   await expect(page.locator('#folder-documents .document-card')).toHaveCount(2);
   await expect(page.locator('#folder-documents .dossier-number')).toHaveCount(2);
+  await expect(page.locator('#folder-documents .excerpt')).toHaveCount(0);
+  await expect(page.locator('#folder-documents .document-heading .document-type').first()).toBeVisible();
+  await expect(page.locator('#folder-documents .document-metadata').first()).toContainText('Data:');
+  await expect(page.locator('#folder-documents .document-metadata').first()).toContainText('Dosar:');
   if (info.project.name === 'desktop-light') {
     await page.evaluate(() => document.activeElement?.blur());
     await page.screenshot({ path: '/screens/DS-001.folder.light.png', fullPage: true, scale: 'css' });
@@ -123,10 +127,12 @@ test('browses four archive sections, searches matching records, and previews app
   await page.locator('#dossier-folders [data-folder-id="dossier-004-succesiune"]').click();
   await expect(page.getByRole('heading', { name: 'Dosar nr. 004' })).toBeVisible();
   await expect(page.locator('#folder-documents .document-card')).toHaveCount(1);
-  await expect(page.locator('#folder-documents .dossier-number')).toHaveText('Dosar nr. 004');
+  await expect(page.locator('#folder-documents .dossier-number')).toHaveText('Dosar: 004');
+  await expect(page.locator('#folder-documents .excerpt')).toHaveCount(0);
   await page.getByRole('button', { name: 'Înapoi la arhivă' }).click();
   await page.locator('#year-folders [data-folder-id="year-2026"]').click();
   await expect(page.getByRole('heading', { name: '2026' })).toBeVisible();
+  await expect(page.locator('#folder-documents .excerpt')).toHaveCount(0);
   await expect(page.locator('#folder-documents .document-metadata')).toContainText('12.05.2026');
   await page.getByRole('button', { name: 'Înapoi la arhivă' }).click();
 
@@ -139,6 +145,7 @@ test('browses four archive sections, searches matching records, and previews app
   const results = page.locator('#search-results .document-card');
   await expect(results).toHaveCount(2);
   await expect(page.locator('#search-results mark').first()).toBeVisible();
+  await expect(results.first().locator('.excerpt')).toBeVisible();
   await expect(page.locator('#result-count')).toContainText('2 rezultate în total');
   const sort = page.getByLabel('Ordonează rezultatele');
   await sort.selectOption('oldest');
@@ -152,13 +159,19 @@ test('browses four archive sections, searches matching records, and previews app
     await expect(card.locator('.dossier-number')).toBeVisible();
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
-  if (info.project.name === 'desktop-light') {
+  if (mobile) {
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.screenshot({ path: `/screens/DS-001.search.mobile-${info.project.name.endsWith('dark') ? 'dark' : 'light'}.png`, fullPage: true, scale: 'css' });
+  } else if (info.project.name === 'desktop-light') {
     await page.evaluate(() => document.activeElement?.blur());
     await page.screenshot({ path: '/screens/DS-001.search.light.png', fullPage: true, scale: 'css' });
     await page.getByLabel('Mod întunecat').click();
     await page.evaluate(() => document.activeElement?.blur());
     await page.screenshot({ path: '/screens/DS-001.search.dark.png', fullPage: true, scale: 'css' });
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.screenshot({ path: '/screens/DS-001.search.1600x900.dark.png', fullPage: true, scale: 'css' });
     await page.getByLabel('Mod luminos').click();
+    await page.screenshot({ path: '/screens/DS-001.search.1600x900.light.png', fullPage: true, scale: 'css' });
   }
   await page.getByLabel('Tipul documentului', { exact: true }).selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Șterge filtrele' }).click();

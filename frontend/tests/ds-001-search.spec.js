@@ -72,11 +72,17 @@ test('searches, sorts, highlights, paginates, and clears archive filters', async
   await page.getByRole('button', { name: 'Dosar nr. 004/2026 · Procură' }).click();
   await expect(page.getByRole('heading', { name: 'Dosar nr. 004/2026' })).toBeVisible();
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText('1 document');
+  await expect(page.locator('.archive-result-excerpt')).toHaveCount(0);
+  await expect(page.locator('.archive-result-meta').first()).toContainText('Data: 01.01.2026');
+  await expect(page.locator('.archive-result-meta').first()).toContainText('Dosar: 004/2026');
+  await expect(page.locator('.archive-result-heading').first()).toContainText('Act nr. 1');
+  await expect(page.locator('.archive-result-heading').first()).toContainText('Procură');
   expect(searchRequests.at(-1).searchParams.get('physical_dossier_id')).toBe('4');
   await page.getByRole('button', { name: 'Șterge căutarea' }).click();
   await page.getByRole('button', { name: '2026', exact: true }).click();
   await expect(page.getByRole('heading', { name: '2026', exact: true })).toBeVisible();
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText('3 documente');
+  await expect(page.locator('.archive-result-excerpt')).toHaveCount(0);
   expect(searchRequests.at(-1).searchParams.get('year')).toBe('2026');
   await page.getByRole('button', { name: 'Șterge căutarea' }).click();
 
@@ -88,6 +94,11 @@ test('searches, sorts, highlights, paginates, and clears archive filters', async
   await expect(resultCards.first()).toBeVisible();
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText(/\d+/);
   await expect(page.locator('[data-testid="search-results"] mark').first()).toBeVisible();
+  await expect(page.locator('.archive-result-excerpt').first()).toBeVisible();
+  await expect(page.locator('.archive-result-meta').first()).toContainText('Data:');
+  await expect(page.locator('.archive-result-meta').first()).toContainText('Dosar:');
+  await expect(page.locator('.archive-result-meta').first()).not.toContainText('Inventar');
+  await expect(page.locator('.archive-result-meta').first()).not.toContainText('Nr.');
   await expect(page.getByText('<mark>', { exact: true })).toHaveCount(0);
   expect(searchRequests.at(-1).searchParams.get('q')).toBe('procură');
   expect(searchRequests.at(-1).searchParams.get('sort')).toBe('relevance');
