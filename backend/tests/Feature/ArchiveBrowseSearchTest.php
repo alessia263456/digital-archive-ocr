@@ -101,7 +101,8 @@ final class ArchiveBrowseSearchTest extends TestCase
         $this->getJson('/api/documents?party=încheiere')->assertOk()->assertJsonPath('meta.total', 2);
         $this->getJson('/api/documents?tag=staff-secret')->assertOk()->assertJsonPath('meta.total', 1);
         $this->getJson('/api/archive/browse')->assertOk()->assertJsonCount(2, 'recent')
-            ->assertJsonCount(1, 'document_types')->assertJsonCount(2, 'physical_dossiers');
+            ->assertJsonCount(1, 'document_types')->assertJsonCount(2, 'physical_dossiers')
+            ->assertJsonPath('physical_dossiers.0.context', 'Contract');
     }
 
     public function test_reader_cannot_use_staff_parameters_and_bad_parameters_have_stable_error_shape(): void
@@ -117,6 +118,51 @@ final class ArchiveBrowseSearchTest extends TestCase
         $this->getJson('/api/documents?unknown=value')->assertUnprocessable()->assertJsonPath('cod', 'parametri_nevalizi');
         $this->getJson('/api/documents?physical_dossier_id=999999')->assertOk()
             ->assertExactJson(['data' => [], 'meta' => ['current_page' => 1, 'per_page' => 20, 'total' => 0, 'last_page' => 1]]);
+    }
+
+    public function test_explicit_act_date_sorts_put_missing_dates_last_and_validate_values(): void
+    {
+        DB::table('archive_search_documents')->where('document_id', $this->documentA)->update(['act_date' => null]);
+        DB::table('archive_search_documents')->where('document_id', $this->documentB)->update(['act_date' => '2025-01-01']);
+        $this->as($this->user('admin'));
+        $this->getJson('/api/documents?sort=newest')->assertOk()
+            ->assertJsonPath('data.0.document_id', $this->documentB)
+            ->assertJsonPath('data.1.document_id', $this->documentA);
+        $this->getJson('/api/documents?sort=oldest')->assertOk()
+            ->assertJsonPath('data.0.document_id', $this->documentB)
+            ->assertJsonPath('data.1.document_id', $this->documentA);
+        $this->getJson('/api/documents?sort=invalid')->assertUnprocessable()
+            ->assertJsonPath('eroare', 'Parametrii de căutare nu sunt valizi.')
+            ->assertJsonPath('cod', 'parametri_nevalizi');
+    }
+
+    public function test_default_and_explicit_relevance_orders_use_approval_time_and_stable_document_ids(): void
+    {
+        $this->as($this->user('admin'));
+
+        $expected = [$this->documentB, $this->documentA];
+        foreach ([
+            '/api/documents',
+            '/api/documents?sort=relevance',
+            '/api/documents?q=%C3%AEncheiere&sort=relevance',
+        ] as $path) {
+            $response = $this->getJson($path)->assertOk();
+            self::assertSame($expected, array_column($response->json('data'), 'document_id'));
+        }
+
+        DB::table('archive_search_documents')->whereIn('document_id', [$this->documentA, $this->documentB])
+            ->update(['act_date' => '2025-01-01']);
+        $tieOrder = [$this->documentA, $this->documentB];
+        sort($tieOrder, SORT_STRING);
+
+        foreach (['newest', 'oldest'] as $sort) {
+            $first = $this->getJson("/api/documents?sort={$sort}&per_page=1&page=1")->assertOk();
+            $second = $this->getJson("/api/documents?sort={$sort}&per_page=1&page=2")->assertOk();
+            self::assertSame($tieOrder[0], $first->json('data.0.document_id'));
+            self::assertSame($tieOrder[1], $second->json('data.0.document_id'));
+            self::assertSame(2, $first->json('meta.total'));
+            self::assertSame(2, $second->json('meta.total'));
+        }
     }
 
     public function test_endpoints_require_a_session_and_current_reader_projection_never_matches_removed_text(): void

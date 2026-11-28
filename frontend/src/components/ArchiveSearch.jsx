@@ -49,6 +49,7 @@ function FolderIcon() {
 }
 
 function dateLabel(value) {
+  if (!value) return 'Nespecificată';
   return new Intl.DateTimeFormat('ro-RO').format(new Date(`${value}T00:00:00`));
 }
 
@@ -76,8 +77,7 @@ export function ArchiveSearch({ user, onUpload, onQueue }) {
     return () => { active = false; };
   }, [user.role]);
 
-  const recentDocuments = useMemo(() => [...(catalog?.documents || [])]
-    .sort((left, right) => right.addedDate.localeCompare(left.addedDate)), [catalog]);
+  const recentDocuments = useMemo(() => catalog?.documents || [], [catalog]);
   const hasFilters = Object.entries(filters).some(([key, value]) => key === 'dossierId' || key === 'type' || key === 'year'
     ? value !== 'all' : Boolean(value.trim()));
 
@@ -101,7 +101,7 @@ export function ArchiveSearch({ user, onUpload, onQueue }) {
     setLoading(true);
     setError('');
     try {
-      const nextResult = await searchArchive({ catalog, role: user.role, query: nextQuery, filters: nextFilters, sort: nextSort, page: requestedPage, browse: nextBrowse });
+      const nextResult = await searchArchive({ role: user.role, query: nextQuery, filters: nextFilters, sort: nextSort, page: requestedPage, browse: nextBrowse });
       if (sequence.current === requestSequence) setResult(nextResult);
     } catch {
       if (sequence.current === requestSequence) setError('Căutarea nu a putut fi finalizată. Încearcă din nou.');
@@ -179,17 +179,18 @@ export function ArchiveSearch({ user, onUpload, onQueue }) {
     return <article className="archive-recent-row" data-testid="browse-document">
       <span className="archive-recent-icon" aria-hidden="true">▤</span>
       <span className="archive-recent-copy"><strong>{document.title}</strong><small>{document.type} · {document.actNumber} · {document.dossierNumber}</small></span>
-      <time dateTime={document.addedDate} data-added-date={document.addedDate}>{dateLabel(document.addedDate)}</time>
+      <time dateTime={document.addedDate || undefined} data-added-date={document.addedDate}>{dateLabel(document.addedDate)}</time>
     </article>;
   }
 
   function renderResultCard(document) {
-    const excerpt = user.role === 'cititor' ? document.readerExcerpt : document.adminExcerpt;
-    return <li className="archive-result-card" data-testid="search-result" data-act-date={document.actDate} key={document.id}>
+    const excerpt = document.highlight;
+    const dossierNumber = document.dossierNumber.replace(/^Dosar nr\.?\s*/i, '');
+    return <li className="archive-result-card" data-testid="search-result" data-act-date={document.actDate || ''} key={document.id}>
       <article>
         <div className="archive-result-heading"><h3><HighlightedText query={query}>{document.title}</HighlightedText></h3><span>{document.type}</span></div>
-        <div className="archive-result-meta"><span>{document.actNumber}</span><span>Data actului: {dateLabel(document.actDate)}</span><span>{document.inventory}</span><strong>{document.dossierNumber}</strong></div>
-        <p className="archive-result-excerpt"><HighlightedText query={query}>{excerpt}</HighlightedText></p>
+        <div className="archive-result-meta"><span>Data: {dateLabel(document.actDate)}</span><strong>Dosar: {dossierNumber}</strong></div>
+        {query.trim() && <p className="archive-result-excerpt"><span>{staff ? 'Text extras: ' : 'Text disponibil după anonimizare: '}</span><HighlightedText query={query}>{excerpt}</HighlightedText></p>}
         {staff && document.tags.length > 0 && <div className="archive-result-tags" aria-label="Etichete ale documentului">{document.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
       </article>
     </li>;

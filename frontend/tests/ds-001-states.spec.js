@@ -10,10 +10,9 @@ async function interceptUser(page) {
 
 test('shows the empty archive state when the catalog has no approved records', async ({ page }) => {
   await interceptUser(page);
-  await page.route('**/src/components/archiveSearchRepository.js*', (route) => route.fulfill({
-    contentType: 'application/javascript',
-    body: 'export const archiveSearchPageSize = 6; export async function loadArchiveCatalog(){return {documents:[],dossiers:[],types:[],years:[]}} export async function searchArchive(){return {items:[],total:0,page:1,pageCount:1}}',
-  }));
+  await page.route('**/api/archive/browse', (route) => route.fulfill({ json: {
+    document_types: [], physical_dossiers: [], years: [], recent: [],
+  } }));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Arhiva este goală' })).toBeVisible();
   await expect(page.getByText('Documentele aprobate vor apărea aici după ce sunt adăugate în arhivă.')).toBeVisible();
@@ -21,10 +20,9 @@ test('shows the empty archive state when the catalog has no approved records', a
 
 test('shows a recoverable error when the archive catalog cannot load', async ({ page }) => {
   await interceptUser(page);
-  await page.route('**/src/components/archiveSearchRepository.js*', (route) => route.fulfill({
-    contentType: 'application/javascript',
-    body: 'export const archiveSearchPageSize = 6; export async function loadArchiveCatalog(){throw new Error("synthetic failure")} export async function searchArchive(){return {items:[],total:0,page:1,pageCount:1}}',
-  }));
+  await page.route('**/api/archive/browse', (route) => route.fulfill({ status: 503, json: {
+    eroare: 'Arhiva nu a putut fi încărcată.', cod: 'eroare_arhiva',
+  } }));
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText('Arhiva nu a putut fi încărcată. Încearcă din nou.');
   await expect(page.getByRole('button', { name: 'Reîncearcă' })).toBeEnabled();
