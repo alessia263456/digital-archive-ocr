@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 async function signInAs(page, role = 'admin') {
+  const searchRequests = [];
   await page.route('**/api/user', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -8,18 +9,19 @@ async function signInAs(page, role = 'admin') {
   }));
   const records = Array.from({ length: 8 }, (_, index) => ({
     document_id: `doc-${index + 1}`, version_id: `ver-${index + 1}`, version_number: 1,
-    document_type: index === 0 ? 'Procură' : 'Contract', act_date: `202${index % 4}-0${index % 9 + 1}-01`,
+    document_type: 'Procură', act_date: `202${index % 4}-0${index % 9 + 1}-01`,
     act_number: String(index + 1), physical_dossier_number: index === 0 ? 'Dosar nr. 004/2026' : `Dosar nr. 00${index}/2026`,
     physical_dossier_id: index === 0 ? 4 : index + 4, inventory_number: `INV-${index}`, approved_at: `2026-01-0${index + 1}T10:00:00Z`,
     highlight: '<mark>procură</mark> Persoană sintetică E', tags: index === 0 ? ['succesiune'] : [],
   }));
   await page.route('**/api/archive/browse', (route) => route.fulfill({ json: {
-    document_types: [{ document_type: 'Procură', total: 1 }, { document_type: 'Contract', total: 7 }],
-    physical_dossiers: records.map((row) => ({ id: row.physical_dossier_id, physical_dossier_number: row.physical_dossier_number, total: 1 })),
+    document_types: [{ document_type: 'Procură', total: 8 }],
+    physical_dossiers: records.map((row) => ({ id: row.physical_dossier_id, physical_dossier_number: row.physical_dossier_number, context: row.document_type, total: 1 })),
     years: [{ year: 2026, total: 8 }], recent: records.slice().reverse().slice(0, 6),
   } }));
   await page.route('**/api/documents?*', async (route) => {
     const url = new URL(route.request().url());
+    searchRequests.push(url);
     let filtered = records.filter((row) => !url.searchParams.get('q') || row.highlight.toLowerCase().includes(url.searchParams.get('q').toLowerCase()));
     if (url.searchParams.get('document_type')) filtered = filtered.filter((row) => row.document_type === url.searchParams.get('document_type'));
     if (url.searchParams.get('physical_dossier_id')) filtered = filtered.filter((row) => String(row.physical_dossier_id) === url.searchParams.get('physical_dossier_id'));
@@ -34,11 +36,12 @@ async function signInAs(page, role = 'admin') {
     await route.fulfill({ json: body });
   });
   await page.goto('/');
+  return searchRequests;
 }
 
 test('searches, sorts, highlights, paginates, and clears archive filters', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await signInAs(page);
+  const searchRequests = await signInAs(page);
 
   await expect(page.getByRole('heading', { name: 'Căutare în arhivă', exact: true })).toBeVisible();
   await expect(page.getByLabel('Etichete')).toBeVisible();
@@ -80,6 +83,9 @@ test('searches, sorts, highlights, paginates, and clears archive filters', async
   await expect(resultCards.first()).toBeVisible();
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText(/\d+/);
   await expect(page.locator('[data-testid="search-results"] mark').first()).toBeVisible();
+  await expect(page.getByText('<mark>', { exact: true })).toHaveCount(0);
+  expect(searchRequests.at(-1).searchParams.get('q')).toBe('procură');
+  expect(searchRequests.at(-1).searchParams.get('sort')).toBe('relevance');
   await page.screenshot({ path: testInfo.outputPath('DS-001.1366-search.png') });
 
   const sort = page.getByLabel('Ordonează rezultatele');
@@ -107,6 +113,8 @@ test('searches, sorts, highlights, paginates, and clears archive filters', async
   await page.getByRole('button', { name: 'Șterge filtrele' }).click();
   await page.getByLabel('Nume din acte').fill('Persoană sintetică E');
   await expect(page.locator('[data-testid="total-result-count"]')).toContainText('1 document');
+  expect(searchRequests.at(-1).searchParams.get('party')).toBe('Persoană sintetică E');
+  expect(searchRequests.at(-1).searchParams.get('page')).toBe('1');
 });
 
 test('keeps the archive browse layout and sidebar collapse usable', async ({ page }) => {
@@ -132,6 +140,15 @@ test('hides Signatory Party and tag search fields for Cititor', async ({ page })
   await expect(page.locator('[data-testid="search-result"]')).toHaveCount(6);
   await expect(page.getByText(/Text disponibil după anonimizare/).first()).toBeVisible();
   await expect(page.locator('[data-testid="search-results"] [data-admin-excerpt]')).toHaveCount(0);
+});
+
+test('renders the reader safe API highlight with the approved excerpt label', async ({ page }) => {
+  await signInAs(page, 'cititor');
+  await page.getByLabel('Text de căutare').fill('procură');
+  await page.getByRole('button', { name: 'Caută' }).click();
+  await expect(page.locator('[data-testid="search-results"] mark').first()).toBeVisible();
+  await expect(page.getByText(/Text disponibil după anonimizare/).first()).toBeVisible();
+  await expect(page.getByText('<mark>', { exact: true })).toHaveCount(0);
 });
 
 test('shows a clear no-results message for an unmatched search', async ({ page }) => {
