@@ -20,7 +20,9 @@ final class ArchiveController
         $groups = (clone $query)->select('document_type', DB::raw('count(*) as total'))
             ->groupBy('document_type')->orderBy('document_type')->get();
         $dossiers = (clone $query)->join('physical_dossiers as dossier', 'dossier.id', '=', 'archive_search_documents.physical_dossier_id')
-            ->select('dossier.id', 'dossier.physical_dossier_number', DB::raw('count(*) as total'))
+            ->select('dossier.id', 'dossier.physical_dossier_number',
+                DB::raw("string_agg(DISTINCT archive_search_documents.document_type, ', ' ORDER BY archive_search_documents.document_type) as context"),
+                DB::raw('count(*) as total'))
             ->groupBy('dossier.id', 'dossier.physical_dossier_number')->orderBy('dossier.physical_dossier_number')->get();
         $years = (clone $query)->whereNotNull('act_date')->selectRaw('EXTRACT(YEAR FROM act_date)::integer as year, count(*) as total')
             ->groupByRaw('EXTRACT(YEAR FROM act_date)')->orderBy('year')->get();

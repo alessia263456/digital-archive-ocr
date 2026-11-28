@@ -13,11 +13,8 @@ function resultItem(row) {
     addedDate: row.approved_at?.slice(0, 10) || '',
     inventory: row.inventory_number || 'Inventar nespecificat',
     dossierNumber: row.physical_dossier_number || 'Dosar nespecificat',
-    dossierId: row.physical_dossier_id,
-    highlight: row.highlight || '',
+    highlight: (row.highlight || '').replace(/<\/?mark>/g, ''),
     tags: row.tags || [],
-    readerExcerpt: row.highlight || '',
-    adminExcerpt: row.highlight || '',
   };
 }
 
@@ -26,7 +23,7 @@ export async function loadArchiveCatalog() {
   const documents = (response.recent || []).map(resultItem);
   return {
     documents,
-    dossiers: (response.physical_dossiers || []).map((item) => ({ id: String(item.id), number: item.physical_dossier_number, context: '' })),
+    dossiers: (response.physical_dossiers || []).map((item) => ({ id: String(item.id), number: item.physical_dossier_number, context: item.context || '' })),
     types: (response.document_types || []).map((item) => item.document_type),
     years: (response.years || []).map((item) => String(item.year)).sort((a, b) => b.localeCompare(a)),
   };
